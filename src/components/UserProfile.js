@@ -1,87 +1,32 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React from 'react';
 
-const UserProfile = () => {
-  const [user, setUser] = useState(null);
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    const fetchUserProfile = async () => {
-      try {
-        const response = await axios.get('/api/profile', {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-        });
-        setUser(response.data);
-        setName(response.data.name);
-        setEmail(response.data.email);
-      } catch (err) {
-        setError(err.response.data.message);
-      }
-    };
-    fetchUserProfile();
-  }, []);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    try {
-      await axios.put(
-        '/api/profile',
-        { name, email, password },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-        }
-      );
-      // Update the user state or show a success message
-    } catch (err) {
-      setError(err.response.data.message);
-    }
-  };
-
-  if (!user) {
-    return <div>Loading...</div>;
-  }
-
+function UserProfile() {
   return (
-    <form onSubmit={handleSubmit}>
-      <div>
-        <label htmlFor="name">Name:</label>
-        <input
-          type="text"
-          id="name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
+    <div className="row justify-content-center">
+      <div className="col-md-8 col-lg-6">
+        <div className="card shadow-sm">
+          <div className="card-header bg-primary text-white">
+            <h4 className="mb-0">User Profile</h4>
+          </div>
+          <div className="card-body">
+            <div className="row">
+              <div className="col-md-4">
+                <img src="https://via.placeholder.com/150" alt="Profile" className="img-fluid rounded-circle mb-3" />
+              </div>
+              <div className="col-md-8">
+                <h5>John Doe</h5>
+                <p className="text-muted">johndoe@example.com</p>
+                <p>
+                  <strong>About:</strong> Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                </p>
+                <button type="button" className="btn btn-primary">Update Profile</button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-      <div>
-        <label htmlFor="email">Email:</label>
-        <input
-          type="email"
-          id="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-      </div>
-      <div>
-        <label htmlFor="password">Password:</label>
-        <input
-          type="password"
-          id="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-      </div>
-      {error && <div className="error">{error}</div>}
-      <button type="submit">Update Profile</button>
-    </form>
+    </div>
   );
-};
+}
 
 export default UserProfile;

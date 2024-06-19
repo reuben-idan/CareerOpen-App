@@ -1,19 +1,12 @@
+// jobRoutes.js
 const express = require('express');
-const jobAlertController = require('./jobAlertController');
-const authMiddleware = require('../auth/authMiddleware');
-
 const router = express.Router();
+const jobController = require('./jobController');
 
-// Create a new job alert
-router.post('/', authMiddleware.authenticate, jobAlertController.createJobAlert);
-
-// Get all job alerts for a user
-router.get('/user/:userId', authMiddleware.authenticate, jobAlertController.getJobAlerts);
-
-// Update a job alert
-router.put('/:id', authMiddleware.authenticate, jobAlertController.updateJobAlert);
-
-// Delete a job alert
-router.delete('/:id', authMiddleware.authenticate, jobAlertController.deleteJobAlert);
+router.get('/', jobController.getAllJobs);
+router.get('/:id', jobController.getJobById);
+router.post('/', jobController.createJob);
+router.patch('/:id', jobController.updateJob);
+router.delete('/:id', jobController.deleteJob);
 
 module.exports = router;

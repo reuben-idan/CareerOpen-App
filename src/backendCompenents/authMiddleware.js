@@ -1,6 +1,6 @@
-const jwt = require('jsonwebtoken');
+import { verify } from 'jsonwebtoken';
 
-exports.authenticate = (req, res, next) => {
+export function authenticate(req, res, next) {
   const token = req.headers.authorization?.split(' ')[1];
 
   if (!token) {
@@ -8,10 +8,10 @@ exports.authenticate = (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = verify(token, process.env.JWT_SECRET);
     req.user = { userId: decoded.userId };
     next();
   } catch (error) {
     return res.status(403).json({ message: 'Failed to authenticate token', error });
   }
-};
+}

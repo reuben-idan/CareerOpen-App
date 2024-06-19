@@ -1,20 +1,28 @@
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const User = require('./userModel');
+// src/controllers/authController.js
+import { genSalt, hash, compare } from 'bcrypt';
+import { sign } from 'jsonwebtoken';
+import User, { findOne, findById } from './userModel';
 
-exports.registerUser = async (req, res) => {
+
+
+
+
+
+
+
+export async function registerUser(req, res) {
   try {
     const { name, email, password } = req.body;
 
     // Check if user already exists
-    const existingUser = await User.findOne({ email });
+    const existingUser = await findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: 'User already exists' });
     }
 
     // Hash the password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const salt = await genSalt(10);
+    const hashedPassword = await hash(password, salt);
 
     // Create a new user
     const newUser = new User({
@@ -26,7 +34,7 @@ exports.registerUser = async (req, res) => {
     await newUser.save();
 
     // Generate a JWT token
-    const token = jwt.sign({ userId: newUser._id }, process.env.JWT_SECRET, {
+    const token = sign({ userId: newUser._id }, process.env.JWT_SECRET, {
       expiresIn: '1d'
     });
 
@@ -34,26 +42,26 @@ exports.registerUser = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: 'Error registering user', error });
   }
-};
+}
 
-exports.loginUser = async (req, res) => {
+export async function loginUser(req, res) {
   try {
     const { email, password } = req.body;
 
     // Find the user
-    const user = await User.findOne({ email });
+    const user = await findOne({ email });
     if (!user) {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
     // Compare the password
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await compare(password, user.password);
     if (!isPasswordValid) {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
     // Generate a JWT token
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+    const token = sign({ userId: user._id }, process.env.JWT_SECRET, {
       expiresIn: '1d'
     });
 
@@ -61,13 +69,13 @@ exports.loginUser = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: 'Error logging in', error });
   }
-};
+}
 
-exports.getAuthenticatedUser = async (req, res) => {
+export async function getAuthenticatedUser(req, res) {
   try {
-    const user = await User.findById(req.user.userId);
+    const user = await findById(req.user.userId);
     res.json({ user });
   } catch (error) {
     res.status(500).json({ message: 'Error getting authenticated user', error });
   }
-};
+}

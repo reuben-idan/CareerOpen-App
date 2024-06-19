@@ -1,12 +1,12 @@
-const express = require('express');
-const authRoutes = require('../auth/authRoutes');
-const userRoutes = require('../user/userRoutes');
-const jobAlertRoutes = require('../jobAlert/jobAlertRoutes');
-const applicationRoutes = require('../application/applicationRoutes');
-const paymentRoutes = require('../payment/paymentRoutes');
-const analyticsRoutes = require('../analytics/analyticsRoutes');
+import { Router } from 'express';
+import authRoutes from '../auth/authRoutes';
+import userRoutes from '../user/userRoutes';
+import jobAlertRoutes from '../jobAlert/jobAlertRoutes';
+import applicationRoutes from '../application/applicationRoutes';
+import paymentRoutes from '../payment/paymentRoutes';
+import analyticsRoutes from '../analytics/analyticsRoutes';
 
-const router = express.Router();
+const router = Router();
 
 // Authentication routes
 router.use('/auth', authRoutes);
@@ -28,4 +28,4 @@ router.use('/analytics', analyticsRoutes);
 
 // Other API routes can be added here
 
-module.exports = router;
+export default router;

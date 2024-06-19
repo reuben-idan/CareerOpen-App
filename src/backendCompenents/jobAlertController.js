@@ -1,61 +1,69 @@
-const JobAlert = require('./jobAlertModel');
-const User = require('../user/userModel');
+// jobController.js
+const Job = require('./jobModel');
 
-exports.createJobAlert = async (req, res) => {
+exports.getAllJobs = async (req, res) => {
   try {
-    const { userId, keywords, location, experience } = req.body;
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-    const jobAlert = new JobAlert({
-      user: userId,
-      keywords,
-      location,
-      experience
-    });
-    await jobAlert.save();
-    res.status(201).json(jobAlert);
-  } catch (error) {
-    res.status(500).json({ message: 'Error creating job alert', error });
+    const jobs = await Job.find();
+    res.status(200).json(jobs);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
   }
 };
 
-exports.getJobAlerts = async (req, res) => {
+exports.getJobById = async (req, res) => {
   try {
-    const jobAlerts = await JobAlert.find({ user: req.params.userId });
-    res.json(jobAlerts);
-  } catch (error) {
-    res.status(500).json({ message: 'Error fetching job alerts', error });
+    const job = await Job.findById(req.params.id);
+    if (!job) return res.status(404).json({ message: 'Job not found' });
+    res.status(200).json(job);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
   }
 };
 
-exports.updateJobAlert = async (req, res) => {
+exports.createJob = async (req, res) => {
+  const job = new Job({
+    title: req.body.title,
+    description: req.body.description,
+    salary: req.body.salary,
+    location: req.body.location,
+    company: req.body.company,
+    postedBy: req.body.postedBy
+  });
+
   try {
-    const { keywords, location, experience } = req.body;
-    const jobAlert = await JobAlert.findById(req.params.id);
-    if (!jobAlert) {
-      return res.status(404).json({ message: 'Job alert not found' });
-    }
-    jobAlert.keywords = keywords;
-    jobAlert.location = location;
-    jobAlert.experience = experience;
-    await jobAlert.save();
-    res.json(jobAlert);
-  } catch (error) {
-    res.status(500).json({ message: 'Error updating job alert', error });
+    const newJob = await job.save();
+    res.status(201).json(newJob);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
   }
 };
 
-exports.deleteJobAlert = async (req, res) => {
+exports.updateJob = async (req, res) => {
   try {
-    const jobAlert = await JobAlert.findById(req.params.id);
-    if (!jobAlert) {
-      return res.status(404).json({ message: 'Job alert not found' });
-    }
-    await jobAlert.deleteOne();
-    res.json({ message: 'Job alert deleted' });
-  } catch (error) {
-    res.status(500).json({ message: 'Error deleting job alert', error });
+    const job = await Job.findById(req.params.id);
+    if (!job) return res.status(404).json({ message: 'Job not found' });
+
+    job.title = req.body.title || job.title;
+    job.description = req.body.description || job.description;
+    job.salary = req.body.salary || job.salary;
+    job.location = req.body.location || job.location;
+    job.company = req.body.company || job.company;
+    job.postedBy = req.body.postedBy || job.postedBy;
+
+    const updatedJob = await job.save();
+    res.status(200).json(updatedJob);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+};
+
+exports.deleteJob = async (req, res) => {
+  try {
+    const job = await Job.findById(req.params.id);
+    if (!job) return res.status(404).json({ message: 'Job not found' });
+    await job.remove();
+    res.status(200).json({ message: 'Job deleted' });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
   }
 };
