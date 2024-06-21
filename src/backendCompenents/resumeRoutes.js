@@ -1,22 +1,11 @@
-const express = require('express');
-const resumeController = require('./resumeController');
-const authMiddleware = require('../auth/authMiddleware');
+// resumeRoutes.js
+import express from 'express';
+import { uploadResume, deleteResume, getResumeData } from './resumeController';
 
 const router = express.Router();
 
-// Create a new resume
-router.post('/', authMiddleware.authenticate, resumeController.createResume);
+router.post('/upload', uploadResume);
+router.delete('/:id', deleteResume);
+router.get('/:id', getResumeData);
 
-// Get all user's resumes
-router.get('/', authMiddleware.authenticate, resumeController.getResumes);
-
-// Get a single resume
-router.get('/:id', authMiddleware.authenticate, resumeController.getResumeById);
-
-// Update a resume
-router.put('/:id', authMiddleware.authenticate, resumeController.updateResume);
-
-// Delete a resume
-router.delete('/:id', authMiddleware.authenticate, resumeController.deleteResume);
-
-module.exports = router;
+export default router;

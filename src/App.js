@@ -1,61 +1,56 @@
-// app.js
-import React from 'react';
-import { Route, Routes, Link } from 'react-router-dom';
-import RegisterForm from './components/RegisterForm';
-import LoginForm from './components/LoginForm';
-import UserProfile from './components/UserProfile';
-import JobList from './components/JobList';
-import JobForm from './components/JobForm';
-import JobDetails from './components/JobDetails';
+import React, { useState } from 'react';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { Container, Row, Col } from 'react-bootstrap';
+import Registration from './components/Registration';
+import Login from './components/Login';
+import Profile from './components/Profile';
 
-import logo from './logo.jpeg';
+const App = () => {
+  const [token, setToken] = useState(localStorage.getItem('token') || null);
 
-function App() {
+  const handleRegistration = (newToken) => {
+    setToken(newToken);
+    localStorage.setItem('token', newToken);
+    return <Navigate to="/login" />;
+  };
+
+  const handleLogin = (newToken) => {
+    setToken(newToken);
+    localStorage.setItem('token', newToken);
+    return <Navigate to="/profile" />;
+  };
+
+  const handleLogout = () => {
+    setToken(null);
+    localStorage.removeItem('token');
+    return <Navigate to="/login" />;
+  };
+
   return (
-    <div className="container my-5">
-      <nav className="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
-        <div className="container">
-          <Link to="/" className="navbar-brand d-flex align-items-center">
-            <img src={logo} alt="CareerOpen Logo" className="mr-2" style={{ height: '35px' }} />
-           {/* <span>CareerOpen</span>*/}
-          </Link>
-          <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span className="navbar-toggler-icon"></span>
-          </button>
-          <div className="collapse navbar-collapse" id="navbarNav">
-            <ul className="navbar-nav">
-              <li className="nav-item">
-                <Link to="/register" className="nav-link">Register</Link>
-              </li>
-              <li className="nav-item">
-                <Link to="/login" className="nav-link">Login</Link>
-              </li>
-              <li className="nav-item">
-                <Link to="/profile" className="nav-link">Profile</Link>
-              </li>
-              <li className="nav-item">
-                <Link to="/jobs" className="nav-link">Jobs</Link>
-              </li>
-              <li className="nav-item">
-                <Link to="/jobs/new" className="nav-link">Post Job</Link>
-              </li>
-           
-            </ul>
-          </div>
-        </div>
-      </nav>
-
-      <Routes>
-        <Route path="/register" element={<RegisterForm />} />
-        <Route path="/login" element={<LoginForm />} />
-        <Route path="/profile" element={<UserProfile />} />
-        <Route path="/jobs" element={<JobList />} />
-        <Route path="/jobs/:id" element={<JobDetails />} />
-        <Route path="/jobs/new" element={<JobForm />} />
-      
-      </Routes>
-    </div>
+    <Router>
+      <Container fluid className="h-100 d-flex flex-column">
+        <Row className="flex-grow-1">
+          <Col className="d-flex align-items-center justify-content-center">
+            <Routes>
+              <Route
+                path="/registration"
+                element={<Registration onRegistration={handleRegistration} />}
+              />
+              <Route
+                path="/login"
+                element={token ? <Navigate to="/profile" /> : <Login onLogin={handleLogin} />}
+              />
+              <Route
+                path="/profile"
+                element={token ? <Profile onLogout={handleLogout} /> : <Navigate to="/login" />}
+              />
+              <Route path="*" element={<Navigate to="/registration" />} />
+            </Routes>
+          </Col>
+        </Row>
+      </Container>
+    </Router>
   );
-}
+};
 
 export default App;

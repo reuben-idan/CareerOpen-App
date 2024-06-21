@@ -3,42 +3,49 @@ import axios from 'axios';
 
 const ResumeUploader = () => {
   const [file, setFile] = useState(null);
-  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const handleFileChange = (e) => {
-    setFile(e.target.files[0]);
+  const handleFileChange = (event) => {
+    setFile(event.target.files[0]);
   };
 
-  const handleUpload = async (e) => {
-    e.preventDefault();
-
-    const formData = new FormData();
-    formData.append('resume', file);
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setLoading(true);
+    setError(null);
 
     try {
-      await axios.post('/api/resumes', formData);
-      // Reset the file input
+      const formData = new FormData();
+      formData.append('file', file);
+
+      await axios.post('/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      // Reset the form
       setFile(null);
-      // Update the resume list component
+      setLoading(false);
+      // Show success message or redirect to a success page
     } catch (err) {
-      setError(err.response.data.message);
+      setLoading(false);
+      setError('Error uploading the file. Please try again.');
+      console.error(err);
     }
   };
 
   return (
-    <form onSubmit={handleUpload}>
-      <div>
-        <label htmlFor="resume">Upload Resume:</label>
-        <input
-          type="file"
-          id="resume"
-          accept=".pdf,.doc,.docx"
-          onChange={handleFileChange}
-        />
-      </div>
-      {error && <div className="error">{error}</div>}
-      <button type="submit">Upload</button>
-    </form>
+    <div>
+      <form onSubmit={handleSubmit}>
+        <input type="file" onChange={handleFileChange} />
+        <button type="submit" disabled={loading}>
+          {loading ? 'Uploading...' : 'Upload Resume'}
+        </button>
+      </form>
+      {error && <div>{error}</div>}
+    </div>
   );
 };
 
