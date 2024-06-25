@@ -1,7 +1,8 @@
+// Login.js
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Container, Row, Col, Card, Form, Button } from 'react-bootstrap';
-import logo from '../logo.jpeg'; // Import the logo image from the assets folder
+import logo from '../logo.jpeg';
 
 const Login = ({ onLogin }) => {
   const [username, setUsername] = useState('');
@@ -14,6 +15,7 @@ const Login = ({ onLogin }) => {
       // Implement your login logic here
       // and retrieve the token upon successful login
       const token = 'your_token_here';
+      localStorage.setItem('token', token);
       onLogin(token);
       navigate('/profile');
     } catch (error) {

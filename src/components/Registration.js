@@ -1,3 +1,4 @@
+// Registration.js
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Container, Row, Col, Card, Form, Button } from 'react-bootstrap';
@@ -15,7 +16,7 @@ const Registration = () => {
       // and retrieve the token upon successful registration
       const token = 'your_token_here';
       localStorage.setItem('token', token);
-      navigate('/profile');
+      navigate('/login');
     } catch (error) {
       console.error('Error during registration:', error);
     }
