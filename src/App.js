@@ -19,13 +19,13 @@ const App = () => {
     localStorage.setItem('token', newToken);
     return <Navigate to="/profile" />;
   };
-
+  
   const handleLogout = () => {
     setToken(null);
     localStorage.removeItem('token');
     return <Navigate to="/login" />;
   };
-
+  
   return (
     <Router>
       <Container fluid className="h-100 d-flex flex-column">

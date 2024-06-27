@@ -53,7 +53,8 @@ const Profile = ({ onLogout}) => {
     localStorage.removeItem('token');
     onLogout();
     navigate('/login');
-  
+
+
 
   return (
     <div>
@@ -179,7 +180,8 @@ const LogoutButton = ({ onLogout }) => {
               <Dropdown.Item href="/profile">Profile</Dropdown.Item>
               <Dropdown.Item href="/settings">Settings</Dropdown.Item>
               <Dropdown.Item href="/account">Account</Dropdown.Item>
-              <Dropdown.Item href="/logout">Logout</Dropdown.Item>
+              <Dropdown.Item onClick={handleLogout} >Logout</Dropdown.Item>
+             
             </Dropdown.Menu>
           </Dropdown>
         </Nav>
