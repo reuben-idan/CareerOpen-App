@@ -1,55 +1,43 @@
 import React, { useState } from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
-import { Container, Row, Col } from 'react-bootstrap';
 import Registration from './components/Registration';
 import Login from './components/Login';
-import Profile from './components/Profile';
+import JobSeekerProfile from './components/JobSeekerProfile';
+import EmployerProfile from './components/EmployerProfile';
 
 const App = () => {
-  const [token, setToken] = useState(localStorage.getItem('token') || null);
+  const [user, setUser] = useState(null);
+  const [currentStep, setCurrentStep] = useState('registration');
 
-  const handleRegistration = (newToken) => {
-    setToken(newToken);
-    localStorage.setItem('token', newToken);
-    return <Navigate to="/login" />;
+  const handleRegistration = (userData) => {
+    // Simulate user registration
+    setUser({ ...userData, loggedIn: false });
+    setCurrentStep('login');
   };
 
-  const handleLogin = (newToken) => {
-    setToken(newToken);
-    localStorage.setItem('token', newToken);
-    return <Navigate to="/profile" />;
+  const handleLogin = (loginData) => {
+    // Simulate user login
+    setUser({ ...user, loggedIn: true });
+    setCurrentStep('profile');
   };
-  
+
   const handleLogout = () => {
-    setToken(null);
-    localStorage.removeItem('token');
-    return <Navigate to="/login" />;
+    setUser(null);
+    setCurrentStep('registration');
   };
-  
+
   return (
-    <Router>
-      <Container fluid className="h-100 d-flex flex-column">
-        <Row className="flex-grow-1">
-          <Col className="d-flex align-items-center justify-content-center">
-            <Routes>
-              <Route
-                path="/registration"
-                element={<Registration onRegistration={handleRegistration} />}
-              />
-              <Route
-                path="/login"
-                element={token ? <Navigate to="/profile" /> : <Login onLogin={handleLogin} />}
-              />
-              <Route
-                path="/profile"
-                element={token ? <Profile onLogout={handleLogout} /> : <Navigate to="/login" />}
-              />
-              <Route path="*" element={<Navigate to="/registration" />} />
-            </Routes>
-          </Col>
-        </Row>
-      </Container>
-    </Router>
+    <div className="app-container">
+      {currentStep === 'registration' && (
+        <Registration onSubmit={handleRegistration} />
+      )}
+      {currentStep === 'login' && <Login onLogin={handleLogin} />}
+      {currentStep === 'profile' && user.userType === 'jobSeeker' && (
+        <JobSeekerProfile onLogout={handleLogout} />
+      )}
+      {currentStep === 'profile' && user.userType === 'employer' && (
+        <EmployerProfile onLogout={handleLogout} />
+      )}
+    </div>
   );
 };
 
