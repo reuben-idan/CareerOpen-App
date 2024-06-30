@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Container, Navbar, Nav, Form, Button, Card } from 'react-bootstrap';
+import { Container, Form, Button, Card } from 'react-bootstrap';
 import logo from '../logo.jpeg'; // Import the logo image
 
 const Registration = ({ onSubmit }) => {

@@ -1,87 +1,52 @@
-// Navbar.js
-import React, { useState } from 'react';
+import React from 'react';
+import { Link } from 'react-router-dom';
 
-const Navbar = () => {
-  const [user, setUser] = useState(() => {
-    const storedUser = localStorage.getItem('user');
-    return storedUser ? JSON.parse(storedUser) : null;
-  });
-
-  const handleProfilePictureClick = () => {
-    // Navigate to the profile page or open a dropdown menu
-  };
-
+const Navbar = ({ profilePicture, onProfilePictureUpload }) => {
   return (
-    <nav className="navbar navbar-expand-lg navbar-dark bg-primary">
-      <div className="container">
-        <a className="navbar-brand" href="#">
-          <img src="/logo.png" alt="CareerOpen" width="30" height="30" className="d-inline-block align-top" />
-          CareerOpen
-        </a>
-        <div className="d-flex">
-          <form className="d-flex">
-            <input className="form-control me-2" type="search" placeholder="Search" aria-label="Search" />
-            <button className="btn btn-outline-light" type="submit">Search</button>
-          </form>
-          <ul className="navbar-nav ms-auto">
-            <li className="nav-item">
-              <a className="nav-link" href="#">Home</a>
-            </li>
-            <li className="nav-item">
-              <a className="nav-link" href="#">My Network</a>
-            </li>
-            <li className="nav-item">
-              <a className="nav-link" href="#">Jobs</a>
-            </li>
-            <li className="nav-item">
-              <a className="nav-link" href="#">Messaging</a>
-            </li>
-            <li className="nav-item">
-              <a className="nav-link" href="#">Notification</a>
-            </li>
-            <li className="nav-item">
-              <a className="nav-link" href="#">Career Resources</a>
-            </li>
-            <li className="nav-item dropdown">
-              <a
-                className="nav-link dropdown-toggle"
-                href="#"
-                id="navbarDropdown"
-                role="button"
-                data-bs-toggle="dropdown"
-                aria-expanded="false"
-              >
-                {user && user.profilePicture ? (
-                  <img src={user.profilePicture} alt="Profile" className="rounded-circle" width="30" height="30" />
-                ) : (
-                  'Me'
-                )}
-              </a>
-              <ul className="dropdown-menu" aria-labelledby="navbarDropdown">
-                <li><a className="dropdown-item" href="#">Profile</a></li>
-                <li><a className="dropdown-item" href="#">Settings</a></li>
-                <li><a className="dropdown-item" href="#">Logout</a></li>
-              </ul>
-            </li>
-            <li className="nav-item dropdown">
-              <a
-                className="nav-link dropdown-toggle"
-                href="#"
-                id="navbarDropdown"
-                role="button"
-                data-bs-toggle="dropdown"
-                aria-expanded="false"
-              >
-                Business
-              </a>
-              <ul className="dropdown-menu" aria-labelledby="navbarDropdown">
-                <li><a className="dropdown-item" href="#">Post a Job</a></li>
-                <li><a className="dropdown-item" href="#">Manage Jobs</a></li>
-                <li><a className="dropdown-item" href="#">Employer Dashboard</a></li>
-              </ul>
-            </li>
-          </ul>
+    <nav className="navbar">
+      <div className="navbar-left">
+        <Link to="/" className="logo">
+          <img src="logo.png" alt="Website Logo" />
+        </Link>
+        <div className="search-bar">
+          <input type="text" placeholder="Search" />
+          <button className="search-button">Search</button>
         </div>
+      </div>
+      <div className="navbar-right">
+        <ul>
+          <li><Link to="/home">Home</Link></li>
+          <li><Link to="/network">My Network</Link></li>
+          <li><Link to="/jobs">Jobs</Link></li>
+          <li><Link to="/messages">Messaging and Notification</Link></li>
+          <li><Link to="/resources">Career Resources</Link></li>
+          <li>
+            <div className="profile-dropdown">
+              <Link to="/profile" className="profile-picture">
+                {profilePicture ? (
+                  <img src={profilePicture} alt="Profile" />
+                ) : (
+                  <i className="fas fa-user-circle"></i>
+                )}
+              </Link>
+              <ul className="dropdown-menu">
+                <li><Link to="/profile">Profile</Link></li>
+                <li><Link to="/settings">Settings</Link></li>
+                <li><Link to="/logout">Logout</Link></li>
+                <li>
+                  <div className="business-dropdown">
+                    <Link to="/business">Business</Link>
+                    <ul className="dropdown-menu">
+                      <li><Link to="/business/dashboard">Dashboard</Link></li>
+                      <li><Link to="/business/jobs">Post Jobs</Link></li>
+                      <li><Link to="/business/analytics">Analytics</Link></li>
+                    </ul>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </li>
+        </ul>
       </div>
     </nav>
   );

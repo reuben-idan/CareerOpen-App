@@ -4,6 +4,9 @@ import Login from './components/Login';
 import JobSeekerProfile from './components/JobSeekerProfile';
 import EmployerProfile from './components/EmployerProfile';
 
+
+
+
 const App = () => {
   const [user, setUser] = useState(null);
   const [currentStep, setCurrentStep] = useState('registration');
