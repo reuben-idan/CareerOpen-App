@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Container, Row, Col, Image, Form, Button, Navbar, Nav, FormControl } from 'react-bootstrap';
+import { Container, Row, Col, Image, Form, Button, Navbar, Nav, FormControl,Dropdown } from 'react-bootstrap';
 
 class JobSeekerProfile extends Component {
   constructor(props) {
@@ -50,41 +50,69 @@ class JobSeekerProfile extends Component {
 
     return (
       <div>
-        <Navbar bg="light" expand="lg">
-          <Navbar.Brand href="/">
-            <Image src="logo.png" alt="Website Logo" height="40" />
-          </Navbar.Brand>
-          <FormControl type="text" placeholder="Search" className="mr-sm-2" />
-          <Navbar.Toggle aria-controls="basic-navbar-nav" />
-          <Navbar.Collapse id="basic-navbar-nav">
-            <Nav className="mr-auto">
-              <Nav.Link href="/">Home</Nav.Link>
-              <Nav.Link href="/network">My Network</Nav.Link>
-              <Nav.Link href="/jobs">Jobs</Nav.Link>
-              <Nav.Link href="/messaging">Messaging</Nav.Link>
-              <Nav.Link href="/notifications">Notifications</Nav.Link>
-              <Nav.Link href="/resources">Career Resources</Nav.Link>
-              <Nav.Link href="/me">
+         <Navbar bg="dark" variant="dark" expand="lg">
+      {/* Logo and Search Bar */}
+      <Navbar.Brand href="/">
+        <img
+          src="path/to/your/logo.png"
+          alt="Website Logo"
+          style={{ height: '30px' }}
+        />
+      </Navbar.Brand>
+      <Form className="d-flex">
+        <FormControl
+          type="search"
+          placeholder="Search"
+          aria-label="Search"
+          className="mr-2"
+          style={{ width: '300px' }}
+        />
+      </Form>
+
+      {/* Navigation Links */}
+      <Navbar.Toggle aria-controls="basic-navbar-nav" />
+      <Navbar.Collapse id="basic-navbar-nav">
+        <Nav className="mr-auto">
+          <Nav.Link href="/">Home</Nav.Link>
+          <Nav.Link href="/my-network">My Network</Nav.Link>
+          <Nav.Link href="/jobs">Jobs</Nav.Link>
+          <Nav.Link href="/messaging">Messaging</Nav.Link>
+          <Nav.Link href="/notifications">Notifications</Nav.Link>
+          <Nav.Link href="/career-resources">Career Resources</Nav.Link>
+        </Nav>
+
+        {/* Profile Picture and Dropdown Menu */}
+        <Nav>
+          <Dropdown>
+            <Dropdown.Toggle as={Nav.Link}>
+            <Nav.Link href="/me">
                 <Image src={profilePicture ? URL.createObjectURL(profilePicture) : 'https://via.placeholder.com/50'} alt="Profile Picture" roundedCircle height="40" />
                 <span className="ml-2">{name}</span>
-                <div className="dropdown-menu">
-                  <a className="dropdown-item" href="/profile">Profile</a>
-                  <a className="dropdown-item" href="/account">Account</a>
-                  <a className="dropdown-item" href="/settings">Settings</a>
-                  <a className="dropdown-item" href="/" onClick={this.handleLogout}>Logout</a>
-                </div>
-              </Nav.Link>
-              <Nav.Link href="/business">
-                Business
-                <div className="dropdown-menu">
-                  <a className="dropdown-item" href="/business/services">Services</a>
-                  <a className="dropdown-item" href="/business/products">Products</a>
-                  <a className="dropdown-item" href="/business/partners">Partners</a>
-                </div>
-              </Nav.Link>
-            </Nav>
-          </Navbar.Collapse>
-        </Navbar>
+                </Nav.Link>
+
+            </Dropdown.Toggle>
+            <Dropdown.Menu>
+              <Dropdown.Item href="/profile">Profile</Dropdown.Item>
+              <Dropdown.Item href="/settings">Settings</Dropdown.Item>
+              <Dropdown.Item href="/account">Account</Dropdown.Item>
+              <Dropdown.Item href="/logout">Logout</Dropdown.Item>
+            </Dropdown.Menu>
+          </Dropdown>
+        </Nav>
+
+        {/* Business Dropdown Menu */}
+        <Nav>
+          <Dropdown>
+            <Dropdown.Toggle as={Nav.Link}>Business</Dropdown.Toggle>
+            <Dropdown.Menu>
+              <Dropdown.Item href="/business/products">Products</Dropdown.Item>
+              <Dropdown.Item href="/business/services">Services</Dropdown.Item>
+              <Dropdown.Item href="/business/partners">Partners</Dropdown.Item>
+            </Dropdown.Menu>
+          </Dropdown>
+        </Nav>
+      </Navbar.Collapse>
+    </Navbar>
 
         <Container className="my-5">
           <Row>
