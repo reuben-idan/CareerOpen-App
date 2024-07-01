@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Container, Row, Col, Image, Form, Button, Navbar, Nav, FormControl, Dropdown } from 'react-bootstrap';
+import ExperienceSection from './ExperienceSection';
 
 const JobSeekerProfile = () => {
   const [profilePicture, setProfilePicture] = useState(null);
@@ -169,73 +170,47 @@ const handleSaveClick = () => setEditMode(false); // Update data on save (implem
 
 
 <hr />
-
 <h3>Experience</h3>
-
-<ul className="list-unstyled">
-  {experience.map((exp, index) => (
-    <li key={index}>
-      {editMode ? (
-        <div>
-          <h4>
-            <Form.Control
-              type="text"
-              defaultValue={exp.title} // Prefill with current title (assuming experience objects have a "title" field)
-              onChange={(e) => {
-                // Fix: Spread the entire object with updated title
-                const updatedExperience = [...experience];
-                updatedExperience[index] = { ...updatedExperience[index], title: e.target.value };
-                setExperience(updatedExperience);
-              }}
-            />
-          </h4>
-          <p>
-            <Form.Control
-              type="text"
-              defaultValue={`${exp.company} - ${exp.duration}`} // Prefill with company and duration (assuming experience objects have "company" and "duration" fields)
-              onChange={(e) => {
-                const updatedExperience = [...experience];
-                const [company, duration] = e.target.value.split(' - ');
-                updatedExperience[index].company = company;
-                updatedExperience[index].duration = duration;
-                setExperience(updatedExperience);
-              }}
-            />
-          </p>
-        </div>
-      ) : (
-        <div>
-          <h4>{exp.title}</h4>
-          <p>{exp.company} - {exp.duration}</p>
-        </div>
-      )}
-    </li>
-  ))}
-</ul>
+<p>
+  {editMode ? (
+    <Form.Control
+      as="textarea"
+      rows={3}
+      defaultValue={experience} // Prefill with current about me from state
+      onChange={(e) => setExperience(e.target.value)} // Update about me on change
+    />
+  ) : (
+    <p>{experience}</p> // Display current about me from state
+  )}
+</p>
 
 <hr />
 
 <h3>Education</h3>
-<ul className="list-unstyled">
-  {education.map((edu, index) => (
-    <li key={index}>
-      <h4>{edu.degree}</h4>
-      <p>{edu.institution} - {edu.graduationYear}</p>
-    </li>
-  ))}
-</ul>
+<p>
+  {editMode ? (
+    <Form.Control
+      as="textarea"
+      rows={3}
+      defaultValue={education} // Prefill with current about me from state
+      onChange={(e) => setEducation(e.target.value)} // Update about me on change
+    />
+  ) : (
+    <p>{education}</p> // Display current about me from state
+  )}
+</p>
+
 
 <hr />
 
-<h3>Certifications</h3>
-<ul className="list-unstyled">
-  {certifications.map((cert, index) => (
-    <li key={index}>
-      <h4>{cert.name}</h4>  {/* Assuming certifications have a "name" field */}
-      <p>{cert.issuer} (Issued: {cert.issuedDate ? cert.issuedDate : 'NA'})</p> {/* Optional issued date */}
-    </li>
-  ))}
-</ul>
+<Form.Group>
+                  <Form.Label><h3>Resume</h3></Form.Label>
+                  <Form.Control type="file" />
+                </Form.Group>
+                <Form.Group>
+                  <Form.Label><h3>Certifications</h3></Form.Label>
+                  <Form.Control type="file" />
+                </Form.Group>
 
 <hr />
 
