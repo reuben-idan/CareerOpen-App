@@ -19,7 +19,7 @@ const Login = ({ onLogin }) => {
 
   return (
     <Container className="d-flex justify-content-center align-items-center" style={{ minHeight: '100vh' }}>
-      <Card className="w-75">
+      <Card className="w-50">
         <Card.Body>
           <div className="d-flex justify-content-center mb-4">
             <img src={logo} alt="CareerOpen Logo" style={{ maxWidth: '200px' }} />
