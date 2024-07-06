@@ -193,11 +193,15 @@ className={editMode ? 'mb-2' : 'mb-3'}
               </Button>
               <Button variant="primary" type="submit" form="profile-update-form">
                 Save Changes
-              </Button>
-            </div>
-          </Form>
-        )}
-      </div></div>
+              </Button>  </div>
+              </Form>
+            ) } (
+  <Button variant="link" onClick={handleEditClick}>
+    Edit Profile
+  </Button>
+)
+<hr />
+    </div></div>
 
       {/* Open Positions */}
       <div className="open-positions-container mt-5">
