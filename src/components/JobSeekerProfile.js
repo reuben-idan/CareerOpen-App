@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import { Container, Row, Col, Image, Form, Button, Navbar, Nav, FormControl, Dropdown } from 'react-bootstrap';
 import ExperienceSection from './ExperienceSection';
+import EducationSection from './EducationSection';
+import axios from 'axios';
+import logo from '../logo.jpeg';
 
 const JobSeekerProfile = () => {
   const [profilePicture, setProfilePicture] = useState(null);
@@ -27,6 +30,37 @@ const JobSeekerProfile = () => {
     setEditMode(false); // Exit edit mode after submission
   };
 
+
+const JOB_API_URL= 'https://www.glassdoor.com/developer/jobsApiActions.htm'; // Replace with actual API endpoint
+const AD_API_URL = 'https://www.glassdoor.com/developer/jobsApiActions.htm';  // Replace with actual API endpoint
+const [fetchedJobs, setFetchedJobs] = useState([]);
+const [fetchedAds, setFetchedAds] = useState([]);
+  
+useEffect(() => {
+  const fetchJobs = async () => {
+    try {
+      const response = await axios.get(JOB_API_URL); // Replace with appropriate API call
+      const jobData = response.data; // Replace with parsing logic for job data
+      setFetchedJobs(jobData);
+    } catch (error) {
+      console.error('Error fetching jobs:', error);
+    }
+  };
+
+  const fetchAds = async () => {
+    try {
+      const response = await axios.get(AD_API_URL); // Replace with appropriate API call
+      const adData = response.data; // Replace with parsing logic for ad data
+      setFetchedAds(adData);
+    } catch (error) {
+      console.error('Error fetching ads:', error);
+    }
+  };
+
+  fetchJobs();
+  fetchAds();
+}, []);
+
   const [name, setName] = useState('John Doe');
   const [occupation, setOccupation] = useState('Software Engineer');
   const [skills, setSkills] = useState(['JavaScript', 'React.js', 'Node.js']);
@@ -45,6 +79,7 @@ const handleSaveClick = () => setEditMode(false); // Update data on save (implem
 
 
 
+
   return (
     <div className="job-seeker-profile">
       {/* Navbar */}
@@ -52,7 +87,7 @@ const handleSaveClick = () => setEditMode(false); // Update data on save (implem
         <Container fluid>
           {/* Logo and Search Bar */}
           <Navbar.Brand href="/">
-            <img src="path/to/your/logo.png" alt="Website Logo" style={{ height: '30px' }} />
+            <img src={logo} alt="Website Logo" style={{ height: '30px' }} />
           </Navbar.Brand>
           <Form className="d-flex ml-auto">
             <FormControl type="search" placeholder="Search" aria-label="Search" style={{ width: '300px' }} />
@@ -78,7 +113,7 @@ const handleSaveClick = () => setEditMode(false); // Update data on save (implem
                     src={profilePicture ? URL.createObjectURL(profilePicture) : 'https://via.placeholder.com/50'}
                     alt="Profile Picture"
                     roundedCircle
-                    height="40"
+                    height="30"
                   />
                   <span className="ml-2">{name}</span>
                 </Dropdown.Toggle>
@@ -104,25 +139,25 @@ const handleSaveClick = () => setEditMode(false); // Update data on save (implem
                 src={backgroundPicture ? URL.createObjectURL(backgroundPicture) : 'https://via.placeholder.com/800x300'}
                 alt="Background Picture"
                 fluid
-              />
+              />   <div className="profile-picture-wrapper">
+              <Image
+   src={profilePicture ? URL.createObjectURL(profilePicture) : 'https://via.placeholder.com/150'}
+   alt="Profile Picture" fluid width={150}
+   rounded
+   className={editMode ? 'mb-2' : 'mb-3'} 
+ />
+ {editMode && (
+   <Form.Control type="file" onChange={handleProfilePictureChange} />
+ )}
+ </div>
               {editMode && (
                 <Form.Control type="file" onChange={handleBackgroundPictureChange} />
-              )}
+              )} 
             </div>
 
             {/* Profile Information */}
             <div className="profile-info-container mt-3">
-              <div className="profile-picture-wrapper">
-             <Image
-  src={profilePicture ? URL.createObjectURL(profilePicture) : 'https://via.placeholder.com/150'}
-  alt="Profile Picture"
-  roundedCircle
-  className={editMode ? 'mb-2' : 'mb-3'}
-/>
-{editMode && (
-  <Form.Control type="file" onChange={handleProfilePictureChange} />
-)}
-</div>
+          
 
 <div className="user-info">
 <h2>{name}</h2>
@@ -215,37 +250,50 @@ const handleSaveClick = () => setEditMode(false); // Update data on save (implem
 <hr />
 
 <h3>Projects</h3>
-<ul className="list-unstyled">
-  {projects.map((project, index) => (
-    <li key={index}>
-      <h4>{project.title}</h4>
-      <p>{project.description}</p> {/* Assuming projects have a "description" field */}
-      <a href={project.url} target="_blank" rel="noopener noreferrer">View Project</a> {/* Optional project URL */}
-    </li>
-  ))}
-</ul>
+<p>
+  {editMode ? (
+    <Form.Control
+      as="textarea"
+      rows={3}
+      defaultValue={projects} // Prefill with current about me from state
+      onChange={(e) => setProjects(e.target.value)} // Update about me on change
+    />
+  ) : (
+    <p>{projects}</p> // Display current about me from state
+  )}
+</p>
 
 <hr />
 
 <h3>Skills</h3>
-<ul className="list-unstyled">
-  {skills.map((skill, index) => (
-    <li key={index}>
-      <span>{skill}</span>  {/* Assuming skills are just strings */}
-    </li>
-  ))}
-</ul>
+<p>
+  {editMode ? (
+    <Form.Control
+      as="textarea"
+      rows={3}
+      defaultValue={skills} // Prefill with current about me from state
+      onChange={(e) => setSkills(e.target.value)} // Update about me on change
+    />
+  ) : (
+    <p>{skills}</p> // Display current about me from state
+  )}
+</p>
 
 <hr />
 
 <h3>Interests</h3>
-<ul className="list-unstyled">
-  {interests.map((interest, index) => (
-    <li key={index}>
-      <span>{interest}</span>  {/* Assuming interests are just strings */}
-    </li>
-  ))}
-</ul>
+<p>
+  {editMode ? (
+    <Form.Control
+      as="textarea"
+      rows={3}
+      defaultValue={interests} // Prefill with current about me from state
+      onChange={(e) =>setInterests(e.target.value)} // Update about me on change
+    />
+  ) : (
+    <p>{interests}</p> // Display current about me from state
+  )}
+</p>
 {/* ... similar structure for Certifications, Projects, Skills, Interests */}
 
 {editMode && (
@@ -261,25 +309,30 @@ const handleSaveClick = () => setEditMode(false); // Update data on save (implem
 </div>
 </Col>
 
-<Col md={4}>
-{/* Live feed of adverts and job opportunities using API */}
-<h3>Suggested Jobs</h3>
-<ul>
-<li>Job 1</li>
-<li>Job 2</li>
-<li>Job 3</li>
-</ul>
-<h3>Recommended Ads</h3>
-<ul>
-<li>Ad 1</li>
-<li>Ad 2</li>
-</ul>
-</Col>
-</Row>
-</Container>
-</div>
-);
-};
+
+
+
+
+  <Col md={4}>
+    <h3>Suggested Jobs</h3>
+    <ul>
+      {fetchedJobs.map((job) => (
+        <li key={job.id}>{job.title}</li>
+      ))}
+    </ul>
+    <h3>Recommended Ads</h3>
+    <ul>
+      {fetchedAds.map((ad) => (
+        <li key={ad.id}>{ad.title}</li>
+      ))}
+    </ul>
+  </Col>
+  </Row>
+  </Container>
+  </div>
+
+
+)};
+
 
 export default JobSeekerProfile;
-
