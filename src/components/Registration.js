@@ -24,71 +24,57 @@ const Registration = ({ onSubmit }) => {
   };
 
   return (
-    <Container className="d-flex justify-content-center align-items-center" style={{ minHeight: '50vh' }}>
-      <Card className="w-50">
-        <Card.Body>
-          <div className="d-flex justify-content-center mb-4">
-            <img src={logo} alt="CareerOpen Logo" style={{ maxWidth: '200px' }} />
+    <Container fluid className="d-flex justify-content-center align-items-center vh-100">
+    <Card className="shadow border-0 rounded-lg w-auto">
+      <Card.Body>
+        <div className="text-center mb-4">
+          <img src={logo} alt="CareerOpen Logo" style={{ maxWidth: '200px' }} />
+          <h2 className="display-4 mt-3">Registration</h2>
+        </div>
+        <Form onSubmit={handleSubmit}>
+          <Form.Group controlId="formName">
+            <Form.Label>Name</Form.Label>
+            <Form.Control type="text" name="name" value={formData.name} onChange={handleInputChange} required />
+          </Form.Group>
+          <Form.Group controlId="formEmail">
+            <Form.Label>Email</Form.Label>
+            <Form.Control type="email" name="email" value={formData.email} onChange={handleInputChange} required />
+          </Form.Group>
+          <Form.Group controlId="formPassword">
+            <Form.Label>Password</Form.Label>
+            <Form.Control type="password" name="password" value={formData.password} onChange={handleInputChange} required />
+          </Form.Group>
+          <Form.Group className="mb-4">
+            <Form.Check
+              inline
+              type="radio"
+              name="userType"
+              id="jobSeeker"
+              value="jobSeeker"
+              checked={userType === 'jobSeeker'}
+              onChange={handleUserTypeChange}
+              label="Job Seeker"
+            />
+            <Form.Check
+              inline
+              type="radio"
+              name="userType"
+              id="employer"
+              value="employer"
+              checked={userType === 'employer'}
+              onChange={handleUserTypeChange}
+              label="Employer"
+            />
+          </Form.Group>
+          <div className="d-grid gap-2">
+            <Button variant="primary" type="submit" size="lg">
+              Register
+            </Button>
           </div>
-          <h2 className="text-center mb-4">Registration</h2>
-          <Form onSubmit={handleSubmit}>
-            <Form.Group controlId="formName">
-              <Form.Label>Name</Form.Label>
-              <Form.Control
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleInputChange}
-                required
-              />
-            </Form.Group>
-            <Form.Group controlId="formEmail">
-              <Form.Label>Email</Form.Label>
-              <Form.Control
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                required
-              />
-            </Form.Group>
-            <Form.Group controlId="formPassword">
-              <Form.Label>Password</Form.Label>
-              <Form.Control
-                type="password"
-                name="password"
-                value={formData.password}
-                onChange={handleInputChange}
-                required
-              />
-            </Form.Group>
-            <Form.Group>
-              <Form.Check
-                type="radio"
-                name="userType"
-                value="jobSeeker"
-                checked={userType === 'jobSeeker'}
-                onChange={handleUserTypeChange}
-                label="Job Seeker"
-              />
-              <Form.Check
-                type="radio"
-                name="userType"
-                value="employer"
-                checked={userType === 'employer'}
-                onChange={handleUserTypeChange}
-                label="Employer"
-              />
-            </Form.Group>
-            <div className="d-flex justify-content-center">
-              <Button variant="primary" type="submit">
-                Register
-              </Button>
-            </div>
-          </Form>
-        </Card.Body>
-      </Card>
-    </Container>
+        </Form>
+      </Card.Body>
+    </Card>
+  </Container>
   );
 };
 
