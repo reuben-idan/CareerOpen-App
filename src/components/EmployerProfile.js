@@ -68,7 +68,7 @@ const EmployerProfile = () => {
   return (
     <div className="employer-profile">
       {/* Navbar */}
-      <Navbar bg="dark" variant="dark" expand="lg">
+      <Navbar bg="dark" variant="dark" expand="lg" fixed="top">
         <Container fluid>
           {/* Logo and Search Bar */}
           <Navbar.Brand href="/">
@@ -133,7 +133,7 @@ alt="Profile Picture"  width={150} height={150}
 roundedCircle
 className="profile-picture-container"
 style={{  border: '5px solid white' ,position: 'relative', top: '50%', left: '15%', transform: 'translate(-50%, -50%)' }}
-className={editMode ? 'mb-2' : 'mb-3'} 
+
 />
 {editMode && (
 <Form.Control type="file" onChange={handleCompanyLogoChange} />

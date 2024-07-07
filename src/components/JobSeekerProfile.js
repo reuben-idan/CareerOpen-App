@@ -105,7 +105,7 @@ const handleSaveClick = () => setEditMode(false); // Update data on save (implem
   return (
     <div className="job-seeker-profile">
       {/* Navbar */}
-      <Navbar bg="dark" variant="dark" expand="lg">
+      <Navbar bg="dark" variant="dark" expand="lg" fixed="top">
         <Container fluid>
           {/* Logo and Search Bar */}
           <Navbar.Brand href="/">
