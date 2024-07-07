@@ -139,11 +139,7 @@ className={editMode ? 'mb-2' : 'mb-3'}
       </div>
 
       {/* Company Information */}
-      <Col xs={12} md={12} className="d-flex justify-content-start"> {/* Adjust col size and float as needed */}
-      <Card className="shadow">
-        <Card.Body>
-          <Card.Title>Company Information</Card.Title>
-          <Card.Text>
+      
       <div className="company-info-container mt-3">
        <div className='company-info'> <h2>{companyName}</h2>
         <p>{companyDescription}</p>
@@ -206,18 +202,16 @@ className={editMode ? 'mb-2' : 'mb-3'}
   <Button variant="secondary" style={{ boxShadow: '0px 2px 5px rgba(0, 0, 0, 0.2)' }} onClick={handleEditClick}>
     Edit Profile
   </Button></div></div>   
-  </Card.Text></Card.Body>
-      </Card>
-    </Col>
+ 
 
 <hr />
     
 
       {/* Company Information */}
-      <Col xs={12} md={12} className="d-flex justify-content-start"> {/* Adjust col size and float as needed */}
+      <Col xs={12} md={12} className=" justify-content-start"> {/* Adjust col size and float as needed */}
       <Card className="shadow">
         <Card.Body>
-          <Card.Title>Company Information</Card.Title>
+          <Card.Title>Positions</Card.Title>
           <Card.Text>
       <div className="company-info-container mt-3">
        <div className='company-info'> <h2>{companyName}</h2>

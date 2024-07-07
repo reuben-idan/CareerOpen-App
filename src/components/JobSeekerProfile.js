@@ -1,5 +1,5 @@
 import React, { useState,useEffect } from 'react';
-import { Container, Row, Col, Image, Form, Button, Navbar, Nav, FormControl, Dropdown } from 'react-bootstrap';
+import {Card, Container, Row, Col, Image, Form, Button, Navbar, Nav, FormControl, Dropdown } from 'react-bootstrap';
 import ExperienceSection from './ExperienceSection';
 import EducationSection from './EducationSection';
 import axios from 'axios';
@@ -179,7 +179,7 @@ const handleSaveClick = () => setEditMode(false); // Update data on save (implem
     </Button>
   </Form>
 ) : (
-  <Button variant="link" onClick={handleEditClick}>
+  <Button variant="secondary" style={{ boxShadow: '0px 2px 5px rgba(0, 0, 0, 0.2)' }} onClick={handleEditClick}>
     Edit Profile
   </Button>
 )}
@@ -188,7 +188,12 @@ const handleSaveClick = () => setEditMode(false); // Update data on save (implem
 
 {/* About Me, Experience, Education, etc. sections */}
 <div>
-<h3>About Me</h3>
+<Col xs={12} md={12} className="justify-content-start"> {/* Adjust col size and float as needed */}
+      <Card className="shadow">
+        <Card.Body>
+          <Card.Title>About Me</Card.Title>
+          <Card.Text>
+
 
 
 <p>
@@ -203,11 +208,21 @@ const handleSaveClick = () => setEditMode(false); // Update data on save (implem
     <p>{aboutMe}</p> // Display current about me from state
   )}
 </p>
+</Card.Text></Card.Body>
+      </Card>
+    </Col>
+
+    
 
 
 
 <hr />
-<h3>Experience</h3>
+<Col xs={12} md={12} className="justify-content-start"> {/* Adjust col size and float as needed */}
+      <Card className="shadow">
+        <Card.Body>
+          <Card.Title>Experience</Card.Title>
+          <Card.Text>
+
 <p>
   {editMode ? (
     <Form.Control
@@ -220,10 +235,19 @@ const handleSaveClick = () => setEditMode(false); // Update data on save (implem
     <p>{experience}</p> // Display current about me from state
   )}
 </p>
+</Card.Text>
+</Card.Body>
+      </Card>
+    </Col>
+
 
 <hr />
+<Col xs={12} md={12} className="justify-content-start"> {/* Adjust col size and float as needed */}
+      <Card className="shadow">
+        <Card.Body>
+          <Card.Title>Education</Card.Title>
+          <Card.Text>
 
-<h3>Education</h3>
 <p>
   {editMode ? (
     <Form.Control
@@ -236,22 +260,52 @@ const handleSaveClick = () => setEditMode(false); // Update data on save (implem
     <p>{education}</p> // Display current about me from state
   )}
 </p>
+</Card.Text>
+</Card.Body>
+      </Card>
+    </Col>
 
 
 <hr />
+<Col xs={12} md={12} className="justify-content-start"> {/* Adjust col size and float as needed */}
+      <Card className="shadow">
+        <Card.Body>
+          <Card.Title>Resume</Card.Title>
+          <Card.Text>
 
 <Form.Group>
-                  <Form.Label><h3>Resume</h3></Form.Label>
+                  <Form.Label><h3></h3></Form.Label>
                   <Form.Control type="file" />
                 </Form.Group>
+
+                </Card.Text>
+</Card.Body>
+      </Card>
+    </Col>
+    <hr />
+
+    <Col xs={12} md={12} className="justify-content-start"> {/* Adjust col size and float as needed */}
+      <Card className="shadow">
+        <Card.Body>
+          <Card.Title>Certifications</Card.Title>
+          <Card.Text>
                 <Form.Group>
-                  <Form.Label><h3>Certifications</h3></Form.Label>
+                  <Form.Label><h3></h3></Form.Label>
                   <Form.Control type="file" />
                 </Form.Group>
+                </Card.Text>
+</Card.Body>
+      </Card>
+    </Col>
 
 <hr />
 
-<h3>Projects</h3>
+<Col xs={12} md={12} className="justify-content-start"> {/* Adjust col size and float as needed */}
+      <Card className="shadow">
+        <Card.Body>
+          <Card.Title>Projects</Card.Title>
+          <Card.Text>
+
 <p>
   {editMode ? (
     <Form.Control
@@ -265,9 +319,20 @@ const handleSaveClick = () => setEditMode(false); // Update data on save (implem
   )}
 </p>
 
+</Card.Text>
+</Card.Body>
+      </Card>
+    </Col>
+
 <hr />
 
-<h3>Skills</h3>
+<Col xs={12} md={12} className="justify-content-start"> {/* Adjust col size and float as needed */}
+      <Card className="shadow">
+        <Card.Body>
+          <Card.Title>Skills</Card.Title>
+          <Card.Text>
+
+
 <p>
   {editMode ? (
     <Form.Control
@@ -280,10 +345,19 @@ const handleSaveClick = () => setEditMode(false); // Update data on save (implem
     <p>{skills}</p> // Display current about me from state
   )}
 </p>
+</Card.Text>
+</Card.Body>
+      </Card>
+    </Col>
 
 <hr />
 
-<h3>Interests</h3>
+<Col xs={12} md={12} className="justify-content-start"> {/* Adjust col size and float as needed */}
+      <Card className="shadow">
+        <Card.Body>
+          <Card.Title>Interests</Card.Title>
+          <Card.Text>
+
 <p>
   {editMode ? (
     <Form.Control
@@ -296,6 +370,10 @@ const handleSaveClick = () => setEditMode(false); // Update data on save (implem
     <p>{interests}</p> // Display current about me from state
   )}
 </p>
+</Card.Text>
+</Card.Body>
+      </Card>
+    </Col>
 {/* ... similar structure for Certifications, Projects, Skills, Interests */}
 
 {editMode && (
