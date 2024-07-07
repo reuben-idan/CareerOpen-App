@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Image, Form, Button, Navbar, Nav, FormControl, Dropdown } from 'react-bootstrap';
+import {Card, Container, Row, Col, Image, Form, Button, Navbar, Nav, FormControl, Dropdown } from 'react-bootstrap';
 import axios from 'axios';
 import logo from '../logo.jpeg';
 
@@ -92,8 +92,8 @@ const EmployerProfile = () => {
                   <Image
                     src={companyLogo ? URL.createObjectURL(companyLogo) : 'https://via.placeholder.com/50'}
                     alt="Company Logo"
-                    roundedCircle
-                    height="30"
+                    roundedCircle width={30} height={30}
+                  
                   />
                   <span className="ml-2">{companyName}</span>
                   </Dropdown.Toggle>
@@ -123,8 +123,10 @@ const EmployerProfile = () => {
         /> <div className="company-logo-wrapper">
         <Image
 src={companyLogo? URL.createObjectURL(companyLogo) : 'https://via.placeholder.com/150'}
-alt="Profile Picture" fluid width={150}
-rounded
+alt="Profile Picture"  width={150} height={150}
+roundedCircle
+className="profile-picture-container"
+style={{  border: '5px solid white' ,position: 'relative', top: '50%', left: '15%', transform: 'translate(-50%, -50%)' }}
 className={editMode ? 'mb-2' : 'mb-3'} 
 />
 {editMode && (
@@ -137,6 +139,11 @@ className={editMode ? 'mb-2' : 'mb-3'}
       </div>
 
       {/* Company Information */}
+      <Col xs={12} md={12} className="d-flex justify-content-start"> {/* Adjust col size and float as needed */}
+      <Card className="shadow">
+        <Card.Body>
+          <Card.Title>Company Information</Card.Title>
+          <Card.Text>
       <div className="company-info-container mt-3">
        <div className='company-info'> <h2>{companyName}</h2>
         <p>{companyDescription}</p>
@@ -195,25 +202,88 @@ className={editMode ? 'mb-2' : 'mb-3'}
                 Save Changes
               </Button>  </div>
               </Form>
-            ) } (
-  <Button variant="link" onClick={handleEditClick}>
+            ) } 
+  <Button variant="secondary" style={{ boxShadow: '0px 2px 5px rgba(0, 0, 0, 0.2)' }} onClick={handleEditClick}>
     Edit Profile
-  </Button>
-)
-<hr />
-    </div></div>
+  </Button></div></div>   
+  </Card.Text></Card.Body>
+      </Card>
+    </Col>
 
-      {/* Open Positions */}
-      <div className="open-positions-container mt-5">
-        <h3>Open Positions</h3>
-        <ul>
-          {openPositions.map((position) => (
-            <li key={position.id}>
-              <a href={`/jobs/${position.id}`}>{position.title}</a>
-            </li>
-          ))}
+<hr />
+    
+
+      {/* Company Information */}
+      <Col xs={12} md={12} className="d-flex justify-content-start"> {/* Adjust col size and float as needed */}
+      <Card className="shadow">
+        <Card.Body>
+          <Card.Title>Company Information</Card.Title>
+          <Card.Text>
+      <div className="company-info-container mt-3">
+       <div className='company-info'> <h2>{companyName}</h2>
+        <p>{companyDescription}</p>
+        <ul className="company-details">
+          <li>
+            <span className="detail-title">Website:</span>
+            <a href={companyWebsite} target="_blank" rel="noreferrer">
+              {companyWebsite}
+            </a>
+          </li>
+          <li>
+            <span className="detail-title">Industry:</span>
+            <span>{companyIndustry}</span>
+          </li>
+          <li>
+            <span className="detail-title">Company Size:</span>
+            <span>{companySize}</span>
+          </li>
+          <li>
+            <span className="detail-title">Location:</span>
+            <span>{companyLocation}</span>
+          </li>
         </ul>
-      </div>
+
+        {editMode && (
+          <Form onSubmit={handleProfileUpdate} id="profile-update-form">
+            <Form.Group controlId="formCompanyName">
+              <Form.Label>Company Name</Form.Label>
+              <Form.Control type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
+            </Form.Group>
+            <Form.Group controlId="formCompanyDescription">
+              <Form.Label>Company Description</Form.Label>
+              <Form.Control as="textarea" rows={5} value={companyDescription} onChange={(e) => setCompanyDescription(e.target.value)} />
+            </Form.Group>
+            <Form.Group controlId="formCompanyWebsite">
+              <Form.Label>Website</Form.Label>
+              <Form.Control type="url" value={companyWebsite} onChange={(e) => setCompanyWebsite(e.target.value)} />
+            </Form.Group>
+            <Form.Group controlId="formCompanyIndustry">
+              <Form.Label>Industry</Form.Label>
+              <Form.Control type="text" value={companyIndustry} onChange={(e) => setCompanyIndustry(e.target.value)} />
+            </Form.Group>
+            <Form.Group controlId="formCompanySize">
+              <Form.Label>Company Size</Form.Label>
+              <Form.Control type="text" value={companySize} onChange={(e) => setCompanySize(e.target.value)} />
+            </Form.Group>
+            <Form.Group controlId="formCompanyLocation">
+              <Form.Label>Location</Form.Label>
+              <Form.Control type="text" value={companyLocation} onChange={(e) => setCompanyLocation(e.target.value)} />
+            </Form.Group>
+            <div className="d-flex justify-content-end">
+              <Button variant="secondary" mr={2} onClick={handleEditClick}>
+                Cancel
+              </Button>
+              <Button variant="primary" type="submit" form="profile-update-form">
+                Save Changes
+              </Button>  </div>
+              </Form>
+            ) } 
+  <Button variant="secondary" style={{ boxShadow: '0px 2px 5px rgba(0, 0, 0, 0.2)' }}onClick={handleEditClick}>
+    Edit Profile
+  </Button></div></div>   
+  </Card.Text></Card.Body>
+      </Card>
+    </Col>
     </Col>
 
     {/* Analytics Dashboard Placeholder (replace with actual implementation) */}

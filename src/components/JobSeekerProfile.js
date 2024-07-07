@@ -112,8 +112,8 @@ const handleSaveClick = () => setEditMode(false); // Update data on save (implem
                   <Image
                     src={profilePicture ? URL.createObjectURL(profilePicture) : 'https://via.placeholder.com/50'}
                     alt="Profile Picture"
-                    roundedCircle
-                    height="30"
+                    roundedCircle width={30} height={30}
+                    
                   />
                   <span className="ml-2">{name}</span>
                 </Dropdown.Toggle>
@@ -134,7 +134,7 @@ const handleSaveClick = () => setEditMode(false); // Update data on save (implem
         <Row>
           <Col md={8}>
             {/* Background Picture */}
-            <div className="background-picture-container">
+            <div className="background-picture-container ">
               <Image
                 src={backgroundPicture ? URL.createObjectURL(backgroundPicture) : 'https://via.placeholder.com/800x300'}
                 alt="Background Picture"
@@ -142,8 +142,10 @@ const handleSaveClick = () => setEditMode(false); // Update data on save (implem
               />   <div className="profile-picture-wrapper">
               <Image
    src={profilePicture ? URL.createObjectURL(profilePicture) : 'https://via.placeholder.com/150'}
-   alt="Profile Picture" fluid width={150}
-   rounded
+   alt="Profile Picture"  width={150} height={150}
+   roundedCircle 
+    className="profile-picture-container"
+              style={{  border: '5px solid white' ,position: 'relative', top: '50%', left: '15%', transform: 'translate(-50%, -50%)' }}
    className={editMode ? 'mb-2' : 'mb-3'} 
  />
  {editMode && (
