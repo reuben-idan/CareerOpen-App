@@ -7,6 +7,7 @@ import logo from '../logo.jpeg';
 
 const JobSeekerProfile = () => {
   const [profilePicture, setProfilePicture] = useState(null);
+  
   const [backgroundPicture, setBackgroundPicture] = useState(null);
   const [editMode, setEditMode] = useState(false);
 
@@ -61,7 +62,7 @@ useEffect(() => {
   fetchAds();
 }, []);
 
-  const [name, setName] = useState('John Doe');
+  const [name, setName] = useState('Reuben Idan');
   const [occupation, setOccupation] = useState('Software Engineer');
   const [skills, setSkills] = useState(['JavaScript', 'React.js', 'Node.js']);
   // ... other user data (experience, education, certifications, projects, interests)

@@ -33,15 +33,21 @@ const EmployerProfile = () => {
   const COMPANY_JOBS_API_URL = 'https://your-api.com/api/company/jobs';
 
   // State variables for company and open positions data
-  const [companyName, setCompanyName] = useState('Acme Inc.');
+  const [companyName, setCompanyName] = useState('DataHaul Inc.');
   const [companyDescription, setCompanyDescription] = useState(
     'We are a leading company in the tech industry. Join our team!'
   );
-  const [companyWebsite, setCompanyWebsite] = useState('https://www.acme.com');
+  const [companyWebsite, setCompanyWebsite] = useState('https://datahaul.framer.website/');
   const [companyIndustry, setCompanyIndustry] = useState('Technology');
-  const [companySize, setCompanySize] = useState('500+ Employees');
-  const [companyLocation, setCompanyLocation] = useState('San Francisco, CA');
+  const [companySize, setCompanySize] = useState(' 500+ Employees');
+  const [companyLocation, setCompanyLocation] = useState(' Tema, Greater Accra');
   const [openPositions, setOpenPositions] = useState([]);
+
+  const [role, setRole] = useState(' Senior/Leader FrontEnd Engineer');
+  const [location, setLocation] = useState(' Greater Accra');
+  const [employmentType, setEmploymentType] = useState(' Remote');
+  const [status, setStatus] = useState(' Actively Recruiting');
+  const [salary, setSalary] = useState(' GHC 50,000 to GHC 75,000');
 
   useEffect(() => {
     const fetchOpenPositions = async () => {
@@ -214,26 +220,26 @@ className={editMode ? 'mb-2' : 'mb-3'}
           <Card.Title>Positions</Card.Title>
           <Card.Text>
       <div className="company-info-container mt-3">
-       <div className='company-info'> <h2>{companyName}</h2>
-        <p>{companyDescription}</p>
+       <div className='company-info'> <h2>{role}</h2>
+        <p>{role}</p>
         <ul className="company-details">
           <li>
-            <span className="detail-title">Website:</span>
-            <a href={companyWebsite} target="_blank" rel="noreferrer">
-              {companyWebsite}
+            <span className="detail-title">Location:</span>
+            <a href={location} target="_blank" rel="noreferrer">
+              {location}
             </a>
           </li>
           <li>
-            <span className="detail-title">Industry:</span>
-            <span>{companyIndustry}</span>
+            <span className="detail-title">Employment Type:</span>
+            <span>{employmentType}</span>
           </li>
           <li>
-            <span className="detail-title">Company Size:</span>
-            <span>{companySize}</span>
+            <span className="detail-title">Status:</span>
+            <span>{status}</span>
           </li>
           <li>
-            <span className="detail-title">Location:</span>
-            <span>{companyLocation}</span>
+            <span className="detail-title">Salary Range:</span>
+            <span>{salary}</span>
           </li>
         </ul>
 
