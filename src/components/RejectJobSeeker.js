@@ -4,9 +4,6 @@ import ExperienceSection from './ExperienceSection';
 import EducationSection from './EducationSection';
 import axios from 'axios';
 import logo from '../logo.jpeg';
-import Advert2 from '../Advert2.jpg';
-import Advert1 from '../Advert1.jpg'
-import { applyToJob } from './../backendCompenents/applicationController';
 
 const JobSeekerProfile = () => {
 
@@ -37,8 +34,8 @@ const JobSeekerProfile = () => {
   };
 
 
-const JOB_API_URL= 'https://boards-api.greenhouse.io/v1/boards/{board_token}/job'; // Replace with actual API endpoint
-const AD_API_URL = 'https://advertising-api-fe.amazon.com';  // Replace with actual API endpoint
+const JOB_API_URL= 'https://www.glassdoor.com/developer/jobsApiActions.htm'; // Replace with actual API endpoint
+const AD_API_URL = 'https://www.glassdoor.com/developer/jobsApiActions.htm';  // Replace with actual API endpoint
 const [fetchedJobs, setFetchedJobs] = useState([]);
 const [fetchedAds, setFetchedAds] = useState([]);
   
@@ -70,22 +67,6 @@ useEffect(() => {
   const [name, setName] = useState('Reuben Idan');
   const [occupation, setOccupation] = useState('Software Engineer');
   const [skills, setSkills] = useState(['JavaScript', 'React.js', 'Node.js']);
-
-  // ... job boards and recommendations
-  const [companyName, setCompanyName] = useState('DataHaul Inc.');
-  const [role, setRole] = useState(' Senior/Leader FrontEnd Engineer');
-  const [location, setLocation] = useState(' Greater Accra');
-  const [employmentType, setEmploymentType] = useState(' Remote');
-  const [status, setStatus] = useState(' Actively Recruiting');
-  const [salary, setSalary] = useState(' GHC 50,000 to GHC 75,000');
-
-  // ... job boards 2
-  const [companyName2, setCompanyName2] = useState('Morgan Stanley');
-  const [role2, setRole2] = useState('Senior Fullstack Software Engineer (FinTech/Cryptocurrency/ Stablecoins)');
-  const [location2, setLocation2] = useState(' Greater Accra');
-  const [employmentType2, setEmploymentType2] = useState(' Remote');
-  const [status2, setStatus2] = useState(' Actively Recruiting');
-  const [salary2, setSalary2] = useState(' GHC 200,000 to GHC 300,000');
   // ... other user data (experience, education, certifications, projects, interests)
   const [experience, setExperience] = useState([]);
 const [education, setEducation] = useState([]); // Assuming an array of education objects
@@ -168,7 +149,7 @@ const handleSaveClick = () => setEditMode(false); // Update data on save (implem
    roundedCircle 
     className="profile-picture-container"
               style={{  border: '5px solid white' ,position: 'relative', top: '50%', left: '15%', transform: 'translate(-50%, -50%)' }}
-  
+   className={editMode ? 'mb-2' : 'mb-3'} 
  />
  {editMode && (
    <Form.Control type="file" onChange={handleProfilePictureChange} />
@@ -413,115 +394,21 @@ const handleSaveClick = () => setEditMode(false); // Update data on save (implem
 
 
 
-{/* ... Suggested Jobs */}
+
 
   <Col md={4}>
     <h3>Suggested Jobs</h3>
-    <Col xs={12} md={12} className=" justify-content-start"> {/* Adjust col size and float as needed */}
-      <Card className="shadow">
-        <Card.Body>
-          <Card.Title>Positions</Card.Title>
-          <Card.Text>
-      <div className="company-info-container mt-3">
-       <div className='company-info'> <h2>{role}</h2>
-        <p>{companyName}</p>
-        <ul className="company-details">
-          <li>
-            <span className="detail-title">Location:</span>
-            <a href={location} target="_blank" rel="noreferrer">
-              {location}
-            </a>
-          </li>
-          <li>
-            <span className="detail-title">Employment Type:</span>
-            <span>{employmentType}</span>
-          </li>
-          <li>
-            <span className="detail-title">Status:</span>
-            <span>{status}</span>
-          </li>
-          <li>
-            <span className="detail-title">Salary Range:</span>
-            <span>{salary}</span>
-          </li>
-        </ul>
-
-        
-  <Button variant="secondary" style={{ boxShadow: '0px 2px 5px rgba(0, 0, 0, 0.2)' }}onClick={handleEditClick}>
-   Apply
-  </Button></div></div>   
-  </Card.Text></Card.Body>
-      </Card>
-    </Col>
-
-    <hr />
-    {/* ... Second job posting */}
-
-    <Col xs={12} md={12} className=" justify-content-start"> {/* Adjust col size and float as needed */}
-      <Card className="shadow">
-        <Card.Body>
-          <Card.Title>Positions</Card.Title>
-          <Card.Text>
-      <div className="company-info-container mt-3">
-       <div className='company-info'> <h2>{role2}</h2>
-        <p>{companyName2}</p>
-        <ul className="company-details">
-          <li>
-            <span className="detail-title">Location:</span>
-            <a href={location2} target="_blank" rel="noreferrer">
-              {location2}
-            </a>
-          </li>
-          <li>
-            <span className="detail-title">Employment Type:</span>
-            <span>{employmentType2}</span>
-          </li>
-          <li>
-            <span className="detail-title">Status:</span>
-            <span>{status2}</span>
-          </li>
-          <li>
-            <span className="detail-title">Salary Range:</span>
-            <span>{salary2}</span>
-          </li>
-        </ul>
-
-        
-  <Button variant="secondary" style={{ boxShadow: '0px 2px 5px rgba(0, 0, 0, 0.2)' }}onClick={handleEditClick}>
-   Apply
-  </Button></div></div>   
-  </Card.Text></Card.Body>
-      </Card>
-    </Col>
-
-    <hr />
-    
+    <ul>
+      {fetchedJobs.map((job) => (
+        <li key={job.id}>{job.title}</li>
+      ))}
+    </ul>
     <h3>Recommended Ads</h3>
-    
-    <Col xs={12} md={12} className="justify-content-start">
-  <Card className="shadow">
-    <Card.Img variant="top" src={Advert2} alt="Background Picture" fluid />
-    <Card.Body>
-      <Button variant="secondary" style={{ boxShadow: '0px 2px 5px rgba(0, 0, 0, 0.2)' }} onClick={handleEditClick}>
-        Buy
-      </Button>
-    </Card.Body>
-  </Card>
-</Col>
-< hr />
-{/* ..... Second Advert */}
-
-
-<Col xs={12} md={12} className="justify-content-start">
-  <Card className="shadow">
-    <Card.Img variant="top" src={Advert1} alt="Background Picture" fluid />
-    <Card.Body>
-      <Button variant="secondary" style={{ boxShadow: '0px 2px 5px rgba(0, 0, 0, 0.2)' }} onClick={handleEditClick}>
-        Buy
-      </Button>
-    </Card.Body>
-  </Card>
-</Col>
+    <ul>
+      {fetchedAds.map((ad) => (
+        <li key={ad.id}>{ad.title}</li>
+      ))}
+    </ul>
   </Col>
   </Row>
   </Container>
