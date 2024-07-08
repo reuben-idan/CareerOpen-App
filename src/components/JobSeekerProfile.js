@@ -68,7 +68,7 @@ useEffect(() => {
   fetchAds();
 }, []);
 
-  const [name, setName] = useState('Reuben Idan');
+  const [name, setName] = useState(' Evelyn Idan');
   const [occupation, setOccupation] = useState('Software Engineer');
   const [skills, setSkills] = useState(['JavaScript', 'React.js', 'Node.js']);
 
