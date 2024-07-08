@@ -73,7 +73,8 @@ const Registration = ({ onSubmit }) => {
                 Register
               </Button>
               <NavLink to="/login" className="btn btn-link" >
-                Already Registered? <Button variant='secondary' type='submit' size='md' onSubmit={handleSubmit}>Login</Button>
+                Already Registered?   <a href='/login'> Login </a>
+
               </NavLink>
             </div>
           </Form>

@@ -89,10 +89,13 @@ useEffect(() => {
   const [status2, setStatus2] = useState(' Actively Recruiting');
   const [salary2, setSalary2] = useState(' USD $200,000 to USD $300,000');
   // ... other user data (experience, education, certifications, projects, interests)
-  const [experience, setExperience] = useState([]);
+  const [experience, setExperience] = useState("5+ years of progressive software engineering Experience across two companies, building and maintaining web applications and APIs. Developed a strong foundation in Design Thinking Methodologies while designing and implementing user-friendly web applications at Apple Inc.Leveraged expertise in UI Implementation, to lead the development of critical [product/feature] at Meta, resulting in 15% new App visits.Demonstrated a collaborative spirit, working effectively across teams to deliver high-quality, scalable software solutions."
+);
 const [education, setEducation] = useState([]); // Assuming an array of education objects
 const [certifications, setCertifications] = useState([]); // Assuming an array of certification objects
-const [aboutMe, setAboutMe] = useState('Enter your about me text here'); // Initial state with placeholder text
+const [aboutMe, setAboutMe] = useState("Hi there! I'm Evelyn Idan, a passionate and results-oriented Software Engineer based in Accra, Ghana. I have  experience in  web development, mobile app development, data structures and algorithms and a strong desire to leverage my skills to create innovative and user-friendly software solutions"
+
+); // Initial state with placeholder text
 const [projects, setProjects] = useState([]); // Array of project objects
 
 const [interests, setInterests] = useState([]); // Array of interest strings (or objects)
