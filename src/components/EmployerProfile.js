@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, } from 'react';
 import {Card, Container, Row, Col, Image, Form, Button, Navbar, Nav, FormControl, Dropdown } from 'react-bootstrap';
 import axios from 'axios';
 import logo from '../logo.jpeg';
@@ -48,21 +48,38 @@ const EmployerProfile = () => {
   const [employmentType, setEmploymentType] = useState(' Remote');
   const [status, setStatus] = useState(' Actively Recruiting');
   const [salary, setSalary] = useState(' GHC 50,000 to GHC 75,000');
+  const [jobPostings, setJobPostings] = useState([]);
+  const [applicants, setApplicants] = useState([]);
 
-  useEffect(() => {
-    const fetchOpenPositions = async () => {
-      try {
-        const response = await axios.get(COMPANY_JOBS_API_URL);
-        const jobsData = response.data; // Replace with parsing logic for job data
-        setOpenPositions(jobsData);
-      } catch (error) {
-        console.error('Error fetching open positions:', error);
-      }
-    };
-
-    fetchOpenPositions();
-  }, []);
-
+  const AnalyticsDashboard = () => {
+ 
+  
+    useEffect(() => {
+      const fetchData = async () => {
+        try {
+          const response = await fetch('https://your-api-endpoint.com/analytics', {
+            // Add authentication headers if needed
+            headers: {
+              'Authorization': 'Bearer your_access_token'
+            }
+          });
+      
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+      
+          const data = await response.json();
+          // Update your state variables with the fetched data
+          setJobPostings(data.jobPostings);
+          setApplicants(data.applicants);
+        } catch (error) {
+          console.error('Error fetching data:', error);
+          // Handle errors appropriately (e.g., display an error message)
+        }
+      };
+  
+      fetchData();
+    }, []);}
   const handleSaveClick = () => setEditMode(false); // Update data on save (implementation not shown)
 
   return (
@@ -288,8 +305,15 @@ style={{  border: '5px solid white' ,position: 'relative', top: '50%', left: '15
 
     {/* Analytics Dashboard Placeholder (replace with actual implementation) */}
     <Col md={4}>
-      <h3>Analytics Dashboard (Coming Soon!)</h3>
-      <p>This section will provide insights into your company's job postings and applicant pool.</p>
+      <h3>Analytics Dashboard</h3>
+      <div>
+        <h4>Job Postings</h4>
+        <p>Total: {jobPostings.length}</p>
+      </div>
+      <div>
+        <h4>Applicants</h4>
+        <p>Total: {applicants.length}</p>
+      </div>
     </Col>
   </Row>
 </Container>

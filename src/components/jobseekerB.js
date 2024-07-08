@@ -34,7 +34,7 @@ const JobSeekerProfile = () => {
   };
 
 
-const JOB_API_URL= 'https://www.glassdoor.com/developer/jobsApiActions.htm'; // Replace with actual API endpoint
+const JOB_API_URL= ' https://dummy.restapiexample.com/api/v1/employees'; // Replace with actual API endpoint
 const AD_API_URL = 'https://www.glassdoor.com/developer/jobsApiActions.htm';  // Replace with actual API endpoint
 const [fetchedJobs, setFetchedJobs] = useState([]);
 const [fetchedAds, setFetchedAds] = useState([]);

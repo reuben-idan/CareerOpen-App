@@ -15,6 +15,7 @@ const JobSeekerProfile = () => {
   
   const [backgroundPicture, setBackgroundPicture] = useState(null);
   const [editMode, setEditMode] = useState(false);
+  
 
   const handleProfilePictureChange = (event) => {
     setProfilePicture(event.target.files[0]);
@@ -78,6 +79,7 @@ useEffect(() => {
   const [employmentType, setEmploymentType] = useState(' Remote');
   const [status, setStatus] = useState(' Actively Recruiting');
   const [salary, setSalary] = useState(' GHC 50,000 to GHC 75,000');
+  
 
   // ... job boards 2
   const [companyName2, setCompanyName2] = useState('Morgan Stanley');
