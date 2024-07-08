@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Container, Form, Button, Card } from 'react-bootstrap';
+import { Container, Form, Button, Card, NavLink } from 'react-bootstrap';
 import logo from '../logo.jpeg'; // Import the logo image
 
 const Registration = ({ onSubmit }) => {
@@ -25,56 +25,61 @@ const Registration = ({ onSubmit }) => {
 
   return (
     <Container fluid className="d-flex justify-content-center align-items-center vh-100">
-    <Card className="shadow border-0 rounded-lg w-auto">
-      <Card.Body>
-        <div className="text-center mb-4">
-          <img src={logo} alt="CareerOpen Logo" style={{ maxWidth: '200px' }} />
-          <h2 className="display-4 mt-3">Registration</h2>
-        </div>
-        <Form onSubmit={handleSubmit}>
-          <Form.Group controlId="formName">
-            <Form.Label>Name</Form.Label>
-            <Form.Control type="text" name="name" value={formData.name} onChange={handleInputChange} required />
-          </Form.Group>
-          <Form.Group controlId="formEmail">
-            <Form.Label>Email</Form.Label>
-            <Form.Control type="email" name="email" value={formData.email} onChange={handleInputChange} required />
-          </Form.Group>
-          <Form.Group controlId="formPassword">
-            <Form.Label>Password</Form.Label>
-            <Form.Control type="password" name="password" value={formData.password} onChange={handleInputChange} required />
-          </Form.Group>
-          <Form.Group className="mb-4">
-            <Form.Check
-              inline
-              type="radio"
-              name="userType"
-              id="jobSeeker"
-              value="jobSeeker"
-              checked={userType === 'jobSeeker'}
-              onChange={handleUserTypeChange}
-              label="Job Seeker"
-            />
-            <Form.Check
-              inline
-              type="radio"
-              name="userType"
-              id="employer"
-              value="employer"
-              checked={userType === 'employer'}
-              onChange={handleUserTypeChange}
-              label="Employer"
-            />
-          </Form.Group>
-          <div className="d-grid gap-2">
-            <Button variant="primary" type="submit" size="lg">
-              Register
-            </Button>
+      <Card className="shadow border-0 rounded-lg w-auto">
+        <Card.Body>
+          <div className="text-center mb-4">
+            <img src={logo} alt="CareerOpen Logo" style={{ maxWidth: '200px' }} />
+            <h2 className="display-4 mt-3">Welcome!</h2>
           </div>
-        </Form>
-      </Card.Body>
-    </Card>
-  </Container>
+          <p>Are you a new user or already registered?</p>
+          <Form onSubmit={handleSubmit}>
+            {/* Registration form fields */}
+            <Form.Group controlId="formName">
+              <Form.Label>Name</Form.Label>
+              <Form.Control type="text" name="name" value={formData.name} onChange={handleInputChange} required />
+            </Form.Group>
+            <Form.Group controlId="formEmail">
+              <Form.Label>Email</Form.Label>
+              <Form.Control type="email" name="email" value={formData.email} onChange={handleInputChange} required />
+            </Form.Group>
+            <Form.Group controlId="formPassword">
+              <Form.Label>Password</Form.Label>
+              <Form.Control type="password" name="password" value={formData.password} onChange={handleInputChange} required />
+            </Form.Group>
+            <Form.Group className="mb-4">
+              <Form.Check
+                inline
+                type="radio"
+                name="userType"
+                id="jobSeeker"
+                value="jobSeeker"
+                checked={userType === 'jobSeeker'}
+                onChange={handleUserTypeChange}
+                label="Job Seeker"
+              />
+              <Form.Check
+                inline
+                type="radio"
+                name="userType"
+                id="employer"
+                value="employer"
+                checked={userType === 'employer'}
+                onChange={handleUserTypeChange}
+                label="Employer"
+              />
+            </Form.Group>
+            <div className="d-grid gap-2">
+              <Button variant="primary" type="submit" size="lg">
+                Register
+              </Button>
+              <NavLink to="/login" className="btn btn-link" >
+                Already Registered? <Button variant='secondary' type='submit' size='md' onSubmit={handleSubmit}>Login</Button>
+              </NavLink>
+            </div>
+          </Form>
+        </Card.Body>
+      </Card>
+    </Container>
   );
 };
 
