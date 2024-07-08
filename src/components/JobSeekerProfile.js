@@ -4,6 +4,8 @@ import ExperienceSection from './ExperienceSection';
 import EducationSection from './EducationSection';
 import axios from 'axios';
 import logo from '../logo.jpeg';
+import background from '../background.jpeg';
+import jobseeker_picture from '../Jobseeker_picture.jpg'
 import Advert2 from '../Advert2.jpg';
 import Advert1 from '../Advert1.jpg'
 import { applyToJob } from './../backendCompenents/applicationController';
@@ -137,7 +139,7 @@ const handleSaveClick = () => setEditMode(false); // Update data on save (implem
               <Dropdown>
                 <Dropdown.Toggle as={Nav.Link}>
                   <Image
-                    src={profilePicture ? URL.createObjectURL(profilePicture) : 'https://via.placeholder.com/50'}
+                    src={jobseeker_picture || 'https://via.placeholder.com/50'}
                     alt="Profile Picture"
                     roundedCircle width={30} height={30}
                     
@@ -163,12 +165,12 @@ const handleSaveClick = () => setEditMode(false); // Update data on save (implem
             {/* Background Picture */}
             <div className="background-picture-container ">
               <Image
-                src={backgroundPicture ? URL.createObjectURL(backgroundPicture) : 'https://via.placeholder.com/800x300'}
+                src={background || 'https://via.placeholder.com/800x300'}
                 alt="Background Picture"
                 fluid
               />   <div className="profile-picture-wrapper">
               <Image
-   src={profilePicture ? URL.createObjectURL(profilePicture) : 'https://via.placeholder.com/150'}
+   src={jobseeker_picture || 'https://via.placeholder.com/150'}
    alt="Profile Picture"  width={150} height={150}
    roundedCircle 
     className="profile-picture-container"
