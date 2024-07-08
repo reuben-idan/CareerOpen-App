@@ -2,6 +2,8 @@ import React, { useState, useEffect, } from 'react';
 import {Card, Container, Row, Col, Image, Form, Button, Navbar, Nav, FormControl, Dropdown } from 'react-bootstrap';
 import axios from 'axios';
 import logo from '../logo.jpeg';
+import DataHaul_logo from '../DataHaul_logo.jpeg';
+import haulbackground from '../haulbackground.jpg';
 
 
 const EmployerProfile = () => {
@@ -113,7 +115,7 @@ const EmployerProfile = () => {
               <Dropdown>
                 <Dropdown.Toggle as={Nav.Link}>
                   <Image
-                    src={companyLogo ? URL.createObjectURL(companyLogo) : 'https://via.placeholder.com/50'}
+                    src={DataHaul_logo || 'https://via.placeholder.com/50'}
                     alt="Company Logo"
                     roundedCircle width={30} height={30}
                   
@@ -140,12 +142,12 @@ const EmployerProfile = () => {
       {/* Background Image */}
       <div className="background-picture-container">
         <Image
-          src={companyBanner ? URL.createObjectURL(companyBanner) : 'https://via.placeholder.com/800x300'}
+          src={haulbackground || 'https://via.placeholder.com/800x300'}
           alt="Background Picture"
           fluid
         /> <div className="company-logo-wrapper">
         <Image
-src={companyLogo? URL.createObjectURL(companyLogo) : 'https://via.placeholder.com/150'}
+src={DataHaul_logo || 'https://via.placeholder.com/150'}
 alt="Profile Picture"  width={150} height={150}
 roundedCircle
 className="profile-picture-container"
