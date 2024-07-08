@@ -449,7 +449,7 @@ const handleSaveClick = () => setEditMode(false); // Update data on save (implem
         </ul>
 
         
-  <Button variant="secondary" style={{ boxShadow: '0px 2px 5px rgba(0, 0, 0, 0.2)' }}onClick={handleEditClick}>
+  <Button variant="secondary" style={{ boxShadow: '0px 2px 5px rgba(0, 0, 0, 0.2)' }}>
    Apply
   </Button></div></div>   
   </Card.Text></Card.Body>
@@ -489,7 +489,7 @@ const handleSaveClick = () => setEditMode(false); // Update data on save (implem
         </ul>
 
         
-  <Button variant="secondary" style={{ boxShadow: '0px 2px 5px rgba(0, 0, 0, 0.2)' }}onClick={handleEditClick}>
+  <Button variant="secondary" style={{ boxShadow: '0px 2px 5px rgba(0, 0, 0, 0.2)' }}>
    Apply
   </Button></div></div>   
   </Card.Text></Card.Body>
@@ -504,7 +504,7 @@ const handleSaveClick = () => setEditMode(false); // Update data on save (implem
   <Card className="shadow">
     <Card.Img variant="top" src={Advert2} alt="Background Picture" fluid />
     <Card.Body>
-      <Button variant="secondary" style={{ boxShadow: '0px 2px 5px rgba(0, 0, 0, 0.2)' }} onClick={handleEditClick}>
+      <Button variant="secondary" style={{ boxShadow: '0px 2px 5px rgba(0, 0, 0, 0.2)' }} >
         Buy
       </Button>
     </Card.Body>
@@ -518,7 +518,7 @@ const handleSaveClick = () => setEditMode(false); // Update data on save (implem
   <Card className="shadow">
     <Card.Img variant="top" src={Advert1} alt="Background Picture" fluid />
     <Card.Body>
-      <Button variant="secondary" style={{ boxShadow: '0px 2px 5px rgba(0, 0, 0, 0.2)' }} onClick={handleEditClick}>
+      <Button variant="secondary" style={{ boxShadow: '0px 2px 5px rgba(0, 0, 0, 0.2)' }} >
         Buy
       </Button>
     </Card.Body>
