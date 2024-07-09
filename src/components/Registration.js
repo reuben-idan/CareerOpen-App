@@ -1,26 +1,26 @@
 import React, { useState } from 'react';
-import { Container, Form, Button, Card, NavLink } from 'react-bootstrap';
-import logo from '../logo.jpeg'; // Import the logo image
+import { Container, Card, Form, Button } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
+import logo from '../logo.jpeg';
 
-const Registration = ({ onSubmit }) => {
-  const [userType, setUserType] = useState('jobSeeker');
+const Registration = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
+    role: '',
   });
+  const navigate = useNavigate();
 
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleUserTypeChange = (e) => {
-    setUserType(e.target.value);
-  };
-
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit({ ...formData, userType });
+    // Perform registration logic here
+    // Upon successful registration, navigate to the login page
+    navigate('/login');
   };
 
   return (
@@ -29,11 +29,9 @@ const Registration = ({ onSubmit }) => {
         <Card.Body>
           <div className="text-center mb-4">
             <img src={logo} alt="CareerOpen Logo" style={{ maxWidth: '200px' }} />
-            <h2 className="display-4 mt-3">Welcome!</h2>
+            <h2 className="display-4 mt-3">Sign Up</h2>
           </div>
-          <p>Are you a new user or already registered?</p>
           <Form onSubmit={handleSubmit}>
-            {/* Registration form fields */}
             <Form.Group controlId="formName">
               <Form.Label>Name</Form.Label>
               <Form.Control type="text" name="name" value={formData.name} onChange={handleInputChange} required />
@@ -46,36 +44,18 @@ const Registration = ({ onSubmit }) => {
               <Form.Label>Password</Form.Label>
               <Form.Control type="password" name="password" value={formData.password} onChange={handleInputChange} required />
             </Form.Group>
-            <Form.Group className="mb-4">
-              <Form.Check
-                inline
-                type="radio"
-                name="userType"
-                id="jobSeeker"
-                value="jobSeeker"
-                checked={userType === 'jobSeeker'}
-                onChange={handleUserTypeChange}
-                label="Job Seeker"
-              />
-              <Form.Check
-                inline
-                type="radio"
-                name="userType"
-                id="employer"
-                value="employer"
-                checked={userType === 'employer'}
-                onChange={handleUserTypeChange}
-                label="Employer"
-              />
+            <Form.Group controlId="formRole">
+              <Form.Label>Role</Form.Label>
+              <Form.Control as="select" name="role" value={formData.role} onChange={handleInputChange} required>
+                <option value="">Select Role</option>
+                <option value="jobseeker">Job Seeker</option>
+                <option value="employer">Employer</option>
+              </Form.Control>
             </Form.Group>
-            <div className="d-grid gap-2">
+            <div className="d-flex justify-content-center mt-4">
               <Button variant="primary" type="submit" size="lg">
-                Register
+                Sign Up
               </Button>
-              <NavLink to="/login" className="btn btn-link" >
-                Already Registered?   <a href='/login'> Login </a>
-
-              </NavLink>
             </div>
           </Form>
         </Card.Body>
