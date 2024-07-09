@@ -4,6 +4,10 @@ import axios from 'axios';
 import logo from '../logo.jpeg';
 import DataHaul_logo from '../DataHaul_logo.jpeg';
 import haulbackground from '../haulbackground.jpg';
+import Applicants  from '../Applicants.jpg';
+import applicants4 from '../applicants4.jpg'
+import jobposting3 from '../jobposting3.png';
+import analytics from '../analytics.jpeg';
 
 
 const EmployerProfile = () => {
@@ -44,6 +48,24 @@ const EmployerProfile = () => {
   const [companySize, setCompanySize] = useState(' 500+ Employees');
   const [companyLocation, setCompanyLocation] = useState(' Tema, Greater Accra');
   const [openPositions, setOpenPositions] = useState([]);
+
+   // ... job boards 2
+   const [companyName2, setCompanyName2] = useState('Morgan Stanley');
+   const [role2, setRole2] = useState('Senior Fullstack Software Engineer (FinTech/Cryptocurrency/ Stablecoins)');
+   const [location2, setLocation2] = useState(' New York');
+   const [employmentType2, setEmploymentType2] = useState(' Remote');
+   const [status2, setStatus2] = useState(' Actively Recruiting');
+   const [salary2, setSalary2] = useState(' USD $200,000 to USD $300,000');
+
+
+
+   // ... job boards 3
+   const [companyName3, setCompanyName3] = useState('Morgan Stanley');
+   const [role3, setRole3] = useState(' Data Science Associate');
+   const [location3, setLocation3] = useState(' Greater Accra');
+   const [employmentType3, setEmploymentType3] = useState(' Remote');
+   const [status3, setStatus3] = useState(' Actively Recruiting');
+   const [salary3, setSalary3] = useState(' GHC 40,000 to GHC 50,000');
 
   const [role, setRole] = useState(' Senior/Leader FrontEnd Engineer');
   const [location, setLocation] = useState(' Greater Accra');
@@ -261,33 +283,77 @@ style={{  border: '5px solid white' ,position: 'relative', top: '50%', left: '15
             <span>{salary}</span>
           </li>
         </ul>
+        <hr />
+{/*Job position 2 */}
+        <h2>{role3}</h2>
+        <p>{role3}</p>
+        <ul className="company-details">
+          <li>
+            <span className="detail-title">Location:</span>
+            <a href={location3} target="_blank" rel="noreferrer">
+              {location3}
+            </a>
+          </li>
+          <li>
+            <span className="detail-title">Employment Type:</span>
+            <span>{employmentType3}</span>
+          </li>
+          <li>
+            <span className="detail-title">Status:</span>
+            <span>{status3}</span>
+          </li>
+          <li>
+            <span className="detail-title">Salary Range:</span>
+            <span>{salary3}</span>
+          </li>
+        </ul>
 
         {editMode && (
           <Form onSubmit={handleProfileUpdate} id="profile-update-form">
             <Form.Group controlId="formCompanyName">
-              <Form.Label>Company Name</Form.Label>
-              <Form.Control type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
+              <Form.Label>Role</Form.Label>
+              <Form.Control type="text" value={role} onChange={(e) => setRole(e.target.value)} />
             </Form.Group>
             <Form.Group controlId="formCompanyDescription">
-              <Form.Label>Company Description</Form.Label>
-              <Form.Control as="textarea" rows={5} value={companyDescription} onChange={(e) => setCompanyDescription(e.target.value)} />
+              <Form.Label>Location</Form.Label>
+              <Form.Control as="textarea" rows={5} value={location} onChange={(e) => setLocation(e.target.value)} />
             </Form.Group>
             <Form.Group controlId="formCompanyWebsite">
-              <Form.Label>Website</Form.Label>
-              <Form.Control type="url" value={companyWebsite} onChange={(e) => setCompanyWebsite(e.target.value)} />
+              <Form.Label>Employment Type</Form.Label>
+              <Form.Control type="url" value={employmentType} onChange={(e) => setEmploymentType(e.target.value)} />
             </Form.Group>
             <Form.Group controlId="formCompanyIndustry">
-              <Form.Label>Industry</Form.Label>
-              <Form.Control type="text" value={companyIndustry} onChange={(e) => setCompanyIndustry(e.target.value)} />
+              <Form.Label>Status</Form.Label>
+              <Form.Control type="text" value={status} onChange={(e) => setStatus(e.target.value)} />
             </Form.Group>
             <Form.Group controlId="formCompanySize">
-              <Form.Label>Company Size</Form.Label>
-              <Form.Control type="text" value={companySize} onChange={(e) => setCompanySize(e.target.value)} />
+              <Form.Label>Salary</Form.Label>
+              <Form.Control type="text" value={salary} onChange={(e) => setSalary(e.target.value)} />
             </Form.Group>
-            <Form.Group controlId="formCompanyLocation">
+            {/* ... send position */}
+
+            <Form.Group controlId="formCompanyName">
+              <Form.Label>Role</Form.Label>
+              <Form.Control type="text" value={role3} onChange={(e) => setRole3(e.target.value)} />
+            </Form.Group>
+            
+            <Form.Group controlId="formCompanyDescription">
               <Form.Label>Location</Form.Label>
-              <Form.Control type="text" value={companyLocation} onChange={(e) => setCompanyLocation(e.target.value)} />
+              <Form.Control as="textarea" rows={5} value={location3} onChange={(e) => setLocation3(e.target.value)} />
             </Form.Group>
+            <Form.Group controlId="formCompanyWebsite">
+              <Form.Label>Employment Type</Form.Label>
+              <Form.Control type="url" value={employmentType3} onChange={(e) => setEmploymentType3(e.target.value)} />
+            </Form.Group>
+            <Form.Group controlId="formCompanyIndustry">
+              <Form.Label>Status</Form.Label>
+              <Form.Control type="text" value={status3} onChange={(e) => setStatus3(e.target.value)} />
+            </Form.Group>
+            <Form.Group controlId="formCompanySize">
+              <Form.Label>Salary</Form.Label>
+              <Form.Control type="text" value={salary3} onChange={(e) => setSalary3(e.target.value)} />
+            </Form.Group>
+            
             <div className="d-flex justify-content-end">
               <Button variant="secondary" mr={2} onClick={handleEditClick}>
                 Cancel
@@ -298,7 +364,7 @@ style={{  border: '5px solid white' ,position: 'relative', top: '50%', left: '15
               </Form>
             ) } 
   <Button variant="secondary" style={{ boxShadow: '0px 2px 5px rgba(0, 0, 0, 0.2)' }}onClick={handleEditClick}>
-    Edit Profile
+    Edit Positions
   </Button></div></div>   
   </Card.Text></Card.Body>
       </Card>
@@ -309,12 +375,72 @@ style={{  border: '5px solid white' ,position: 'relative', top: '50%', left: '15
     <Col md={4}>
       <h3>Analytics Dashboard</h3>
       <div>
-        <h4>Job Postings</h4>
-        <p>Total: {jobPostings.length}</p>
+        
+       {/* ... job posting Analytics*/}
+
+    <Col xs={12} md={12} className=" justify-content-start"> {/* Adjust col size and float as needed */}
+      <Card className="shadow">
+        <Card.Body>
+          <Card.Title>Job Postings Analytics</Card.Title>
+          <Card.Text>
+      <div className="company-info-container mt-3">
+       <div className='company-info'>  <Image
+                    src={analytics }
+                    alt="Profile Picture"
+                   fluid 
+                    
+                  />
+                  < hr />
+                  <Image
+                    src={jobposting3}
+                    alt="Profile Picture"
+                   fluid 
+                    
+                  />         
+        <hr />
+
+        
+  <Button variant="secondary" style={{ boxShadow: '0px 2px 5px rgba(0, 0, 0, 0.2)' }}>
+   Learn more
+  </Button></div></div>   
+  </Card.Text></Card.Body>
+      </Card>
+    </Col>
+
+    <hr />
       </div>
       <div>
-        <h4>Applicants</h4>
-        <p>Total: {applicants.length}</p>
+       
+         {/* ... Applicants Analytics*/}
+
+    <Col xs={12} md={12} className=" justify-content-start"> {/* Adjust col size and float as needed */}
+      <Card className="shadow">
+        <Card.Body>
+          <Card.Title>Applicants Analytics</Card.Title>
+          <Card.Text>
+      <div className="company-info-container mt-3">
+       <div className='company-info'>  <Image
+                    src={applicants4 }
+                    alt="Profile Picture"
+                   fluid 
+                    
+                  />
+                 
+                  <Image
+                    src={Applicants}
+                    alt="Profile Picture"
+                   fluid 
+                    
+                  />         
+       <hr />
+        
+  <Button variant="secondary" style={{ boxShadow: '0px 2px 5px rgba(0, 0, 0, 0.2)' }}>
+   Learn more
+  </Button></div></div>   
+  </Card.Text></Card.Body>
+      </Card>
+    </Col>
+
       </div>
     </Col>
   </Row>

@@ -7,7 +7,13 @@ import logo from '../logo.jpeg';
 import background from '../background.jpeg';
 import jobseeker_picture from '../Jobseeker_picture.jpg'
 import Advert2 from '../Advert2.jpg';
-import Advert1 from '../Advert1.jpg'
+import Advert1 from '../Advert1.jpg';
+import UG from '../UG.jpg';
+import Generation from '../Generation.jpeg';
+import python from '../python.jpeg';
+import javascript from '../javascript.jpeg';
+import react from '../react.png';
+import bootstrap from '../bootstrap.jpeg';
 import { applyToJob } from './../backendCompenents/applicationController';
 
 const JobSeekerProfile = () => {
@@ -90,7 +96,32 @@ useEffect(() => {
   const [employmentType2, setEmploymentType2] = useState(' Remote');
   const [status2, setStatus2] = useState(' Actively Recruiting');
   const [salary2, setSalary2] = useState(' USD $200,000 to USD $300,000');
-  // ... other user data (experience, education, certifications, projects, interests)
+
+  // ... Education
+
+ 
+  const [institution, setInstitution] = useState('University of Ghana, Legon');
+  const [course, setCourse] = useState('Computer Engineering');
+  const [time, setTime] = useState('2016-2020');
+  const [description, setDescription] = useState('In this Computer Engineering program, I embark on a transformative journey to cultivate essential skills and master the tools needed for success in this exciting and highly rewarding role.');
+  
+   // ... Experience
+
+ 
+   const [company4, setCompany4] = useState('Generation Ghana');
+   const [role4, setRole4] = useState(' Freelance Web Developer');
+   const [duration, setDuration] = useState('2020-2024');
+   const [jobDescription, setJobDescription] = useState('In this comprehensive Web Developer freelance role, I embark on a transformative journey to cultivate essential skills and master the tools needed for success in this exciting and highly rewarding role.');
+  
+
+   // ...Skills
+
+   
+   const [skills1, setSkills1] = useState('Javascript');
+   const [skills2, setSkills2] = useState('React.js');
+   const [skills3, setSkills3] = useState('Bootstrap');
+   const [skills4, setSkills4] = useState('Python');
+   // ... other user data (experience, education, certifications, projects, interests)
   const [experience, setExperience] = useState("5+ years of progressive software engineering Experience across two companies, building and maintaining web applications and APIs. Developed a strong foundation in Design Thinking Methodologies while designing and implementing user-friendly web applications at Apple Inc.Leveraged expertise in UI Implementation, to lead the development of critical [product/feature] at Meta, resulting in 15% new App visits.Demonstrated a collaborative spirit, working effectively across teams to deliver high-quality, scalable software solutions."
 );
 const [education, setEducation] = useState([]); // Assuming an array of education objects
@@ -246,51 +277,136 @@ const handleSaveClick = () => setEditMode(false); // Update data on save (implem
 
 
 <hr />
-<Col xs={12} md={12} className="justify-content-start"> {/* Adjust col size and float as needed */}
+
+{/*...Experience */}
+<Col xs={12} md={12} className=" justify-content-start"> {/* Adjust col size and float as needed */}
       <Card className="shadow">
         <Card.Body>
           <Card.Title>Experience</Card.Title>
           <Card.Text>
+      <div className="company-info-container mt-3">
+       <div className='company-info'> <div> <h2><Image
+                    src={Generation}
+                    alt="Profile Picture"
+                    fluid width={50} height={50}
+                    
+                  />{role4}</h2></div>
+        <p>{company4} <i>{duration}</i></p>
 
-<p>
-  {editMode ? (
-    <Form.Control
-      as="textarea"
-      rows={3}
-      defaultValue={experience} // Prefill with current about me from state
-      onChange={(e) => setExperience(e.target.value)} // Update about me on change
-    />
-  ) : (
-    <p>{experience}</p> // Display current about me from state
-  )}
-</p>
-</Card.Text>
-</Card.Body>
+        <span className="detail-title"></span>
+            <span>{jobDescription}</span>
+         
+       
+         
+         
+       
+        <hr />
+{/*Job position 2 */}
+        
+
+        {editMode && (
+          <Form onSubmit={handleProfileUpdate} id="profile-update-form">
+            <Form.Group controlId="formCompanyName">
+              <Form.Label>Organization</Form.Label>
+              <Form.Control type="text" value={company4} onChange={(e) => setCompany4(e.target.value)} />
+            </Form.Group>
+            <Form.Group controlId="formCompanyDescription">
+              <Form.Label>Role</Form.Label>
+              <Form.Control as="textarea" rows={5} value={role4} onChange={(e) => setRole4(e.target.value)} />
+            </Form.Group>
+            <Form.Group controlId="formCompanyWebsite">
+              <Form.Label>Duration</Form.Label>
+              <Form.Control type="text" value={duration} onChange={(e) => setTime(e.target.value)} />
+            </Form.Group>
+            <Form.Group controlId="formCompanyIndustry">
+              <Form.Label>Job Description</Form.Label>
+              <Form.Control type="text" value={jobDescription} onChange={(e) => setJobDescription(e.target.value)} />
+            </Form.Group>
+            
+            {/* ... send position */}
+
+           
+            
+            <div className="d-flex justify-content-end">
+              <Button variant="secondary" mr={2} onClick={handleEditClick}>
+                Cancel
+              </Button>
+              <Button variant="primary" type="submit" form="profile-update-form">
+                Save Changes
+              </Button>  </div>
+              </Form>
+            ) } 
+  <Button variant="secondary" style={{ boxShadow: '0px 2px 5px rgba(0, 0, 0, 0.2)' }}onClick={handleEditClick}>
+    Edit Experience
+  </Button></div></div>   
+  </Card.Text></Card.Body>
       </Card>
     </Col>
 
 
+
 <hr />
-<Col xs={12} md={12} className="justify-content-start"> {/* Adjust col size and float as needed */}
+<Col xs={12} md={12} className=" justify-content-start"> {/* Adjust col size and float as needed */}
       <Card className="shadow">
         <Card.Body>
           <Card.Title>Education</Card.Title>
           <Card.Text>
+      <div className="company-info-container mt-3">
+       <div className='company-info'> <div> <h2><Image
+                    src={UG}
+                    alt="Profile Picture"
+                    fluid width={50} height={50}
+                    
+                  />{institution}</h2></div>
+        <p>{course} <i>{time}</i></p>
 
-<p>
-  {editMode ? (
-    <Form.Control
-      as="textarea"
-      rows={3}
-      defaultValue={education} // Prefill with current about me from state
-      onChange={(e) => setEducation(e.target.value)} // Update about me on change
-    />
-  ) : (
-    <p>{education}</p> // Display current about me from state
-  )}
-</p>
-</Card.Text>
-</Card.Body>
+        <span className="detail-title"></span>
+            <span>{description}</span>
+         
+       
+         
+         
+       
+        <hr />
+{/*Job position 2 */}
+        
+
+        {editMode && (
+          <Form onSubmit={handleProfileUpdate} id="profile-update-form">
+            <Form.Group controlId="formCompanyName">
+              <Form.Label>Institution</Form.Label>
+              <Form.Control type="text" value={institution} onChange={(e) => setInstitution(e.target.value)} />
+            </Form.Group>
+            <Form.Group controlId="formCompanyDescription">
+              <Form.Label>Course</Form.Label>
+              <Form.Control as="textarea" rows={5} value={course} onChange={(e) => setCourse(e.target.value)} />
+            </Form.Group>
+            <Form.Group controlId="formCompanyWebsite">
+              <Form.Label>Time</Form.Label>
+              <Form.Control type="text" value={time} onChange={(e) => setTime(e.target.value)} />
+            </Form.Group>
+            <Form.Group controlId="formCompanyIndustry">
+              <Form.Label>Description</Form.Label>
+              <Form.Control type="text" value={description} onChange={(e) => setDescription(e.target.value)} />
+            </Form.Group>
+            
+            {/* ... send position */}
+
+           
+            
+            <div className="d-flex justify-content-end">
+              <Button variant="secondary" mr={2} onClick={handleEditClick}>
+                Cancel
+              </Button>
+              <Button variant="primary" type="submit" form="profile-update-form">
+                Save Changes
+              </Button>  </div>
+              </Form>
+            ) } 
+  <Button variant="secondary" style={{ boxShadow: '0px 2px 5px rgba(0, 0, 0, 0.2)' }}onClick={handleEditClick}>
+    Edit Education
+  </Button></div></div>   
+  </Card.Text></Card.Body>
       </Card>
     </Col>
 
@@ -354,28 +470,84 @@ const handleSaveClick = () => setEditMode(false); // Update data on save (implem
     </Col>
 
 <hr />
-
-<Col xs={12} md={12} className="justify-content-start"> {/* Adjust col size and float as needed */}
+{/*...Skills */}
+<Col xs={12} md={12} className="  justify-content-start"> {/* Adjust col size and float as needed */}
       <Card className="shadow">
         <Card.Body>
           <Card.Title>Skills</Card.Title>
           <Card.Text>
+      <div className="company-info-container mt-3">
+       <div className='company-info'> <div> <p><Image
+                    src={javascript}
+                    alt="Profile Picture"
+                    fluid roundedCircle width={50} height={50}
+                    
+                  />{skills1}</p></div>
+                 
+                  <div> <p><Image
+                    src={react}
+                    alt="Profile Picture"
+                    fluid  roundedCircle width={50} height={50}
+                    
+                  />{skills2}</p></div>
+                  <div> <p><Image
+                    src={bootstrap}
+                    alt="Profile Picture"
+                    fluid  roundedCircle width={50} height={50}
+                    
+                  />{skills3}</p></div>
+                  <div> <p><Image
+                    src={python}
+                    alt="Profile Picture"
+                    fluid roundedCircle width={50} height={50}
+                    
+                  />{skills4}</p></div>
+           
+         
+       
+         
+         
+       
+        <hr />
+{/*Job position 2 */}
+        
 
+        {editMode && (
+          <Form onSubmit={handleProfileUpdate} id="profile-update-form">
+            <Form.Group controlId="formCompanyName">
+              <Form.Label>Skills 1</Form.Label>
+              <Form.Control type="text" value={skills1} onChange={(e) => setSkills1(e.target.value)} />
+            </Form.Group>
+            <Form.Group controlId="formCompanyDescription">
+              <Form.Label>Skills 2</Form.Label>
+              <Form.Control as="textarea" rows={5} value={skills2} onChange={(e) => setSkills2(e.target.value)} />
+            </Form.Group>
+            <Form.Group controlId="formCompanyWebsite">
+              <Form.Label>Skills 3</Form.Label>
+              <Form.Control type="text" value={skills3} onChange={(e) => setSkills3(e.target.value)} />
+            </Form.Group>
+            <Form.Group controlId="formCompanyIndustry">
+              <Form.Label>Skill 4</Form.Label>
+              <Form.Control type="text" value={skills4} onChange={(e) => setSkills4(e.target.value)} />
+            </Form.Group>
+            
+            {/* ... send position */}
 
-<p>
-  {editMode ? (
-    <Form.Control
-      as="textarea"
-      rows={3}
-      defaultValue={skills} // Prefill with current about me from state
-      onChange={(e) => setSkills(e.target.value)} // Update about me on change
-    />
-  ) : (
-    <p>{skills}</p> // Display current about me from state
-  )}
-</p>
-</Card.Text>
-</Card.Body>
+           
+            
+            <div className="d-flex justify-content-end">
+              <Button variant="secondary" mr={2} onClick={handleEditClick}>
+                Cancel
+              </Button>
+              <Button variant="primary" type="submit" form="profile-update-form">
+                Save Changes
+              </Button>  </div>
+              </Form>
+            ) } 
+  <Button variant="secondary" style={{ boxShadow: '0px 2px 5px rgba(0, 0, 0, 0.2)' }}onClick={handleEditClick}>
+    Edit Skills
+  </Button></div></div>   
+  </Card.Text></Card.Body>
       </Card>
     </Col>
 
