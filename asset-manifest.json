@@ -1,0 +1,27 @@
+{
+  "files": {
+    "main.css": "/careeropen-app/static/css/main.d5289b2f.css",
+    "main.js": "/careeropen-app/static/js/main.2be195e0.js",
+    "static/media/haulbackground.jpg": "/careeropen-app/static/media/haulbackground.1820f35a4f6d512ccdc3.jpg",
+    "static/media/Advert2.jpg": "/careeropen-app/static/media/Advert2.6330c501583575ba45f6.jpg",
+    "static/media/logo.jpeg": "/careeropen-app/static/media/logo.0eeb5413c5c9e740df08.jpeg",
+    "static/media/Jobseeker_picture.jpg": "/careeropen-app/static/media/Jobseeker_picture.ffff4aaf4e3b3e8ef37d.jpg",
+    "static/media/Advert1.jpg": "/careeropen-app/static/media/Advert1.3517f5fd9bf2fde690f6.jpg",
+    "static/media/analytics.jpeg": "/careeropen-app/static/media/analytics.9f7aa6c1d51c3c5c6d07.jpeg",
+    "static/media/background.jpeg": "/careeropen-app/static/media/background.aaf0869249aae2a62b35.jpeg",
+    "static/media/Applicants.jpg": "/careeropen-app/static/media/Applicants.835e9f6535409475761c.jpg",
+    "static/media/react.png": "/careeropen-app/static/media/react.813d68745bb1c19c9575.png",
+    "static/media/UG.jpg": "/careeropen-app/static/media/UG.a29eb7287f1252ecd79a.jpg",
+    "static/media/applicants4.jpg": "/careeropen-app/static/media/applicants4.63d1b643dfdea266a610.jpg",
+    "static/media/javascript.jpeg": "/careeropen-app/static/media/javascript.3e888f5d15adb47f8c7e.jpeg",
+    "static/media/python.jpeg": "/careeropen-app/static/media/python.2fa7520ef0151935e593.jpeg",
+    "static/media/jobposting3.png": "/careeropen-app/static/media/jobposting3.49550317cc62c501cd87.png",
+    "index.html": "/careeropen-app/index.html",
+    "main.d5289b2f.css.map": "/careeropen-app/static/css/main.d5289b2f.css.map",
+    "main.2be195e0.js.map": "/careeropen-app/static/js/main.2be195e0.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.d5289b2f.css",
+    "static/js/main.2be195e0.js"
+  ]
+}
