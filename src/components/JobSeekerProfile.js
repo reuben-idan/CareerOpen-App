@@ -607,7 +607,7 @@ const handleSaveClick = () => setEditMode(false); // Update data on save (implem
         <ul className="company-details">
           <li>
             <span className="detail-title">Location:</span>
-            <a href={location} target="_blank" rel="noreferrer">
+            <a  target="_blank" rel="noreferrer">
               {location}
             </a>
           </li>
@@ -647,7 +647,7 @@ const handleSaveClick = () => setEditMode(false); // Update data on save (implem
         <ul className="company-details">
           <li>
             <span className="detail-title">Location:</span>
-            <a href={location2} target="_blank" rel="noreferrer">
+            <a  target="_blank" rel="noreferrer">
               {location2}
             </a>
           </li>

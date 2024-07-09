@@ -266,7 +266,7 @@ style={{  border: '5px solid white' ,position: 'relative', top: '50%', left: '15
         <ul className="company-details">
           <li>
             <span className="detail-title">Location:</span>
-            <a href={location} target="_blank" rel="noreferrer">
+            <a  target="_blank" rel="noreferrer">
               {location}
             </a>
           </li>
@@ -290,7 +290,7 @@ style={{  border: '5px solid white' ,position: 'relative', top: '50%', left: '15
         <ul className="company-details">
           <li>
             <span className="detail-title">Location:</span>
-            <a href={location3} target="_blank" rel="noreferrer">
+            <a  target="_blank" rel="noreferrer">
               {location3}
             </a>
           </li>
