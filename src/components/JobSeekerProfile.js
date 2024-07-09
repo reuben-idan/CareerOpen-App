@@ -599,7 +599,7 @@ const handleSaveClick = () => setEditMode(false); // Update data on save (implem
     <Col xs={12} md={12} className=" justify-content-start"> {/* Adjust col size and float as needed */}
       <Card className="shadow">
         <Card.Body>
-          <Card.Title>Positions</Card.Title>
+          <Card.Title></Card.Title>
           <Card.Text>
       <div className="company-info-container mt-3">
        <div className='company-info'> <h2>{role}</h2>
@@ -639,7 +639,7 @@ const handleSaveClick = () => setEditMode(false); // Update data on save (implem
     <Col xs={12} md={12} className=" justify-content-start"> {/* Adjust col size and float as needed */}
       <Card className="shadow">
         <Card.Body>
-          <Card.Title>Positions</Card.Title>
+          <Card.Title></Card.Title>
           <Card.Text>
       <div className="company-info-container mt-3">
        <div className='company-info'> <h2>{role2}</h2>
