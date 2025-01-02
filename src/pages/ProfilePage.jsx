@@ -5,7 +5,7 @@ import Sidebar from "../components/Sidebar"; // Sidebar Component Import
 const ProfilePage = ({ user }) => {
   const [userData, setUserData] = useState(
     user || {
-      name: "John Doe",
+      name: "Evelyn Idan",
       headline: "Web Developer",
       location: "New York, NY",
       profilePicture: "/default-profile-pic.jpg",
