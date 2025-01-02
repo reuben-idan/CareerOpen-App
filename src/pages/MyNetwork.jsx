@@ -6,7 +6,7 @@ import SuggestedConnectionCard from "../components/SuggestedConnectionCard";
 
 const MyNetwork = () => {
   const invitations = [
-    { id: 1, name: "John Doe", title: "Web Developer", mutualConnections: 10 },
+    { id: 1, name: "Reuben Idan", title: "Web Developer", mutualConnections: 10 },
     {
       id: 2,
       name: "Jane Smith",
