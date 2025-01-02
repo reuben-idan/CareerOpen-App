@@ -15,7 +15,7 @@ import Feed from "./pages/Feed";
 import MyNetwork from "./pages/MyNetwork";
 import Messages from "./pages/Messages";
 import SignupPage from "./pages/SignUpPage";
-import SigninPage from "./pages/SigninPage";
+import SigninPage from "./pages/SignInPage";
 import NotificationPage from "./pages/NotificationPage";
 
 import "./index.css"; // or wherever your Tailwind CSS file is located
