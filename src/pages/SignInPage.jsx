@@ -41,7 +41,7 @@ const SignInPage = () => {
         uid: user.uid,
       });
       toast.success("Sign-in successful! Redirecting...");
-      navigate("/signup"); // Navigate to dashboard or any other protected page
+      navigate("/feed"); // Navigate to the desired page
     } catch (err) {
       setError(err.message);
       toast.error(`Error: ${err.message}`);
@@ -58,7 +58,7 @@ const SignInPage = () => {
         uid: user.uid,
       });
       toast.success("Google sign-in successful! Redirecting...");
-      navigate("/signup");
+      navigate("/feed");
     } catch (err) {
       toast.error(`Google sign-in failed: ${err.message}`);
     }
@@ -74,7 +74,7 @@ const SignInPage = () => {
         uid: user.uid,
       });
       toast.success("Facebook sign-in successful! Redirecting...");
-      navigate("/signup");
+      navigate("/feed");
     } catch (err) {
       toast.error(`Facebook sign-in failed: ${err.message}`);
     }
@@ -82,118 +82,89 @@ const SignInPage = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="flex flex-col md:flex-row items-center bg-white shadow-md rounded-lg max-w-4xl w-full p-6">
-        {/* Left Section - Sign-in Form */}
-        <div className="md:w-1/2 px-4">
-          <h1 className="text-2xl font-semibold mb-6 text-center text-gray-900">
-            Welcome back to your professional community
-          </h1>
-          <form onSubmit={handleSignIn} className="space-y-4">
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Email
-              </label>
+      <div className="bg-white shadow-md rounded-lg max-w-md w-full p-6 flex flex-col items-center justify-center text-center space-y-4">
+        {/* Add your content here */}
+        <div className="text-center mb-6">
+          <img src={logo} alt="CareerOpen Logo" className="w-32 mx-auto mb-4" />
+          <h2 className="text-2xl font-semibold text-gray-900">Welcome Back</h2>
+          <p className="text-gray-500">Sign in to continue</p>
+        </div>
+        <form onSubmit={handleSignIn} className="space-y-4">
+          <div>
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Email
+            </label>
+            <input
+              type="email"
+              id="email"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              value={email}
+              onChange={handleEmailChange}
+              required
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Password
+            </label>
+            <div className="relative">
               <input
-                type="email"
-                id="email"
+                type={showPassword ? "text" : "password"}
+                id="password"
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                value={email}
-                onChange={handleEmailChange}
+                value={password}
+                onChange={handlePasswordChange}
                 required
               />
-            </div>
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-700"
+              <button
+                type="button"
+                className="absolute inset-y-0 right-0 px-3 flex items-center text-sm text-gray-600 hover:text-gray-900"
+                onClick={toggleShowPassword}
               >
-                Password
-              </label>
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  id="password"
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                  value={password}
-                  onChange={handlePasswordChange}
-                  required
-                />
-                <button
-                  type="button"
-                  className="absolute inset-y-0 right-0 px-3 flex items-center text-sm text-gray-600 hover:text-gray-900"
-                  onClick={toggleShowPassword}
-                >
-                  {showPassword ? "Hide" : "Show"}
-                </button>
-              </div>
+                {showPassword ? "Hide" : "Show"}
+              </button>
             </div>
-            {error && <p className="text-red-500 text-sm">{error}</p>}
-            <button
-              type="submit"
-              className="w-full py-2 px-4 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              Sign in
-            </button>
-          </form>
-          <div className="my-4 text-center text-gray-500">or</div>
-          <div className="space-y-2">
-            <button
-              type="button"
-              onClick={handleGoogleSignIn}
-              className="w-full py-2 px-4 flex justify-center items-center border border-gray-300 rounded-md shadow-sm bg-white text-gray-600 font-medium hover:bg-gray-50"
-            >
-              <FontAwesomeIcon icon={faGoogle} className="mr-2 text-red-500" />
-              Continue with Google
-            </button>
-            <button
-              type="button"
-              onClick={handleFacebookSignIn}
-              className="w-full py-2 px-4 flex justify-center items-center border border-gray-300 rounded-md shadow-sm bg-white text-gray-600 font-medium hover:bg-gray-50"
-            >
-              <FontAwesomeIcon
-                icon={faFacebook}
-                className="mr-2 text-blue-500"
-              />
-              Continue with Facebook
-            </button>
           </div>
-          <div className="mt-4 text-center text-sm text-gray-500">
-            New to CareerOpen?{" "}
-            <a href="/signup" className="text-blue-600 hover:underline">
-              Join now
-            </a>
-          </div>
+          {error && <p className="text-red-500 text-sm">{error}</p>}
+          <button
+            type="submit"
+            className="w-full py-2 px-4 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            Sign in
+          </button>
+        </form>
+        <div className="my-4 text-center text-gray-500">or</div>
+        <div className="space-y-2">
+          <button
+            type="button"
+            onClick={handleGoogleSignIn}
+            className="w-full py-2 px-4 flex justify-center items-center border border-gray-300 rounded-md shadow-sm bg-white text-gray-600 font-medium hover:bg-gray-50"
+          >
+            <FontAwesomeIcon icon={faGoogle} className="mr-2 text-red-500" />
+            Continue with Google
+          </button>
+          <button
+            type="button"
+            onClick={handleFacebookSignIn}
+            className="w-full py-2 px-4 flex justify-center items-center border border-gray-300 rounded-md shadow-sm bg-white text-gray-600 font-medium hover:bg-gray-50"
+          >
+            <FontAwesomeIcon icon={faFacebook} className="mr-2 text-blue-500" />
+            Continue with Facebook
+          </button>
         </div>
-
-        {/* Right Section - Logo */}
-        <div className="md:w-1/2 flex justify-center items-center p-4">
-          <img
-            src={logo}
-            alt="CareerOpen Logo"
-            className="w-3/4 md:w-full max-w-xs transform hover:scale-105 transition-transform duration-300"
-          />
+        <div className="mt-4 text-center text-sm text-gray-500">
+          New to CareerOpen?{" "}
+          <a href="/signup" className="text-blue-600 hover:underline">
+            Join now
+          </a>
         </div>
       </div>
-
-      <footer className="mt-6 text-center text-xs text-gray-500">
-        <p>
-          &copy; {new Date().getFullYear()} CareerOpen. All rights reserved.
-        </p>
-        <div className="flex justify-center space-x-4 mt-2">
-          <a href="/about" className="hover:underline">
-            About
-          </a>
-          <a href="/privacy" className="hover:underline">
-            Privacy Policy
-          </a>
-          <a href="/terms" className="hover:underline">
-            User Agreement
-          </a>
-        </div>
-      </footer>
     </div>
   );
 };
