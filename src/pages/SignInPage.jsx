@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState,useEffect} from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
 import {
@@ -11,6 +11,9 @@ import { auth } from "../../firebaseConfig";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import logo from "../assets/logo.jpeg"; // App logo
+import slide1 from "../assets/slide1.png";
+import slide2 from "../assets/slide2.png";
+// import slide3 from "../assets/slide3.jpg";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGoogle, faFacebook } from "@fortawesome/free-brands-svg-icons";
 
@@ -21,6 +24,17 @@ const SignInPage = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+
+ 
+    const [currentSlide, setCurrentSlide] = useState(0);
+    const slides = [slide1, slide2, ];
+  
+    useEffect(() => {
+      const interval = setInterval(() => {
+        setCurrentSlide((prev) => (prev + 1) % slides.length);
+      }, 3000);
+      return () => clearInterval(interval);
+    }, []);
 
   const handleEmailChange = (e) => setEmail(e.target.value);
   const handlePasswordChange = (e) => setPassword(e.target.value);
@@ -81,9 +95,8 @@ const SignInPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white shadow-md rounded-lg max-w-md w-full p-6 flex flex-col items-center justify-center text-center space-y-4">
-        {/* Add your content here */}
+    <div className="min-h-screen flex flex-col md:flex-row items-center justify-center bg-gray-100">
+      <div className="bg-white shadow-md rounded-lg w-full max-w-md p-8">
         <div className="text-center mb-6">
           <img src={logo} alt="CareerOpen Logo" className="w-32 mx-auto mb-4" />
           <h2 className="text-2xl font-semibold text-gray-900">Welcome Back</h2>
@@ -163,6 +176,15 @@ const SignInPage = () => {
           <a href="/signup" className="text-blue-600 hover:underline">
             Join now
           </a>
+        </div>
+      </div>
+      <div className="hidden md:block md:w-1/2 h-full">
+        <div className="h-full w-full relative">
+          <img
+            src={slides[currentSlide]}
+            alt="Slide"
+            className="h-full w-full object-cover rounded-lg shadow-lg"
+          />
         </div>
       </div>
     </div>
