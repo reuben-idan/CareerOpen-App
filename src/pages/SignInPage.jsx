@@ -13,6 +13,7 @@ import "react-toastify/dist/ReactToastify.css";
 import logo from "../assets/logo.jpeg"; // App logo
 import slide1 from "../assets/slide1.png";
 import slide2 from "../assets/slide2.png";
+import slide3 from "../assets/slide3.png";
 // import slide3 from "../assets/slide3.jpg";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGoogle, faFacebook } from "@fortawesome/free-brands-svg-icons";
@@ -27,7 +28,7 @@ const SignInPage = () => {
 
  
     const [currentSlide, setCurrentSlide] = useState(0);
-    const slides = [slide1, slide2, ];
+    const slides = [slide1, slide2, slide3];
   
     useEffect(() => {
       const interval = setInterval(() => {
