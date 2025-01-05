@@ -8,7 +8,7 @@ const FeedPage = () => {
   const feedPosts = [
     {
       user: {
-        name: "John Doe",
+        name: "Reuben Idan",
         profilePicture: "/path/to/profile.jpg",
       },
       timestamp: "2 hours ago",
