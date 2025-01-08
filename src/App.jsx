@@ -17,8 +17,11 @@ import Messages from "./pages/Messages";
 import SignupPage from "./pages/SignUpPage";
 import SigninPage from "./pages/SignInPage";
 import NotificationPage from "./pages/NotificationPage";
+// import NotFoundPage from "./components/NotFoundPage"; 
+
 
 import "./index.css"; // or wherever your Tailwind CSS file is located
+import SubscriptionPayment from "./pages/SubscriptionPayment";
 
 const App = () => {
   return (
@@ -61,6 +64,10 @@ const AuthenticatedRoutes = () => {
           <Route
             path="/profile/:userId"
             element={<PrivateRoute Component={ProfilePage} />}
+          />
+          <Route
+            path="/SubscriptionPayment"
+            element={<PrivateRoute Component={SubscriptionPayment} />}
           />
 
           {/* My Network & Messages Routes */}
@@ -106,7 +113,7 @@ const PrivateRoute = ({ Component }) => {
 // AuthRoute component ensures that authenticated users are redirected away from sign-in or sign-up pages
 const AuthRoute = ({ Component }) => {
   const { user } = useUser();
-  return user ? <Navigate to="/feed" /> : <Component />;
+  return user ? <Navigate to="/NotFoundPage" /> : <Component />;
 };
 
 // PropTypes validation for PrivateRoute and AuthRoute components
