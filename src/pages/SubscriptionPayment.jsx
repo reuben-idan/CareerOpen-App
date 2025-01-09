@@ -6,8 +6,10 @@ import "react-toastify/dist/ReactToastify.css";
 // toast.configure(); // Configure Toastify once
 
 const SubscriptionPayment = () => {
-  const publicKey = " pk_test_90800a7e8af8e9abef7680fabff8026047606e40"; // Replace with your Paystack public key
-  const amount = 500000; // Example amount in kobo (5000 NGN)
+  const publicKey = "pk_test_90800a7e8af8e9abef7680fabff8026047606e40"; // Replace with your Paystack public key
+  const amount = 500000; // Example amount in kobo (5000 GHC)
+  const currency = "GHS"; // Specify the correct currency
+
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -15,6 +17,7 @@ const SubscriptionPayment = () => {
   const componentProps = {
     email,
     amount,
+    currency, // Add currency to component props
     metadata: {
       name,
       phone,
