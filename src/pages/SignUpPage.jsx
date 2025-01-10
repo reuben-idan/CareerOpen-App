@@ -27,14 +27,14 @@ const SignUpPage = () => {
   });
   const [error, setError] = useState("");
   const [currentSlide, setCurrentSlide] = useState(0);
-  const slides = [slide1, slide2, ];
+  const slides = [slide1, slide2];
 
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
     }, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [slides.length]);
 
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
