@@ -7,7 +7,7 @@ import {
   FacebookAuthProvider,
   signInWithPopup,
 } from "firebase/auth";
-import { auth } from "../../firebaseConfig";
+import { auth, db } from "../../firebaseConfig";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import logo from "../assets/logo.jpeg";
@@ -16,6 +16,7 @@ import slide2 from "../assets/slide2.png";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGoogle, faFacebook } from "@fortawesome/free-brands-svg-icons";
+import { doc, setDoc } from "firebase/firestore";
 
 const SignUpPage = () => {
   const { signUp } = useUser();
@@ -40,6 +41,17 @@ const SignUpPage = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const saveUserToFirestore = async (user) => {
+    try {
+      await setDoc(doc(db, "users", user.uid), {
+        email: user.email,
+        role: formData.role,
+      });
+    } catch (err) {
+      console.error("Error saving user to Firestore", err);
+    }
+  };
+
   const handleSignUp = async (e) => {
     e.preventDefault();
     setError("");
@@ -50,11 +62,8 @@ const SignUpPage = () => {
         formData.password
       );
       const user = userCredential.user;
-      signUp({
-        email: user.email,
-        uid: user.uid,
-        role: formData.role,
-      });
+      await saveUserToFirestore(user);
+      signUp({ email: user.email, uid: user.uid, role: formData.role });
       toast.success("Sign-up successful! Redirecting to your dashboard.");
       navigate(`/feed/${user.uid}`);
     } catch (err) {
@@ -67,11 +76,8 @@ const SignUpPage = () => {
     try {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
-      signUp({
-        email: user.email,
-        uid: user.uid,
-        role: formData.role,
-      });
+      await saveUserToFirestore(user);
+      signUp({ email: user.email, uid: user.uid, role: formData.role });
       toast.success("Sign-up successful! Redirecting to your dashboard.");
       navigate(`/feed/${user.uid}`);
     } catch (err) {

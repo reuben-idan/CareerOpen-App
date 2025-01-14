@@ -17,14 +17,18 @@ import Messages from "./pages/Messages";
 import SignupPage from "./pages/SignUpPage";
 import SigninPage from "./pages/SignInPage";
 import NotificationPage from "./pages/NotificationPage";
+// import { db } from "../firebaseConfig";
 // import NotFoundPage from "./components/NotFoundPage"; 
 
 
 import "./index.css"; // or wherever your Tailwind CSS file is located
 import SubscriptionPayment from "./pages/SubscriptionPayment";
 
+
 const App = () => {
+  
   return (
+    
     <UserProvider>
       <Router>
         <AuthenticatedRoutes />
@@ -36,6 +40,7 @@ const App = () => {
 // AuthenticatedRoutes component handles the routes with conditional rendering for NavigationBar
 const AuthenticatedRoutes = () => {
   const { user } = useUser();
+  
 
   return (
     <div>

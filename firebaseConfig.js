@@ -1,7 +1,14 @@
 // firebaseConfig.js
 import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import.meta.env.VITE_; 
+import {
+  getAuth,
+  GoogleAuthProvider,
+  FacebookAuthProvider,
+  signInWithPopup,
+  signOut,
+  verifyPasswordResetCode,
+} from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -16,5 +23,17 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const googleProvider = new GoogleAuthProvider();
+const facebookProvider = new FacebookAuthProvider();
+const db = getFirestore(app);
 
-export { auth };
+export {
+  app,
+  db,
+  auth,
+  googleProvider,
+  facebookProvider,
+  signInWithPopup,
+  signOut,
+  verifyPasswordResetCode,
+};
