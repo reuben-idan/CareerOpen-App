@@ -8,7 +8,10 @@ import { ProfileProvider } from "./context/profile";
 // MetaMask/Ethereum provider check (prevents connectChrome error if MetaMask is not installed)
 if (typeof window !== "undefined" && !window.ethereum) {
   window.ethereum = undefined;
-  if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+  if (
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1"
+  ) {
     console.info("MetaMask is not installed. Some web3 features may not work.");
   }
 }
