@@ -9,12 +9,32 @@ import { doc, setDoc, getDoc } from "firebase/firestore";
  */
 export const createUserProfile = async (userId, userData) => {
   try {
-    const userRef = doc(db, "users", userId);
-    await setDoc(userRef, {
-      ...userData,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    });
+    const profileRef = doc(db, "profiles", userId);
+    const profileSnap = await getDoc(profileRef);
+    if (!profileSnap.exists()) {
+      // Try to migrate from 'users' collection if exists
+      const oldUserRef = doc(db, "users", userId);
+      const oldUserSnap = await getDoc(oldUserRef);
+      let dataToSave = { ...userData };
+      if (oldUserSnap.exists()) {
+        dataToSave = { ...oldUserSnap.data(), ...userData };
+      }
+      await setDoc(profileRef, {
+        ...dataToSave,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+    } else {
+      // Profile already exists, just update
+      await setDoc(
+        profileRef,
+        {
+          ...userData,
+          updatedAt: new Date().toISOString(),
+        },
+        { merge: true }
+      );
+    }
   } catch (error) {
     console.error("Error creating user profile:", error);
     throw error;
@@ -29,7 +49,7 @@ export const createUserProfile = async (userId, userData) => {
  */
 export const updateUserProfile = async (userId, userData) => {
   try {
-    const userRef = doc(db, "users", userId);
+    const userRef = doc(db, "profiles", userId); // Save to 'profiles' collection
     await setDoc(
       userRef,
       {

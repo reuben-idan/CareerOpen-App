@@ -33,7 +33,7 @@ const ProfileProvider = ({ children }) => {
     try {
       const profileRef = doc(db, "profiles", userId);
       const profileSnap = await getDoc(profileRef);
-
+      console.log("[Profile Fetch] userId:", userId, "exists:", profileSnap.exists(), profileSnap.data());
       if (!profileSnap.exists()) {
         setProfile(null);
         setError("Profile not found");

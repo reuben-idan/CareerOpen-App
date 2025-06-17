@@ -51,7 +51,9 @@ const App = () => {
       <HelmetProvider>
         <ThemeProvider>
           <UserProvider>
-            <Router>
+            <Router
+              future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+            >
               <AnalyticsWrapper>
                 <SEO />
                 <AuthenticatedRoutes />
