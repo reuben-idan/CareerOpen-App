@@ -1,357 +1,764 @@
-import { useState } from "react";
-import PropTypes from "prop-types";
-import Sidebar from "../components/Sidebar"; // Sidebar Component Import
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useUser } from "../context/auth";
+import analytics from "../services/analytics";
+import {
+  PencilIcon,
+  UserPlusIcon,
+  EnvelopeIcon,
+  PhoneIcon,
+  GlobeAltIcon,
+  MapPinIcon,
+  BriefcaseIcon,
+  AcademicCapIcon,
+  StarIcon,
+  ChatBubbleLeftRightIcon,
+  UserCircleIcon,
+  LinkIcon,
+  XCircleIcon,
+  HeartIcon,
+  ShareIcon,
+  BookmarkIcon,
+  EyeIcon,
+  CurrencyDollarIcon,
+  CheckCircleIcon,
+  SparklesIcon,
+  TrophyIcon,
+  ClockIcon,
+  CalendarIcon,
+  BuildingOfficeIcon,
+  ArrowUpIcon,
+  ArrowDownIcon,
+  PlusIcon,
+  MinusIcon,
+} from "@heroicons/react/24/outline";
+import {
+  StarIcon as StarSolidIcon,
+  HeartIcon as HeartSolidIcon,
+} from "@heroicons/react/24/solid";
+import ProfileHeader from "../components/profile/ProfileHeader";
+import ProfileCard from "../components/profile/ProfileCard";
+import EditProfileModal from "../components/profile/EditProfileModal";
+import LoadingSpinner from "../components/common/LoadingSpinner";
+import SkillsList from "../components/profile/SkillsList";
+import ExperienceList from "../components/profile/ExperienceList";
+import EducationList from "../components/profile/EducationList";
+import ActivityFeed from "../components/social/ActivityFeed";
+import { PaystackButton } from "react-paystack";
+import { toast } from "react-toastify";
+import Sidebar from "../components/layout/Sidebar";
+import { EmployerLogos, PeopleGrid, GlassCard } from "../components";
+import { useProfile } from "../context/profile";
 
-const ProfilePage = ({ user }) => {
-  const [userData, setUserData] = useState(
-    user || {
-      name: "Evelyn Idan",
-      headline: "Web Developer",
-      location: "New York, NY",
-      profilePicture: "/default-profile-pic.jpg",
-      backgroundImage: "/default-background.jpg",
-      experiences: [],
-      education: [],
-      skills: [],
-      recommendations: [],
-      activities: [],
+const ProfilePage = () => {
+  const { user } = useUser();
+  const { profile, loading, error, updateProfile, fetchProfileById } =
+    useProfile();
+  const { userId } = useParams();
+  const navigate = useNavigate();
+  const [isEditing, setIsEditing] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [isOwnProfile, setIsOwnProfile] = useState(false);
+  const [activeTab, setActiveTab] = useState("overview");
+  const [isConnected, setIsConnected] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [isPremium, setIsPremium] = useState(false);
+  const [viewCount, setViewCount] = useState(0);
+  const [isLiked, setIsLiked] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(false);
+
+  // Payment configuration
+  const publicKey = "pk_test_90800a7e8af8e9abef7680fabff8026047606e40";
+  const [paymentData, setPaymentData] = useState({
+    email: "",
+    name: "",
+    phone: "",
+  });
+
+  useEffect(() => {
+    if (userId) {
+      fetchProfileById(userId);
     }
-  );
-  const [isEditModalOpen, setEditModalOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState(""); // Error message state
-  const [editingSection, setEditingSection] = useState(null);
+  }, [userId, fetchProfileById]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setUserData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
+  useEffect(() => {
+    if (user && profile) {
+      setIsOwnProfile(user.uid === userId);
+      setViewCount(profile?.stats?.profileViews || 0);
+    }
+  }, [user, userId, profile]);
+
+  const handleEdit = () => {
+    setIsEditing(true);
   };
 
-  const handleSaveProfile = async () => {
-    setIsLoading(true);
-    setErrorMessage(""); // Reset error message on save attempt
-
+  const handleUpdateProfile = async (updatedData) => {
     try {
-      // Simulate an API call for saving the profile data
-      setTimeout(() => {
-        setIsLoading(false);
-        alert("Profile updated successfully!");
-        setEditModalOpen(false);
-      }, 1000);
-    } catch {
-      setIsLoading(false);
-      setErrorMessage("An error occurred while saving the profile.");
+      await updateProfile(updatedData);
+      setIsEditing(false);
+      setShowEditModal(false);
+      toast.success("Profile updated successfully!");
+      analytics.track("update_profile", { profileId: userId });
+    } catch (err) {
+      toast.error("Failed to update profile");
+      analytics.track("profile_update_error", { error: err.message });
     }
   };
 
-  const handleImageUpload = (e, type) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setUserData((prevData) => ({
-          ...prevData,
-          [type]: reader.result,
-        }));
-      };
-      reader.readAsDataURL(file);
+  const handleConnect = async () => {
+    try {
+      setIsConnected(true);
+      toast.success("Connection request sent!");
+      analytics.track("connection_request", { profileId: userId });
+    } catch (err) {
+      setError("Failed to send connection request");
+      toast.error("Failed to send connection request");
+      analytics.track("connection_request_error", { error: err.message });
     }
   };
 
-  const handleEditSection = (section) => {
-    setEditingSection(section);
+  const handleFollow = async () => {
+    try {
+      setIsFollowing(!isFollowing);
+      toast.success(
+        isFollowing ? "Unfollowed successfully" : "Following successfully"
+      );
+      analytics.track("profile_follow", {
+        profileId: userId,
+        action: isFollowing ? "unfollow" : "follow",
+      });
+    } catch (err) {
+      setError("Failed to update follow status");
+      toast.error("Failed to update follow status");
+      analytics.track("profile_follow_error", { error: err.message });
+    }
   };
+
+  const handleMessage = () => {
+    navigate(`/messages/${userId}`);
+  };
+
+  const handleLike = () => {
+    setIsLiked(!isLiked);
+    toast.success(isLiked ? "Removed from likes" : "Added to likes");
+  };
+
+  const handleBookmark = () => {
+    setIsBookmarked(!isBookmarked);
+    toast.success(
+      isBookmarked ? "Removed from bookmarks" : "Added to bookmarks"
+    );
+  };
+
+  const handleShare = () => {
+    navigator.clipboard.writeText(window.location.href);
+    toast.success("Profile link copied to clipboard!");
+  };
+
+  const handlePaymentSuccess = () => {
+    setIsPremium(true);
+    setShowPaymentModal(false);
+    toast.success(
+      "Premium subscription activated! Welcome to CareerOpen Premium."
+    );
+  };
+
+  const handlePaymentClose = () => {
+    setShowPaymentModal(false);
+    toast.info("Payment cancelled. You can upgrade to premium anytime.");
+  };
+
+  const paymentProps = {
+    email: paymentData.email,
+    amount: 500000, // 5000 GHS in kobo
+    currency: "GHS",
+    metadata: {
+      name: paymentData.name,
+      phone: paymentData.phone,
+      userId: user?.uid,
+    },
+    publicKey,
+    text: "Upgrade to Premium",
+    onSuccess: handlePaymentSuccess,
+    onClose: handlePaymentClose,
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 px-4">
+        <div className="max-w-md w-full text-center">
+          <div className="text-red-600 mb-4">
+            <XCircleIcon className="h-12 w-12 mx-auto" />
+          </div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            {error === "Profile not found" ? "Profile Not Found" : "Error Loading Profile"}
+          </h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button onClick={() => navigate("/")} className="btn">
+            Back to Home
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 px-4">
+        <div className="max-w-md w-full text-center">
+          <div className="text-gray-600 mb-4">
+            <UserCircleIcon className="h-12 w-12 mx-auto" />
+          </div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            Profile Not Found
+          </h2>
+          <p className="text-gray-600 mb-4">The requested profile could not be found.</p>
+          <button onClick={() => navigate("/")} className="btn">
+            Back to Home
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const tabs = [
+    { id: "overview", name: "Overview", icon: UserCircleIcon },
+    { id: "experience", name: "Experience", icon: BriefcaseIcon },
+    { id: "education", name: "Education", icon: AcademicCapIcon },
+    { id: "skills", name: "Skills", icon: StarIcon },
+    { id: "activity", name: "Activity", icon: ClockIcon },
+  ];
 
   return (
-    <div className="bg-gray-50 min-h-screen">
-      {/* Profile Header */}
-      <header
-        className="bg-cover bg-center h-64 relative"
-        style={{ backgroundImage: `url(${userData.backgroundImage})` }}
-      >
-        <div className="flex items-center justify-center h-full bg-black bg-opacity-50">
-          <img
-            src={userData.profilePicture}
-            alt="Profile"
-            className="rounded-full w-32 h-32 border-4 border-white absolute bottom-[-20px] left-4"
-            style={{ transform: "translateY(50%)" }}
-          />
-        </div>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => handleImageUpload(e, "backgroundImage")}
-          className="absolute top-2 right-2 bg-blue-500 text-white p-2 rounded-md"
-        />
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => handleImageUpload(e, "profilePicture")}
-          className="absolute top-2 left-2 bg-blue-500 text-white p-2 rounded-md"
-        />
-      </header>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex">
+      <Sidebar />
+      <div className="flex-1 ml-0 md:ml-64">
+        {/* Profile Header */}
+        <div className="relative">
+          {/* Background Cover */}
+          <div className="h-64 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 relative overflow-hidden">
+            <div className="absolute inset-0 bg-black bg-opacity-20"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
 
-      {/* Main Content and Sidebar */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 max-w-7xl mx-auto py-6 px-4">
-        {/* Sidebar */}
-        <aside className="lg:col-span-1 bg-white shadow-lg rounded-lg p-6 space-y-6">
-          <Sidebar user={userData} />
-        </aside>
-
-        {/* Profile Content */}
-        <main className="lg:col-span-3 space-y-6">
-          {/* About Section */}
-          <section className="bg-white shadow-md rounded-lg p-6">
-            <div className="flex justify-between">
-              <h2 className="text-2xl font-bold mb-4 text-gray-800">About</h2>
-              <button
-                onClick={() => handleEditSection("about")}
-                className="text-blue-500"
-              >
-                Edit
-              </button>
+            {/* Floating Elements */}
+            <div className="absolute top-4 left-4 opacity-20">
+              <PeopleGrid maxImages={3} showOnMobile={false} />
             </div>
-            <textarea
-              name="headline"
-              value={userData.headline}
-              onChange={handleChange}
-              placeholder="Add your headline here..."
-              className="w-full h-24 p-4 border border-gray-300 rounded-md"
-              disabled={editingSection !== "about"}
-            />
-          </section>
-
-          {/* Experience Section */}
-          <section className="bg-white shadow-md rounded-lg p-6">
-            <div className="flex justify-between">
-              <h2 className="text-2xl font-bold mb-4 text-gray-800">
-                Experience
-              </h2>
-              <button
-                onClick={() => handleEditSection("experience")}
-                className="text-blue-500"
-              >
-                Edit
-              </button>
+            <div className="absolute top-4 right-4 opacity-20">
+              <EmployerLogos />
             </div>
-            <ul className="space-y-4">
-              {userData.experiences.length > 0 ? (
-                userData.experiences.map((experience, index) => (
-                  <li key={index} className="flex flex-col space-y-2">
-                    <h3 className="font-semibold">
-                      {experience.position} at {experience.company}
-                    </h3>
-                    <textarea
-                      name="experienceDetails"
-                      value={experience.details || ""}
-                      onChange={(e) => handleChange(e)}
-                      placeholder="Experience details..."
-                      className="w-full h-24 p-4 border border-gray-300 rounded-md"
-                      disabled={editingSection !== "experience"}
-                    />
-                    <p className="text-gray-600">{experience.duration}</p>
-                  </li>
-                ))
-              ) : (
-                <p className="text-gray-600">No experience available.</p>
-              )}
-            </ul>
-          </section>
 
-          {/* Education Section */}
-          <section className="bg-white shadow-md rounded-lg p-6">
-            <div className="flex justify-between">
-              <h2 className="text-2xl font-bold mb-4 text-gray-800">
-                Education
-              </h2>
-              <button
-                onClick={() => handleEditSection("education")}
-                className="text-blue-500"
-              >
-                Edit
-              </button>
-            </div>
-            <ul className="space-y-4">
-              {userData.education.length > 0 ? (
-                userData.education.map((edu, index) => (
-                  <li key={index} className="flex flex-col space-y-2">
-                    <h3 className="font-semibold">
-                      {edu.degree} at {edu.institution}
-                    </h3>
-                    <textarea
-                      name="educationDetails"
-                      value={edu.details || ""}
-                      onChange={handleChange}
-                      placeholder="Education details..."
-                      className="w-full h-24 p-4 border border-gray-300 rounded-md"
-                      disabled={editingSection !== "education"}
-                    />
-                    <p className="text-gray-600">{edu.duration}</p>
-                  </li>
-                ))
-              ) : (
-                <p className="text-gray-600">No education history available.</p>
-              )}
-            </ul>
-          </section>
-
-          {/* Skills Section */}
-          <section className="bg-white shadow-md rounded-lg p-6">
-            <div className="flex justify-between">
-              <h2 className="text-2xl font-bold mb-4 text-gray-800">
-                Skills & Endorsements
-              </h2>
-              <button
-                onClick={() => handleEditSection("skills")}
-                className="text-blue-500"
-              >
-                Edit
-              </button>
-            </div>
-            <ul className="space-y-4">
-              {userData.skills.length > 0 ? (
-                userData.skills.map((skill, index) => (
-                  <li key={index} className="flex flex-col space-y-2">
-                    <textarea
-                      name="skills"
-                      value={skill.name || ""}
-                      onChange={handleChange}
-                      placeholder="Add a skill..."
-                      className="w-full h-16 p-4 border border-gray-300 rounded-md"
-                      disabled={editingSection !== "skills"}
-                    />
-                  </li>
-                ))
-              ) : (
-                <p className="text-gray-600">No skills listed.</p>
-              )}
-            </ul>
-          </section>
-        </main>
-      </div>
-
-      {/* Edit Profile Modal */}
-      {isEditModalOpen && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-              Edit Profile
-            </h2>
-            {errorMessage && (
-              <div className="text-red-600 text-sm mb-4">{errorMessage}</div>
+            {/* Premium Badge */}
+            {isPremium && (
+              <div className="absolute top-4 right-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center space-x-1">
+                <SparklesIcon className="h-4 w-4" />
+                <span>Premium</span>
+              </div>
             )}
-            <div className="space-y-4">
-              <div>
-                <label
-                  htmlFor="name"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Name
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  value={userData.name}
-                  onChange={handleChange}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
+          </div>
+
+          {/* Profile Info */}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-20 relative z-10">
+            <GlassCard className="p-6 lg:p-8">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-6">
+                  {/* Avatar */}
+                  <div className="relative">
+                    <div className="h-32 w-32 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-4xl font-bold shadow-2xl border-4 border-white/20">
+                      {profile.avatar ? (
+                        <img
+                          src={profile.avatar}
+                          alt={profile.name}
+                          className="h-32 w-32 rounded-full object-cover"
+                        />
+                      ) : (
+                        profile.name
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")
+                      )}
+                    </div>
+                    {isPremium && (
+                      <div className="absolute -bottom-2 -right-2 bg-gradient-to-r from-yellow-400 to-orange-500 p-2 rounded-full shadow-lg">
+                        <TrophyIcon className="h-5 w-5 text-white" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Profile Details */}
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <h1 className="text-3xl font-bold text-gray-900">
+                        {profile.name}
+                      </h1>
+                      {isPremium && (
+                        <SparklesIcon className="h-6 w-6 text-yellow-500" />
+                      )}
+                    </div>
+                    <p className="text-xl text-gray-600 mb-2">
+                      {profile.title}
+                    </p>
+                    <div className="flex items-center space-x-4 text-sm text-gray-500">
+                      <div className="flex items-center space-x-1">
+                        <MapPinIcon className="h-4 w-4" />
+                        <span>{profile.location}</span>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <EyeIcon className="h-4 w-4" />
+                        <span>{viewCount} profile views</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex flex-wrap items-center space-x-3 mt-6 lg:mt-0">
+                  {!isOwnProfile && (
+                    <>
+                      <button
+                        onClick={handleConnect}
+                        disabled={isConnected}
+                        className={`px-6 py-3 rounded-xl font-medium transition-all duration-200 ${
+                          isConnected
+                            ? "bg-green-600 hover:bg-green-700 text-white"
+                            : "bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl"
+                        }`}
+                      >
+                        {isConnected ? (
+                          <>
+                            <CheckCircleIcon className="h-4 w-4 mr-2 inline" />
+                            Connected
+                          </>
+                        ) : (
+                          <>
+                            <UserPlusIcon className="h-4 w-4 mr-2 inline" />
+                            Connect
+                          </>
+                        )}
+                      </button>
+                      <button
+                        onClick={handleFollow}
+                        className={`px-6 py-3 rounded-xl font-medium transition-all duration-200 ${
+                          isFollowing
+                            ? "bg-blue-50 text-blue-600 border border-blue-200"
+                            : "bg-white/80 backdrop-blur-sm text-gray-700 border border-gray-200 hover:bg-white"
+                        }`}
+                      >
+                        {isFollowing ? (
+                          <>
+                            <CheckCircleIcon className="h-4 w-4 mr-2 inline" />
+                            Following
+                          </>
+                        ) : (
+                          <>
+                            <PlusIcon className="h-4 w-4 mr-2 inline" />
+                            Follow
+                          </>
+                        )}
+                      </button>
+                      <button
+                        onClick={handleMessage}
+                        className="px-6 py-3 rounded-xl font-medium bg-white/80 backdrop-blur-sm text-gray-700 border border-gray-200 hover:bg-white transition-all duration-200"
+                      >
+                        <ChatBubbleLeftRightIcon className="h-4 w-4 mr-2 inline" />
+                        Message
+                      </button>
+                    </>
+                  )}
+
+                  {isOwnProfile && (
+                    <button
+                      onClick={() => setShowEditModal(true)}
+                      className="px-6 py-3 rounded-xl font-medium bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                    >
+                      <PencilIcon className="h-4 w-4 mr-2 inline" />
+                      Edit Profile
+                    </button>
+                  )}
+
+                  <button
+                    onClick={handleLike}
+                    className="p-3 rounded-xl bg-white/80 backdrop-blur-sm border border-gray-200 hover:bg-white transition-all duration-200"
+                  >
+                    {isLiked ? (
+                      <HeartSolidIcon className="h-4 w-4 text-red-500" />
+                    ) : (
+                      <HeartIcon className="h-4 w-4" />
+                    )}
+                  </button>
+
+                  <button
+                    onClick={handleBookmark}
+                    className="p-3 rounded-xl bg-white/80 backdrop-blur-sm border border-gray-200 hover:bg-white transition-all duration-200"
+                  >
+                    <BookmarkIcon className="h-4 w-4" />
+                  </button>
+
+                  <button
+                    onClick={handleShare}
+                    className="p-3 rounded-xl bg-white/80 backdrop-blur-sm border border-gray-200 hover:bg-white transition-all duration-200"
+                  >
+                    <ShareIcon className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
-              <div>
-                <label
-                  htmlFor="headline"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Headline
-                </label>
-                <input
-                  type="text"
-                  id="headline"
-                  name="headline"
-                  value={userData.headline}
-                  onChange={handleChange}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
+
+              {/* Bio */}
+              <div className="mt-6">
+                <p className="text-gray-700 leading-relaxed">{profile.bio}</p>
               </div>
-              <div className="flex justify-end space-x-4 mt-4">
-                <button
-                  onClick={() => setEditModalOpen(false)}
-                  className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSaveProfile}
-                  className="bg-blue-500 text-white px-4 py-2 rounded-md"
-                >
-                  {isLoading ? "Saving..." : "Save Changes"}
-                </button>
+
+              {/* Stats */}
+              <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="text-center p-4 bg-white/50 backdrop-blur-sm rounded-2xl border border-white/20">
+                  <div className="text-2xl font-bold text-blue-600">
+                    {profile.stats.connections}
+                  </div>
+                  <div className="text-sm text-gray-600">Connections</div>
+                </div>
+                <div className="text-center p-4 bg-white/50 backdrop-blur-sm rounded-2xl border border-white/20">
+                  <div className="text-2xl font-bold text-green-600">
+                    {profile.stats.profileViews}
+                  </div>
+                  <div className="text-sm text-gray-600">Profile Views</div>
+                </div>
+                <div className="text-center p-4 bg-white/50 backdrop-blur-sm rounded-2xl border border-white/20">
+                  <div className="text-2xl font-bold text-purple-600">
+                    {profile.stats.postViews}
+                  </div>
+                  <div className="text-sm text-gray-600">Post Views</div>
+                </div>
+                <div className="text-center p-4 bg-white/50 backdrop-blur-sm rounded-2xl border border-white/20">
+                  <div className="text-2xl font-bold text-orange-600">
+                    {profile.stats.endorsements}
+                  </div>
+                  <div className="text-sm text-gray-600">Endorsements</div>
+                </div>
               </div>
+            </GlassCard>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            {/* Main Content Area */}
+            <div className="lg:col-span-3 space-y-6">
+              {/* Profile Card */}
+              <ProfileCard
+                profile={profile}
+                onEdit={() => setShowEditModal(true)}
+              />
+
+              {/* Tabs */}
+              <GlassCard className="overflow-hidden">
+                <div className="border-b border-white/20">
+                  <nav className="flex space-x-8 px-6" aria-label="Tabs">
+                    {tabs.map((tab) => {
+                      const Icon = tab.icon;
+                      return (
+                        <button
+                          key={tab.id}
+                          onClick={() => setActiveTab(tab.id)}
+                          className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 transition-colors duration-200 ${
+                            activeTab === tab.id
+                              ? "border-blue-500 text-blue-600"
+                              : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                          }`}
+                        >
+                          <Icon className="h-5 w-5" />
+                          <span>{tab.name}</span>
+                        </button>
+                      );
+                    })}
+                  </nav>
+                </div>
+
+                <div className="p-6">
+                  {activeTab === "overview" && (
+                    <div className="space-y-6">
+                      {/* Skills Preview */}
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                          Top Skills
+                        </h3>
+                        <div className="flex flex-wrap gap-2">
+                          {profile.skills.slice(0, 6).map((skill, index) => (
+                            <span
+                              key={index}
+                              className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
+                            >
+                              {skill.name}
+                              <span className="ml-2 text-xs text-blue-600">
+                                {skill.level}
+                              </span>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Recent Experience */}
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                          Recent Experience
+                        </h3>
+                        <div className="space-y-4">
+                          {profile.experience.slice(0, 2).map((exp) => (
+                            <div
+                              key={exp.id}
+                              className="border-l-4 border-blue-500 pl-4"
+                            >
+                              <h4 className="font-medium text-gray-900">
+                                {exp.title}
+                              </h4>
+                              <p className="text-gray-600">
+                                {exp.company} • {exp.location}
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                {exp.startDate} - {exp.endDate || "Present"}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {activeTab === "experience" && (
+                    <ExperienceList experience={profile.experience} />
+                  )}
+
+                  {activeTab === "education" && (
+                    <EducationList education={profile.education} />
+                  )}
+
+                  {activeTab === "skills" && (
+                    <SkillsList skills={profile.skills} />
+                  )}
+
+                  {activeTab === "activity" && (
+                    <ActivityFeed activities={profile.activities} />
+                  )}
+                </div>
+              </GlassCard>
+            </div>
+
+            {/* Sidebar */}
+            <div className="space-y-6">
+              {/* Premium Upgrade Card */}
+              {!isPremium && (
+                <GlassCard className="bg-gradient-to-br from-yellow-400 to-orange-500 text-white">
+                  <div className="flex items-center space-x-2 mb-4">
+                    <SparklesIcon className="h-6 w-6" />
+                    <h3 className="text-lg font-semibold">
+                      Upgrade to Premium
+                    </h3>
+                  </div>
+                  <p className="text-sm mb-4 opacity-90">
+                    Unlock advanced features, priority support, and exclusive
+                    content.
+                  </p>
+                  <button
+                    onClick={() => setShowPaymentModal(true)}
+                    className="w-full bg-white text-orange-600 font-medium py-2 px-4 rounded-xl hover:bg-gray-100 transition-colors"
+                  >
+                    Upgrade Now
+                  </button>
+                </GlassCard>
+              )}
+
+              {/* Contact Information */}
+              <GlassCard>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  Contact Information
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-3">
+                    <EnvelopeIcon className="h-5 w-5 text-gray-400" />
+                    <span className="text-gray-700">{profile.email}</span>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <PhoneIcon className="h-5 w-5 text-gray-400" />
+                    <span className="text-gray-700">{profile.phone}</span>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <GlobeAltIcon className="h-5 w-5 text-gray-400" />
+                    <a
+                      href={profile.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-700"
+                    >
+                      {profile.website}
+                    </a>
+                  </div>
+                </div>
+              </GlassCard>
+
+              {/* Certifications */}
+              <GlassCard>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  Certifications
+                </h3>
+                <div className="space-y-3">
+                  {profile.certifications.map((cert, index) => (
+                    <div key={index} className="flex items-center space-x-3">
+                      <CheckCircleIcon className="h-5 w-5 text-green-500" />
+                      <div>
+                        <div className="font-medium text-gray-900">
+                          {cert.name}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {cert.issuer} • {cert.date}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </GlassCard>
+
+              {/* Languages */}
+              <GlassCard>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  Languages
+                </h3>
+                <div className="space-y-2">
+                  {profile.languages.map((lang, index) => (
+                    <div
+                      key={index}
+                      className="flex justify-between items-center"
+                    >
+                      <span className="text-gray-700">{lang.name}</span>
+                      <span className="text-sm text-gray-500">
+                        {lang.level}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </GlassCard>
             </div>
           </div>
         </div>
-      )}
 
-      {/* Edit Profile Button */}
-      <div className="fixed bottom-6 right-6">
-        <button
-          onClick={() => setEditModalOpen(true)}
-          className="bg-blue-500 text-white p-4 rounded-full shadow-lg hover:bg-blue-600 transition-all"
-        >
-          Edit Profile
-        </button>
+        {/* Edit Profile Modal */}
+        {showEditModal && (
+          <EditProfileModal
+            isOpen={showEditModal}
+            profile={profile}
+            onClose={() => setShowEditModal(false)}
+            onSave={handleUpdateProfile}
+          />
+        )}
+
+        {/* Payment Modal */}
+        {showPaymentModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <GlassCard className="max-w-md w-full">
+              <div className="text-center mb-6">
+                <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 mb-4">
+                  <SparklesIcon className="h-6 w-6 text-white" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Upgrade to Premium
+                </h3>
+                <p className="text-gray-600 mt-2">
+                  Get access to exclusive features and priority support
+                </p>
+              </div>
+
+              <div className="space-y-4 mb-6">
+                <div className="flex items-center space-x-3">
+                  <CheckCircleIcon className="h-5 w-5 text-green-500" />
+                  <span className="text-gray-700">
+                    Priority job applications
+                  </span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <CheckCircleIcon className="h-5 w-5 text-green-500" />
+                  <span className="text-gray-700">Advanced analytics</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <CheckCircleIcon className="h-5 w-5 text-green-500" />
+                  <span className="text-gray-700">Direct messaging</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <CheckCircleIcon className="h-5 w-5 text-green-500" />
+                  <span className="text-gray-700">Premium support</span>
+                </div>
+              </div>
+
+              <form className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Name
+                  </label>
+                  <input
+                    type="text"
+                    value={paymentData.name}
+                    onChange={(e) =>
+                      setPaymentData({ ...paymentData, name: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    value={paymentData.email}
+                    onChange={(e) =>
+                      setPaymentData({ ...paymentData, email: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Phone
+                  </label>
+                  <input
+                    type="tel"
+                    value={paymentData.phone}
+                    onChange={(e) =>
+                      setPaymentData({ ...paymentData, phone: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  />
+                </div>
+              </form>
+
+              <div className="flex space-x-3 mt-6">
+                <button
+                  onClick={() => setShowPaymentModal(false)}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <PaystackButton
+                  {...paymentProps}
+                  className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-medium"
+                />
+              </div>
+            </GlassCard>
+          </div>
+        )}
       </div>
     </div>
   );
-};
-
-ProfilePage.propTypes = {
-  user: PropTypes.shape({
-    name: PropTypes.string.isRequired,
-    headline: PropTypes.string.isRequired,
-    location: PropTypes.string.isRequired,
-    profilePicture: PropTypes.string.isRequired,
-    backgroundImage: PropTypes.string,
-    experiences: PropTypes.arrayOf(
-      PropTypes.shape({
-        id: PropTypes.number.isRequired,
-        position: PropTypes.string.isRequired,
-        company: PropTypes.string.isRequired,
-        duration: PropTypes.string.isRequired,
-      })
-    ).isRequired,
-    education: PropTypes.arrayOf(
-      PropTypes.shape({
-        id: PropTypes.number.isRequired,
-        degree: PropTypes.string.isRequired,
-        institution: PropTypes.string.isRequired,
-        duration: PropTypes.string.isRequired,
-      })
-    ).isRequired,
-    skills: PropTypes.arrayOf(
-      PropTypes.shape({
-        id: PropTypes.number.isRequired,
-        name: PropTypes.string.isRequired,
-      })
-    ).isRequired,
-    recommendations: PropTypes.arrayOf(
-      PropTypes.shape({
-        id: PropTypes.number.isRequired,
-        recommender: PropTypes.string.isRequired,
-        message: PropTypes.string.isRequired,
-      })
-    ).isRequired,
-    activities: PropTypes.arrayOf(
-      PropTypes.shape({
-        id: PropTypes.number.isRequired,
-        timestamp: PropTypes.string.isRequired,
-        description: PropTypes.string.isRequired,
-      })
-    ).isRequired,
-  }).isRequired,
 };
 
 export default ProfilePage;

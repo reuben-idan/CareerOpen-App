@@ -1,7 +1,8 @@
 // pages/NotificationPage.jsx
 import { useState, useEffect } from "react";
-import NotificationList from "../components/NotificationList";
-import NotificationFilter from "../components/NotificationFilter";
+import NotificationList from "../components/notifications/NotificationList";
+import NotificationFilter from "../components/notifications/NotificationFilter";
+import Sidebar from "../components/layout/Sidebar";
 
 // Sample data for notifications
 const sampleNotifications = [
@@ -49,20 +50,25 @@ const NotificationPage = () => {
   }, [selectedFilter]);
 
   return (
-    <div className="bg-gray-50 min-h-screen">
-      <div className="container mx-auto py-8 px-4">
-        <h1 className="text-2xl font-semibold text-gray-800 mb-6">
-          Notifications
-        </h1>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
+      {/* Sidebar Navigation */}
+      <Sidebar />
+      {/* Main Content */}
+      <div className="flex-1 ml-0 md:ml-64">
+        <div className="container mx-auto py-8 px-4">
+          <h1 className="text-2xl font-semibold text-gray-800 mb-6">
+            Notifications
+          </h1>
 
-        {/* Filter Component */}
-        <NotificationFilter
-          selectedFilter={selectedFilter}
-          onFilterChange={setSelectedFilter}
-        />
+          {/* Filter Component */}
+          <NotificationFilter
+            selectedFilter={selectedFilter}
+            onFilterChange={setSelectedFilter}
+          />
 
-        {/* Notifications List */}
-        <NotificationList notifications={filteredNotifications} />
+          {/* Notifications List */}
+          <NotificationList notifications={filteredNotifications} />
+        </div>
       </div>
     </div>
   );

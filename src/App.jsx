@@ -1,133 +1,163 @@
-import "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import {
   BrowserRouter as Router,
   Route,
   Routes,
   Navigate,
+  useLocation,
 } from "react-router-dom";
-import { UserProvider, useUser } from "./context/UserContext"; // Import UserProvider
-import PropTypes from "prop-types"; // Import PropTypes for validation
-import ProfilePage from "./pages/ProfilePage";
-import JobList from "./pages/JobList";
-import JobDetail from "./pages/JobDetail";
-import NavigationBar from "./components/NavigationBar";
-import Feed from "./pages/Feed";
-import MyNetwork from "./pages/MyNetwork";
-import Messages from "./pages/Messages";
-import SignupPage from "./pages/SignUpPage";
-import SigninPage from "./pages/SignInPage";
-import NotificationPage from "./pages/NotificationPage";
-// import { db } from "../firebaseConfig";
-// import NotFoundPage from "./components/NotFoundPage"; 
+import { UserProvider, useUser } from "./context/auth";
+import { ThemeProvider } from "./context/ThemeContext";
+import PropTypes from "prop-types";
+import NavigationBar from "./components/layout/NavigationBar";
+import Sidebar from "./components/layout/Sidebar";
+import LoadingSpinner from "./components/common/LoadingSpinner";
+import ErrorBoundary from "./components/common/ErrorBoundary";
+import SEO from "./components/common/SEO";
+import analytics from "./services/analytics";
+import config from "./config/env";
+import { HelmetProvider } from "react-helmet-async";
+import "./index.css";
 
+// Lazy load components for better performance
+const ProfilePage = lazy(() => import("./pages/ProfilePage"));
+const JobList = lazy(() => import("./pages/JobList"));
+const JobDetail = lazy(() => import("./pages/JobDetail"));
+const Feed = lazy(() => import("./pages/Feed"));
+const MyNetwork = lazy(() => import("./pages/MyNetwork"));
+const Messages = lazy(() => import("./pages/Messages"));
+const SignupPage = lazy(() => import("./pages/SignUpPage"));
+const SigninPage = lazy(() => import("./pages/SignInPage"));
+const NotificationPage = lazy(() => import("./pages/NotificationPage"));
+const SubscriptionPayment = lazy(() => import("./pages/SubscriptionPayment"));
+const SettingsPage = lazy(() => import("./pages/SettingsPage"));
+const SavedJobsPage = lazy(() => import("./pages/SavedJobsPage"));
 
-import "./index.css"; // or wherever your Tailwind CSS file is located
-import SubscriptionPayment from "./pages/SubscriptionPayment";
+// Analytics wrapper component
+const AnalyticsWrapper = ({ children }) => {
+  const location = useLocation();
 
+  useEffect(() => {
+    analytics.initialize();
+    analytics.trackPageView(location.pathname, document.title);
+  }, [location]);
+
+  return children;
+};
 
 const App = () => {
-  
   return (
-    
-    <UserProvider>
-      <Router>
-        <AuthenticatedRoutes />
-      </Router>
-    </UserProvider>
+    <ErrorBoundary>
+      <HelmetProvider>
+        <ThemeProvider>
+          <UserProvider>
+            <Router>
+              <AnalyticsWrapper>
+                <SEO />
+                <AuthenticatedRoutes />
+              </AnalyticsWrapper>
+            </Router>
+          </UserProvider>
+        </ThemeProvider>
+      </HelmetProvider>
+    </ErrorBoundary>
   );
 };
 
-// AuthenticatedRoutes component handles the routes with conditional rendering for NavigationBar
 const AuthenticatedRoutes = () => {
   const { user } = useUser();
-  
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+  const handleSidebarToggle = () => {
+    setIsSidebarCollapsed(!isSidebarCollapsed);
+  };
 
   return (
-    <div>
-      {/* Only render the NavigationBar if the user is authenticated */}
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {user && <NavigationBar />}
+      <main className={`${user ? "pt-16" : ""}`}>
+        <Suspense fallback={<LoadingSpinner />}>
+          <Routes>
+            {/* Auth Routes */}
+            <Route path="/" element={<AuthRedirect />} />
+            <Route
+              path="/signup"
+              element={<AuthRoute Component={SignupPage} />}
+            />
+            <Route
+              path="/signin"
+              element={<AuthRoute Component={SigninPage} />}
+            />
 
-      <div className="container mx-auto px-4 py-8">
-        <Routes>
-          {/* Auth Routes */}
-          <Route path="/" element={<AuthRedirect />} />
-          <Route
-            path="/signup"
-            element={<AuthRoute Component={SignupPage} />}
-          />
-          <Route
-            path="/signin"
-            element={<AuthRoute Component={SigninPage} />}
-          />
+            {/* Public Routes */}
+            <Route path="/jobs" element={<JobList />} />
+            <Route path="/job/:jobId" element={<JobDetail />} />
+            <Route path="/feed" element={<Feed />} />
 
-          {/* Public Routes */}
-          <Route path="/jobs" element={<JobList />} />
-          <Route path="/job/:jobId" element={<JobDetail />} />
-          <Route path="/feed/:feedId" element={<Feed />} />
+            {/* Protected Routes */}
+            <Route
+              path="/profile/:userId"
+              element={<PrivateRoute Component={ProfilePage} />}
+            />
+            <Route
+              path="/subscription"
+              element={<PrivateRoute Component={SubscriptionPayment} />}
+            />
+            <Route
+              path="/network"
+              element={<PrivateRoute Component={MyNetwork} />}
+            />
+            <Route
+              path="/messages"
+              element={<PrivateRoute Component={Messages} />}
+            />
+            <Route
+              path="/notifications"
+              element={<PrivateRoute Component={NotificationPage} />}
+            />
+            <Route
+              path="/settings"
+              element={<PrivateRoute Component={SettingsPage} />}
+            />
+            <Route
+              path="/saved-jobs"
+              element={<PrivateRoute Component={SavedJobsPage} />}
+            />
 
-          {/* Profile Routes */}
-          <Route
-            path="/profile/:userId"
-            element={<PrivateRoute Component={ProfilePage} />}
-          />
-          <Route
-            path="/SubscriptionPayment"
-            element={<PrivateRoute Component={SubscriptionPayment} />}
-          />
-
-          {/* My Network & Messages Routes */}
-          <Route
-            path="/myNetwork/:userId"
-            element={<PrivateRoute Component={MyNetwork} />}
-          />
-          <Route
-            path="/messages/:messageId"
-            element={<PrivateRoute Component={Messages} />}
-          />
-          <Route
-            path="/notifications/:notificationId"
-            element={<PrivateRoute Component={NotificationPage} />}
-          />
-
-          {/* Redirect for any undefined routes */}
-          <Route path="*" element={<Feed />} />
-        </Routes>
-      </div>
+            {/* Fallback Route */}
+            <Route path="*" element={<Navigate to="/feed" replace />} />
+          </Routes>
+        </Suspense>
+      </main>
     </div>
   );
 };
 
-// AuthRedirect component for handling initial page routing
 const AuthRedirect = () => {
   const { user } = useUser();
-  if (user) {
-    // If user is logged in, redirect to Feed (or other landing page)
-    return <Navigate to="/feed" />;
-  } else {
-    // If no user is logged in, show the signup page
-    return <Navigate to="/signup" />;
-  }
+  return user ? (
+    <Navigate to="/feed" replace />
+  ) : (
+    <Navigate to="/signup" replace />
+  );
 };
 
-// PrivateRoute component ensures only authenticated users can access these routes
 const PrivateRoute = ({ Component }) => {
   const { user } = useUser();
-  return user ? <Component /> : <Navigate to="/signin" />;
+  return user ? <Component /> : <Navigate to="/signin" replace />;
 };
 
-// AuthRoute component ensures that authenticated users are redirected away from sign-in or sign-up pages
 const AuthRoute = ({ Component }) => {
   const { user } = useUser();
-  return user ? <Navigate to="/NotFoundPage" /> : <Component />;
+  return user ? <Navigate to="/feed" replace /> : <Component />;
 };
 
-// PropTypes validation for PrivateRoute and AuthRoute components
 PrivateRoute.propTypes = {
-  Component: PropTypes.elementType.isRequired, // Ensures Component is a React component
+  Component: PropTypes.elementType.isRequired,
 };
 
 AuthRoute.propTypes = {
-  Component: PropTypes.elementType.isRequired, // Ensures Component is a React component
+  Component: PropTypes.elementType.isRequired,
 };
 
 export default App;

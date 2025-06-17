@@ -1,14 +1,17 @@
 # CareerOpen - Connecting Talent with Opportunity
 
 ## Overview
+
 CareerOpen is a job board platform designed to bridge the gap between talented job seekers and potential employers. It offers a seamless experience for users to post job listings, search for jobs, and manage applications.
 
 ## Technologies
+
 - **Frontend:** React.js
 - **Backend:** Node.js
 - **Database:** MongoDB
 
 ## Features
+
 - **User Registration:** Secure sign-up process for employers and job seekers.
 - **Advanced Job Search:** Filters by various criteria like location and job type.
 - **Resume Uploads:** Easy upload and management of resumes.
@@ -22,10 +25,13 @@ CareerOpen is a job board platform designed to bridge the gap between talented j
 - **Career Resources:** Valuable content to aid job search.
 
 ## Design
+
 An elegant and professional theme with interactive elements ensures a user-friendly experience.
 
 ## Getting Started
+
 Instructions on setting up the project locally.
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
@@ -57,7 +63,6 @@ Your app is ready to be deployed!
 
 See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
 
-
 ## Learn More
 
 You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
@@ -87,18 +92,37 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
- 18,316 changes: 18,316 additions & 0 deletions18,316  
+18,316 changes: 18,316 additions & 0 deletions18,316  
 package-lock.json
 
-
 ## Contribution
+
 Guidelines for contributing to the project.
 
 ## License
+
 Details about the project's license.
 
-
-
 ## Contact
+
 Information on how to reach out for support or queries.
 
+## Running Tests
+
+This project uses [Vitest](https://vitest.dev/) and [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/) for unit and component testing.
+
+### To run all tests:
+
+```
+npm test
+```
+
+### Test file locations
+
+- Test files are placed next to their components (e.g., `Component.test.jsx`)
+- You can also organize tests in `__tests__` folders if preferred
+
+### Writing tests
+
+- Use `.test.js` or `.test.jsx` extensions for test files
+- See existing tests in `src/components/common/LoadingSpinner.test.jsx`, `src/components/jobs/JobCard.test.jsx`, etc., for examples

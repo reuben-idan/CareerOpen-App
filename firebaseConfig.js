@@ -20,12 +20,45 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
+// Validate Firebase configuration
+const validateFirebaseConfig = (config) => {
+  const requiredFields = [
+    "apiKey",
+    "authDomain",
+    "projectId",
+    "storageBucket",
+    "messagingSenderId",
+    "appId",
+  ];
+
+  const missingFields = requiredFields.filter((field) => !config[field]);
+
+  if (missingFields.length > 0) {
+    console.error("Missing Firebase configuration:", missingFields);
+    throw new Error(
+      `Missing required Firebase configuration: ${missingFields.join(", ")}`
+    );
+  }
+};
+
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const googleProvider = new GoogleAuthProvider();
-const facebookProvider = new FacebookAuthProvider();
-const db = getFirestore(app);
+let app;
+let auth;
+let googleProvider;
+let facebookProvider;
+let db;
+
+try {
+  validateFirebaseConfig(firebaseConfig);
+  app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  googleProvider = new GoogleAuthProvider();
+  facebookProvider = new FacebookAuthProvider();
+  db = getFirestore(app);
+} catch (error) {
+  console.error("Firebase initialization error:", error);
+  throw error;
+}
 
 export {
   app,

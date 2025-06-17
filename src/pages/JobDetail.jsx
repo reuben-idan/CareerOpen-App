@@ -7,10 +7,12 @@ import {
   FaRegHeart,
   FaArrowAltCircleRight,
 } from "react-icons/fa";
+import JobCard from "../components/jobs/JobCard";
+import Sidebar from "../components/layout/Sidebar";
 
 const JobDetail = () => {
   const { jobId } = useParams();
-  const [job, setJob] = useState(null); // Initial state set to null
+  const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -45,33 +47,13 @@ const JobDetail = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-2xl mx-auto bg-white shadow-lg rounded-lg p-6">
-        <h2 className="text-3xl font-semibold">{job.title}</h2>
-        <div className="flex items-center space-x-2 text-lg text-gray-700 mt-2">
-          <FaBriefcase />
-          <span>{job.company}</span>
-        </div>
-        <div className="flex items-center space-x-2 text-sm text-gray-500 mt-2">
-          <FaMapMarkerAlt />
-          <span>{job.location}</span>
-        </div>
-        <div className="mt-4">
-          <h3 className="text-lg font-semibold">Job Description</h3>
-          <p className="text-gray-600 mt-2">{job.description}</p>
-        </div>
-        <div className="flex items-center justify-between mt-6">
-          <button
-            onClick={handleApply}
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg flex items-center space-x-2 hover:bg-blue-700 transition duration-200"
-          >
-            <FaArrowAltCircleRight />
-            <span>Apply Now</span>
-          </button>
-          <button className="text-gray-500 flex items-center space-x-2">
-            <FaRegHeart />
-            <span>Save</span>
-          </button>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
+      {/* Sidebar Navigation */}
+      <Sidebar />
+      {/* Main Content */}
+      <div className="flex-1 ml-0 md:ml-64">
+        <div className="container mx-auto px-4 py-8">
+          <JobCard job={job} onApply={handleApply} />
         </div>
       </div>
     </div>
