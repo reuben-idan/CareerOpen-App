@@ -8,6 +8,7 @@ import {
 } from "react-router-dom";
 import { UserProvider, useUser } from "./context/auth";
 import { ThemeProvider } from "./context/ThemeContext";
+import { ProfileProvider } from "./context/profile";
 import PropTypes from "prop-types";
 import NavigationBar from "./components/layout/NavigationBar";
 import Sidebar from "./components/layout/Sidebar";
@@ -18,6 +19,9 @@ import analytics from "./services/analytics";
 import config from "./config/env";
 import { HelmetProvider } from "react-helmet-async";
 import "./index.css";
+import { Web3Provider } from "./context/web3";
+import CookieConsent from "./components/common/CookieConsent";
+import { ToastProvider } from "./context/toast";
 
 // Lazy load components for better performance
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
@@ -51,14 +55,24 @@ const App = () => {
       <HelmetProvider>
         <ThemeProvider>
           <UserProvider>
-            <Router
-              future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
-            >
-              <AnalyticsWrapper>
-                <SEO />
-                <AuthenticatedRoutes />
-              </AnalyticsWrapper>
-            </Router>
+            <Web3Provider>
+              <ProfileProvider>
+                <ToastProvider>
+                  <Router
+                    future={{
+                      v7_startTransition: true,
+                      v7_relativeSplatPath: true,
+                    }}
+                  >
+                    <AnalyticsWrapper>
+                      <SEO />
+                      <AuthenticatedRoutes />
+                      <CookieConsent />
+                    </AnalyticsWrapper>
+                  </Router>
+                </ToastProvider>
+              </ProfileProvider>
+            </Web3Provider>
           </UserProvider>
         </ThemeProvider>
       </HelmetProvider>

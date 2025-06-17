@@ -17,14 +17,14 @@ import {
 import { HeartIcon as HeartSolidIcon } from "@heroicons/react/24/solid";
 
 const ProfileHeader = ({
-  profile,
-  isOwnProfile,
-  isConnected,
-  isFollowing,
-  isPremium,
-  viewCount,
-  isLiked,
-  isBookmarked,
+  profile = {},
+  isOwnProfile = false,
+  isConnected = false,
+  isFollowing = false,
+  isPremium = false,
+  viewCount = 0,
+  isLiked = false,
+  isBookmarked = false,
   onEdit,
   onConnect,
   onFollow,
@@ -33,6 +33,40 @@ const ProfileHeader = ({
   onBookmark,
   onShare,
 }) => {
+  // Early return if profile is not loaded or invalid
+  if (!profile || typeof profile !== 'object' || Object.keys(profile).length === 0) {
+    return (
+      <div className="animate-pulse">
+        <div className="h-64 bg-gray-200 dark:bg-gray-700"></div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-20">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 lg:p-8">
+            <div className="flex items-center space-x-4">
+              <div className="h-32 w-32 rounded-full bg-gray-200 dark:bg-gray-700"></div>
+              <div className="flex-1">
+                <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-2"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const stats = profile.stats || {
+    connections: 0,
+    profileViews: 0,
+    posts: 0,
+    likes: 0,
+  };
+
+  const initials = profile.name
+    ? profile.name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+    : "?";
+
   return (
     <div className="relative">
       {/* Background Cover */}
@@ -60,14 +94,17 @@ const ProfileHeader = ({
                   {profile.avatar ? (
                     <img
                       src={profile.avatar}
-                      alt={profile.name}
+                      alt={profile.name || "Profile"}
                       className="h-32 w-32 rounded-full object-cover"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                          profile.name || "User"
+                        )}&background=random`;
+                      }}
                     />
                   ) : (
-                    profile.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")
+                    initials
                   )}
                 </div>
                 {isPremium && (
@@ -81,20 +118,22 @@ const ProfileHeader = ({
               <div className="flex-1">
                 <div className="flex items-center space-x-2 mb-2">
                   <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                    {profile.name}
+                    {profile.name || "Anonymous User"}
                   </h1>
                   {isPremium && (
                     <SparklesIcon className="h-6 w-6 text-yellow-500" />
                   )}
                 </div>
                 <p className="text-xl text-gray-600 dark:text-gray-300 mb-2">
-                  {profile.title}
+                  {profile.title || "No title provided"}
                 </p>
                 <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
+                  {profile.location && (
                   <div className="flex items-center space-x-1">
                     <MapPinIcon className="h-4 w-4" />
                     <span>{profile.location}</span>
                   </div>
+                  )}
                   <div className="flex items-center space-x-1">
                     <EyeIcon className="h-4 w-4" />
                     <span>{viewCount} profile views</span>
@@ -179,17 +218,19 @@ const ProfileHeader = ({
           </div>
 
           {/* Bio */}
+          {profile.bio && (
           <div className="mt-6">
             <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
               {profile.bio}
             </p>
           </div>
+          )}
 
           {/* Stats */}
           <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
               <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                {profile.stats.connections}
+                {stats.connections}
               </div>
               <div className="text-sm text-gray-600 dark:text-gray-400">
                 Connections
@@ -197,7 +238,7 @@ const ProfileHeader = ({
             </div>
             <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
               <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                {profile.stats.profileViews}
+                {stats.profileViews}
               </div>
               <div className="text-sm text-gray-600 dark:text-gray-400">
                 Profile Views
@@ -205,18 +246,18 @@ const ProfileHeader = ({
             </div>
             <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
               <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                {profile.stats.postViews}
+                {stats.posts}
               </div>
               <div className="text-sm text-gray-600 dark:text-gray-400">
-                Post Views
+                Posts
               </div>
             </div>
             <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
               <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
-                {profile.stats.endorsements}
+                {stats.likes}
               </div>
               <div className="text-sm text-gray-600 dark:text-gray-400">
-                Endorsements
+                Likes
               </div>
             </div>
           </div>
@@ -228,32 +269,32 @@ const ProfileHeader = ({
 
 ProfileHeader.propTypes = {
   profile: PropTypes.shape({
-    name: PropTypes.string.isRequired,
-    title: PropTypes.string.isRequired,
-    location: PropTypes.string.isRequired,
+    name: PropTypes.string,
+    title: PropTypes.string,
+    bio: PropTypes.string,
+    location: PropTypes.string,
     avatar: PropTypes.string,
-    bio: PropTypes.string.isRequired,
     stats: PropTypes.shape({
-      connections: PropTypes.number.isRequired,
-      profileViews: PropTypes.number.isRequired,
-      postViews: PropTypes.number.isRequired,
-      endorsements: PropTypes.number.isRequired,
-    }).isRequired,
-  }).isRequired,
-  isOwnProfile: PropTypes.bool.isRequired,
-  isConnected: PropTypes.bool.isRequired,
-  isFollowing: PropTypes.bool.isRequired,
-  isPremium: PropTypes.bool.isRequired,
-  viewCount: PropTypes.number.isRequired,
-  isLiked: PropTypes.bool.isRequired,
-  isBookmarked: PropTypes.bool.isRequired,
-  onEdit: PropTypes.func.isRequired,
-  onConnect: PropTypes.func.isRequired,
-  onFollow: PropTypes.func.isRequired,
-  onMessage: PropTypes.func.isRequired,
-  onLike: PropTypes.func.isRequired,
-  onBookmark: PropTypes.func.isRequired,
-  onShare: PropTypes.func.isRequired,
+      connections: PropTypes.number,
+      profileViews: PropTypes.number,
+      posts: PropTypes.number,
+      likes: PropTypes.number,
+    }),
+  }),
+  isOwnProfile: PropTypes.bool,
+  isConnected: PropTypes.bool,
+  isFollowing: PropTypes.bool,
+  isPremium: PropTypes.bool,
+  viewCount: PropTypes.number,
+  isLiked: PropTypes.bool,
+  isBookmarked: PropTypes.bool,
+  onEdit: PropTypes.func,
+  onConnect: PropTypes.func,
+  onFollow: PropTypes.func,
+  onMessage: PropTypes.func,
+  onLike: PropTypes.func,
+  onBookmark: PropTypes.func,
+  onShare: PropTypes.func,
 };
 
 export default ProfileHeader;

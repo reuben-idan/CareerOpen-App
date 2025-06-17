@@ -136,3 +136,25 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+/* Replace deprecated -ms-high-contrast with modern forced-colors */
+@media (forced-colors: active) {
+
+  /* High contrast mode styles */
+  .btn,
+  .btn-secondary {
+    forced-color-adjust: none;
+  }
+
+  .text-primary {
+    forced-color-adjust: none;
+  }
+
+  .bg-primary {
+    forced-color-adjust: none;
+  }
+
+  /* Add any other high contrast mode styles here */
+}
+
+/* Remove any existing -ms-high-contrast styles */

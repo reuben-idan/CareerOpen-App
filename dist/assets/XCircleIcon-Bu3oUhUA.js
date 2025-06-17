@@ -1,2 +1,0 @@
-import{r as e}from"./react-vendor-Dw2mMYsl.js";function t({title:t,titleId:r,...n},o){return e.createElement("svg",Object.assign({xmlns:"http://www.w3.org/2000/svg",fill:"none",viewBox:"0 0 24 24",strokeWidth:1.5,stroke:"currentColor","aria-hidden":"true","data-slot":"icon",ref:o,"aria-labelledby":r},n),t?e.createElement("title",{id:r},t):null,e.createElement("path",{strokeLinecap:"round",strokeLinejoin:"round",d:"m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"}))}const r=e.forwardRef(t);export{r as F};
-//# sourceMappingURL=XCircleIcon-Bu3oUhUA.js.map

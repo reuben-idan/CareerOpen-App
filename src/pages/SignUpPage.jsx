@@ -9,23 +9,23 @@ import logo from "../assets/logo.jpeg";
 const employerLogos = [
   {
     name: "Google",
-    url: "https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg",
+    url: "/images/employers/google.svg",
   },
   {
     name: "Microsoft",
-    url: "https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg",
+    url: "/images/employers/microsoft.svg",
   },
   {
     name: "Meta",
-    url: "https://upload.wikimedia.org/wikipedia/commons/0/05/Meta_Platforms_Logo.svg",
+    url: "/images/employers/meta.svg",
   },
   {
     name: "Amazon",
-    url: "https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg",
+    url: "/images/employers/amazon.svg",
   },
   {
     name: "Netflix",
-    url: "https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg",
+    url: "/images/employers/netflix.svg",
   },
 ];
 
@@ -75,8 +75,8 @@ export default function SignUpPage() {
     try {
       const { user } = await signUp(formData.email, formData.password);
 
-      // Create user profile with default values
-      await createUserProfile(user.uid, {
+      // Create initial profile data
+      const initialProfileData = {
         ...formData,
         id: user.uid,
         displayName: `${formData.firstName} ${formData.lastName}`,
@@ -92,9 +92,19 @@ export default function SignUpPage() {
           connections: 0,
           endorsements: 0,
         },
-      });
+      };
 
-      navigate("/feed");
+      // Store initial profile data in localStorage
+      localStorage.setItem(
+        `profile_${user.uid}`,
+        JSON.stringify(initialProfileData)
+      );
+
+      // Create user profile with default values
+      await createUserProfile(user.uid, initialProfileData);
+
+      // Navigate to profile page instead of feed
+      navigate(`/profile/${user.uid}`);
     } catch (err) {
       setError(err.message);
     } finally {

@@ -13,7 +13,7 @@ import {
   StarIcon,
 } from "@heroicons/react/24/outline";
 
-const ActivityFeed = ({ activities }) => {
+const ActivityFeed = ({ activities = [] }) => {
   const getActivityIcon = (type) => {
     switch (type) {
       case "connection":
@@ -57,6 +57,8 @@ const ActivityFeed = ({ activities }) => {
   };
 
   const formatTimestamp = (timestamp) => {
+    if (!timestamp) return "Unknown time";
+    
     const date = new Date(timestamp);
     const now = new Date();
     const diffInSeconds = Math.floor((now - date) / 1000);
@@ -114,76 +116,76 @@ const ActivityFeed = ({ activities }) => {
       </div>
 
       <div className="space-y-3">
-        {activities.map((activity, index) => (
-          <div
-            key={activity.id || index}
-            className={`p-4 rounded-lg border ${getActivityColor(
-              activity.type
-            )} hover:shadow-sm transition-shadow`}
-          >
-            <div className="flex items-start space-x-3">
-              <div className="flex-shrink-0 mt-1">
-                {getActivityIcon(activity.type)}
-              </div>
-
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between mb-1">
-                  <h4 className="text-sm font-medium text-gray-900 dark:text-white">
-                    {getActivityTitle(activity.type)}
-                  </h4>
-                  <div className="flex items-center space-x-1 text-xs text-gray-500 dark:text-gray-400">
-                    <ClockIcon className="h-3 w-3" />
-                    <span>{formatTimestamp(activity.timestamp)}</span>
-                  </div>
+        {activities && activities.length > 0 ? (
+          activities.map((activity, index) => (
+            <div
+              key={activity.id || index}
+              className={`p-4 rounded-lg border ${getActivityColor(
+                activity.type
+              )} hover:shadow-sm transition-shadow`}
+            >
+              <div className="flex items-start space-x-3">
+                <div className="flex-shrink-0 mt-1">
+                  {getActivityIcon(activity.type)}
                 </div>
 
-                <p className="text-sm text-gray-600 dark:text-gray-300">
-                  {activity.message}
-                </p>
-
-                {/* Activity Details */}
-                {activity.details && (
-                  <div className="mt-2 p-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {activity.details}
-                    </p>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                      {getActivityTitle(activity.type)}
+                    </h4>
+                    <div className="flex items-center space-x-1 text-xs text-gray-500 dark:text-gray-400">
+                      <ClockIcon className="h-3 w-3" />
+                      <span>{formatTimestamp(activity.timestamp)}</span>
+                    </div>
                   </div>
-                )}
 
-                {/* Action Buttons */}
-                {activity.actions && (
-                  <div className="mt-3 flex space-x-2">
-                    {activity.actions.map((action, idx) => (
-                      <button
-                        key={idx}
-                        onClick={action.onClick}
-                        className={`text-xs px-2 py-1 rounded transition-colors ${
-                          action.primary
-                            ? "bg-blue-600 text-white hover:bg-blue-700"
-                            : "bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
-                        }`}
-                      >
-                        {action.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                    {activity.message}
+                  </p>
+
+                  {/* Activity Details */}
+                  {activity.details && (
+                    <div className="mt-2 p-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {activity.details}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Action Buttons */}
+                  {activity.actions && (
+                    <div className="mt-3 flex space-x-2">
+                      {activity.actions.map((action, idx) => (
+                        <button
+                          key={idx}
+                          onClick={action.onClick}
+                          className={`text-xs px-2 py-1 rounded transition-colors ${
+                            action.primary
+                              ? "bg-blue-600 text-white hover:bg-blue-700"
+                              : "bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                          }`}
+                        >
+                          {action.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
+          ))
+        ) : (
+          <div className="text-center py-8">
+            <div className="text-gray-400 dark:text-gray-500 mb-2">
+              <ClockIcon className="h-12 w-12 mx-auto" />
+            </div>
+            <p className="text-gray-600 dark:text-gray-400">
+              No recent activity to show
+            </p>
           </div>
-        ))}
+        )}
       </div>
-
-      {activities.length === 0 && (
-        <div className="text-center py-8">
-          <div className="text-gray-400 dark:text-gray-500 mb-2">
-            <ClockIcon className="h-12 w-12 mx-auto" />
-          </div>
-          <p className="text-gray-600 dark:text-gray-400">
-            No recent activity to show
-          </p>
-        </div>
-      )}
 
       {/* Activity Stats */}
       <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
@@ -228,10 +230,10 @@ const ActivityFeed = ({ activities }) => {
 ActivityFeed.propTypes = {
   activities: PropTypes.arrayOf(
     PropTypes.shape({
-      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      id: PropTypes.string,
       type: PropTypes.string.isRequired,
       message: PropTypes.string.isRequired,
-      timestamp: PropTypes.string.isRequired,
+      timestamp: PropTypes.string,
       details: PropTypes.string,
       actions: PropTypes.arrayOf(
         PropTypes.shape({
@@ -241,7 +243,7 @@ ActivityFeed.propTypes = {
         })
       ),
     })
-  ).isRequired,
+  ),
 };
 
 export default ActivityFeed;

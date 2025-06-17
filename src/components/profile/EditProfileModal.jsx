@@ -1,34 +1,27 @@
 import React, { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { Dialog } from "@headlessui/react";
 import { useUser } from "../../context/auth";
 import analytics from "../../services/analytics";
-import {
-  uploadProfilePicture,
-  uploadCoverPhoto,
-  deleteFile,
-  getFilePathFromURL,
-} from "../../services/storage";
+import { uploadProfilePicture, uploadCoverPhoto } from "../../services/storage";
 import ImageUpload from "../common/ImageUpload";
-import { useProfile } from "../../context/profile";
 
-const EditProfileModal = ({ isOpen, onClose, profile: profileProp }) => {
+const EditProfileModal = ({ isOpen = false, onClose, profile, onUpdate }) => {
   const { user } = useUser();
-  const { profile, updateProfile } = useProfile();
-  const currentProfile = profileProp || profile;
   const [formData, setFormData] = useState({
-    displayName: currentProfile?.displayName || currentProfile?.name || "",
-    headline: currentProfile?.headline || currentProfile?.title || "",
-    about: currentProfile?.about || currentProfile?.bio || "",
-    location: currentProfile?.location || "",
-    email: currentProfile?.email || "",
-    phone: currentProfile?.phone || "",
-    website: currentProfile?.website || "",
-    skills: currentProfile?.skills || [],
-    experience: currentProfile?.experience || [],
-    education: currentProfile?.education || [],
-    photoURL: currentProfile?.photoURL || "",
-    coverPhoto: currentProfile?.coverPhoto || "",
+    displayName: "",
+    headline: "",
+    about: "",
+    location: "",
+    email: "",
+    phone: "",
+    website: "",
+    skills: [],
+    experience: [],
+    education: [],
+    photoURL: "",
+    coverPhoto: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
@@ -45,6 +38,26 @@ const EditProfileModal = ({ isOpen, onClose, profile: profileProp }) => {
       document.body.style.overflow = "unset";
     };
   }, [isOpen]);
+
+  // Reset form data when modal opens with a new profile
+  useEffect(() => {
+    if (isOpen && profile) {
+      setFormData({
+        displayName: profile.displayName || profile.name || "",
+        headline: profile.headline || profile.title || "",
+        about: profile.about || profile.bio || "",
+        location: profile.location || "",
+        email: profile.email || "",
+        phone: profile.phone || "",
+        website: profile.website || "",
+        skills: profile.skills || [],
+        experience: profile.experience || [],
+        education: profile.education || [],
+        photoURL: profile.photoURL || "",
+        coverPhoto: profile.coverPhoto || "",
+      });
+    }
+  }, [isOpen, profile?.id]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -89,7 +102,6 @@ const EditProfileModal = ({ isOpen, onClose, profile: profileProp }) => {
   const uploadImages = async () => {
     const uploads = {};
 
-    // Upload profile picture if changed
     if (profileImageFile) {
       setIsUploadingImage(true);
       try {
@@ -106,7 +118,6 @@ const EditProfileModal = ({ isOpen, onClose, profile: profileProp }) => {
       }
     }
 
-    // Upload cover photo if changed
     if (coverImageFile) {
       setIsUploadingImage(true);
       try {
@@ -129,17 +140,18 @@ const EditProfileModal = ({ isOpen, onClose, profile: profileProp }) => {
     setError(null);
 
     try {
-      // Upload images first
+      // First upload any new images
       const uploadedImages = await uploadImages();
 
-      // Combine form data with uploaded image URLs
+      // Then update the profile with all changes
       const finalFormData = {
         ...formData,
         ...uploadedImages,
+        updatedAt: new Date().toISOString(),
       };
 
-      await updateProfile(finalFormData);
-      analytics.track("profile_update", { userId: currentProfile?.id });
+      await onUpdate(finalFormData);
+      analytics.track("profile_update", { userId: profile?.id });
       onClose();
     } catch (err) {
       setError(err.message);
@@ -214,7 +226,7 @@ const EditProfileModal = ({ isOpen, onClose, profile: profileProp }) => {
                       disabled={isSubmitting || isUploadingImage}
                     />
                     <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                      Recommended: 1200x300px, max 5MB
+                      Recommended: 16:9 ratio, max 5MB
                     </p>
                   </div>
                 </div>
@@ -225,107 +237,32 @@ const EditProfileModal = ({ isOpen, onClose, profile: profileProp }) => {
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
                   Basic Information
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label
-                      htmlFor="displayName"
-                      className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                    >
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Display Name
                     </label>
                     <input
                       type="text"
-                      id="displayName"
                       name="displayName"
                       value={formData.displayName}
                       onChange={handleChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:text-white sm:text-sm"
-                      required
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                      disabled={isSubmitting}
                     />
                   </div>
 
                   <div>
-                    <label
-                      htmlFor="headline"
-                      className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                    >
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Headline
                     </label>
                     <input
                       type="text"
-                      id="headline"
                       name="headline"
                       value={formData.headline}
                       onChange={handleChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:text-white sm:text-sm"
-                    />
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor="location"
-                      className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                    >
-                      Location
-                    </label>
-                    <input
-                      type="text"
-                      id="location"
-                      name="location"
-                      value={formData.location}
-                      onChange={handleChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:text-white sm:text-sm"
-                    />
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor="email"
-                      className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                    >
-                      Email
-                    </label>
-                    <input
-                      type="email"
-                      id="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:text-white sm:text-sm"
-                    />
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor="phone"
-                      className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                    >
-                      Phone
-                    </label>
-                    <input
-                      type="tel"
-                      id="phone"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:text-white sm:text-sm"
-                    />
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor="website"
-                      className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                    >
-                      Website
-                    </label>
-                    <input
-                      type="url"
-                      id="website"
-                      name="website"
-                      value={formData.website}
-                      onChange={handleChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:text-white sm:text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                      disabled={isSubmitting}
                     />
                   </div>
                 </div>
@@ -333,63 +270,145 @@ const EditProfileModal = ({ isOpen, onClose, profile: profileProp }) => {
 
               {/* About */}
               <div>
-                <label
-                  htmlFor="about"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                >
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   About
                 </label>
                 <textarea
-                  id="about"
                   name="about"
-                  rows={4}
                   value={formData.about}
                   onChange={handleChange}
-                  className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:text-white sm:text-sm"
+                  rows={4}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                  disabled={isSubmitting}
                 />
+              </div>
+
+              {/* Contact Information */}
+              <div>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                  Contact Information
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                      disabled={isSubmitting}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Phone
+                    </label>
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                      disabled={isSubmitting}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Website
+                    </label>
+                    <input
+                      type="url"
+                      name="website"
+                      value={formData.website}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                      disabled={isSubmitting}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Location
+                    </label>
+                    <input
+                      type="text"
+                      name="location"
+                      value={formData.location}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* Skills */}
               <div>
-                <label
-                  htmlFor="skills"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                >
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Skills (comma-separated)
                 </label>
                 <input
                   type="text"
-                  id="skills"
                   name="skills"
                   value={formData.skills.join(", ")}
                   onChange={handleSkillChange}
-                  className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:text-white sm:text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                  disabled={isSubmitting}
                 />
               </div>
+            </div>
 
-              {/* Submit Button */}
-              <div className="flex justify-end space-x-3">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting || isUploadingImage}
-                  className="px-4 py-2 text-sm font-medium text-white bg-primary-600 border border-transparent rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isSubmitting ? "Saving..." : "Save Changes"}
-                </button>
-              </div>
+            <div className="mt-6 flex justify-end space-x-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                disabled={isSubmitting}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isSubmitting || isUploadingImage}
+              >
+                {isSubmitting ? "Saving..." : "Save Changes"}
+              </button>
             </div>
           </form>
         </div>
       </div>
     </Dialog>
   );
+};
+
+EditProfileModal.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  profile: PropTypes.shape({
+    id: PropTypes.string,
+    displayName: PropTypes.string,
+    name: PropTypes.string,
+    headline: PropTypes.string,
+    title: PropTypes.string,
+    about: PropTypes.string,
+    bio: PropTypes.string,
+    location: PropTypes.string,
+    email: PropTypes.string,
+    phone: PropTypes.string,
+    website: PropTypes.string,
+    skills: PropTypes.arrayOf(PropTypes.string),
+    experience: PropTypes.array,
+    education: PropTypes.array,
+    photoURL: PropTypes.string,
+    coverPhoto: PropTypes.string,
+  }),
+  onUpdate: PropTypes.func.isRequired,
 };
 
 export default EditProfileModal;

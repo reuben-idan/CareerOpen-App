@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useCallback } from "react";
 import { useUser } from "../auth";
 import { db } from "../../config/firebase";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc, setDoc } from "firebase/firestore";
 import PropTypes from "prop-types";
 
 const ProfileContext = createContext();
@@ -17,10 +17,39 @@ const useProfile = () => {
 const ProfileProvider = ({ children }) => {
   const { user } = useUser();
   const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY = 1000; // 1 second
 
-  const fetchProfileById = async (userId) => {
+  // Create initial profile data
+  const createInitialProfile = (userId, initialData = {}) => {
+    return {
+      name: initialData.name || user?.displayName || "Anonymous User",
+      email: initialData.email || user?.email || "",
+      title: initialData.title || "No title provided",
+      bio: initialData.bio || "",
+      location: initialData.location || "",
+      avatar: initialData.avatar || user?.photoURL || null,
+      stats: {
+        connections: 0,
+        profileViews: 0,
+        posts: 0,
+        likes: 0,
+      },
+      skills: initialData.skills || [],
+      experience: initialData.experience || [],
+      education: initialData.education || [],
+      certifications: initialData.certifications || [],
+      languages: initialData.languages || [],
+      activities: initialData.activities || [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+  };
+
+  const fetchProfileById = useCallback(async (userId) => {
     if (!userId) {
       setError("No user ID provided");
       setLoading(false);
@@ -31,61 +60,107 @@ const ProfileProvider = ({ children }) => {
     setError(null);
 
     try {
+      // Check for cached data first
+      const cachedData = localStorage.getItem(`profile_${userId}`);
+      if (cachedData) {
+        setProfile(JSON.parse(cachedData));
+      }
+
+      // Fetch from database
       const profileRef = doc(db, "profiles", userId);
       const profileSnap = await getDoc(profileRef);
-      console.log(
-        "[Profile Fetch] userId:",
-        userId,
-        "exists:",
-        profileSnap.exists(),
-        profileSnap.data()
-      );
-      if (!profileSnap.exists()) {
-        setProfile(null);
-        setError("Profile not found");
+
+      if (profileSnap.exists()) {
+        const profileData = {
+          id: profileSnap.id,
+          ...profileSnap.data(),
+        };
+        setProfile(profileData);
+        localStorage.setItem(`profile_${userId}`, JSON.stringify(profileData));
       } else {
-        setProfile({ id: profileSnap.id, ...profileSnap.data() });
-        setError(null);
+        // Create a new profile if it doesn't exist
+        const newProfile = {
+          id: userId,
+          name: "",
+          title: "",
+          bio: "",
+          location: "",
+          email: "",
+          phone: "",
+          website: "",
+          skills: [],
+          experience: [],
+          education: [],
+          photoURL: "",
+          coverPhoto: "",
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+
+        await setDoc(profileRef, newProfile);
+        setProfile(newProfile);
+        localStorage.setItem(`profile_${userId}`, JSON.stringify(newProfile));
       }
     } catch (err) {
       console.error("Error fetching profile:", err);
       setError(err.message);
-      setProfile(null);
+      throw err;
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const updateProfile = async (updates) => {
-    if (!user) {
-      throw new Error("No user logged in");
-    }
+  const updateProfile = useCallback(
+    async (updatedData) => {
+      if (!profile?.id) {
+        throw new Error("No profile to update");
+      }
 
-    try {
-      const profileRef = doc(db, "profiles", user.uid);
-      await updateDoc(profileRef, updates);
-      setProfile((prev) => ({ ...prev, ...updates }));
-    } catch (err) {
-      console.error("Error updating profile:", err);
-      throw err;
-    }
-  };
+      setLoading(true);
+      setError(null);
 
-  useEffect(() => {
-    if (user) {
-      fetchProfileById(user.uid);
-    } else {
-      setProfile(null);
-      setLoading(false);
-    }
-  }, [user]);
+      try {
+        const profileRef = doc(db, "profiles", profile.id);
+        const updateData = {
+          ...updatedData,
+          updatedAt: new Date().toISOString(),
+        };
+
+        // Update in database
+        await updateDoc(profileRef, updateData);
+
+        // Update local state
+        const updatedProfile = {
+          ...profile,
+          ...updateData,
+        };
+        setProfile(updatedProfile);
+
+        // Update cache
+        localStorage.setItem(
+          `profile_${profile.id}`,
+          JSON.stringify(updatedProfile)
+        );
+
+        return updatedProfile;
+      } catch (err) {
+        console.error("Error updating profile:", err);
+        setError(err.message);
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [profile]
+  );
 
   const value = {
     profile,
     loading,
     error,
-    updateProfile,
     fetchProfileById,
+    updateProfile,
+    retryCount,
   };
 
   return (
