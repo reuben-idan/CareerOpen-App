@@ -1,128 +1,125 @@
-# CareerOpen - Connecting Talent with Opportunity
+# CareerOpen — Connecting Talent with Opportunity
+
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![React](https://img.shields.io/badge/frontend-React.js-61dafb?logo=react)](https://reactjs.org/)
+[![Node.js](https://img.shields.io/badge/backend-Node.js-3c873a?logo=node.js)](https://nodejs.org/)
+[![MongoDB](https://img.shields.io/badge/database-MongoDB-47a248?logo=mongodb)](https://www.mongodb.com/)
+
+---
 
 ## Overview
 
-CareerOpen is a job board platform designed to bridge the gap between talented job seekers and potential employers. It offers a seamless experience for users to post job listings, search for jobs, and manage applications.
+CareerOpen is a modern job board platform engineered to seamlessly connect top talent with leading employers. With a focus on intuitive user experience, advanced job-matching, and robust analytics, CareerOpen empowers users to discover opportunities and employers to find the perfect fit.
 
-## Technologies
+---
+
+## Tech Stack
 
 - **Frontend:** React.js
 - **Backend:** Node.js
 - **Database:** MongoDB
+- **Testing:** Vitest, React Testing Library
+
+---
 
 ## Features
 
-- **User Registration:** Secure sign-up process for employers and job seekers.
-- **Advanced Job Search:** Filters by various criteria like location and job type.
-- **Resume Uploads:** Easy upload and management of resumes.
-- **Job Alerts:** Customizable email notifications for new job postings.
-- **Company Profiles:** Dedicated space for employer branding.
-- **Application Tracking:** Status tracking for job applications.
-- **Mobile Responsiveness:** Optimized for various devices.
-- **Secure Payment System:** For premium listings and services.
-- **Analytics Dashboard:** Insights on job listing performance.
-- **User Reviews & Ratings:** Feedback mechanism for continuous improvement.
-- **Career Resources:** Valuable content to aid job search.
+- User Registration: Secure sign-up for employers and job seekers
+- Advanced Job Search: Powerful filters by location, job type, and more
+- Resume Uploads: Effortless document management
+- Job Alerts: Personalized email notifications
+- Company Profiles: Rich employer branding
+- Application Tracking: Real-time status updates
+- Responsive Design: Mobile-friendly UI
+- Secure Payments: For premium listings and services
+- Analytics Dashboard: Actionable insights for employers
+- User Reviews and Ratings: Community-driven feedback
+- Career Resources: Guidance and tips for job seekers
+
+---
 
 ## Design
 
-An elegant and professional theme with interactive elements ensures a user-friendly experience.
+CareerOpen offers a sleek, professional interface with interactive elements for an efficient and enjoyable user journey across all devices.
+
+---
 
 ## Getting Started
 
-Instructions on setting up the project locally.
+To run CareerOpen locally:
 
-# Getting Started with Create React App
+1. **Clone the repository**
+    ```bash
+    git clone https://github.com/reuben-idan/CareerOpen-App.git
+    cd CareerOpen-App
+    ```
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+2. **Install dependencies**
+    ```bash
+    npm install
+    ```
 
-## Available Scripts
+3. **Set up environment variables**
+    - Create a `.env` file based on `.env.example`
+    - Fill in required environment variables
 
-In the project directory, you can run:
+4. **Run the development server**
+    ```bash
+    npm start
+    ```
+    Visit [http://localhost:3000](http://localhost:3000) in your browser.
 
-### `npm start`
+---
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## Scripts
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+- `npm start` — Launches the app in development mode.
+- `npm test` — Runs unit and component tests.
+- `npm run build` — Builds the app for production.
 
-### `npm test`
+---
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## Testing
 
-### `npm run build`
+This project uses [Vitest](https://vitest.dev/) and [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/).
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+- **To run all tests:**
+    ```bash
+    npm test
+    ```
+- **Test locations:** Test files are located next to components (e.g., `Component.test.jsx`), or in `__tests__` folders.
+- **Writing tests:** Use `.test.js` or `.test.jsx` extensions.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+Sample tests include:  
+- `src/components/common/LoadingSpinner.test.jsx`  
+- `src/components/jobs/JobCard.test.jsx`  
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+---
 
-## Learn More
+## Contributing
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+Contributions are welcome. Please review our [contribution guidelines](CONTRIBUTING.md) before submitting a pull request.
 
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
-18,316 changes: 18,316 additions & 0 deletions18,316  
-package-lock.json
-
-## Contribution
-
-Guidelines for contributing to the project.
+---
 
 ## License
 
-Details about the project's license.
+This project is licensed under the [MIT License](LICENSE).
+
+---
 
 ## Contact
 
-Information on how to reach out for support or queries.
+Questions, feedback or support requests?  
+Reach out via [GitHub Issues](https://github.com/reuben-idan/CareerOpen-App/issues) or email at [reuben.idan@gmail.com].
 
-## Running Tests
+---
 
-This project uses [Vitest](https://vitest.dev/) and [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/) for unit and component testing.
+## Resources
 
-### To run all tests:
+- [Create React App Documentation](https://facebook.github.io/create-react-app/docs/getting-started)
+- [React Documentation](https://reactjs.org/)
+- [Vitest Documentation](https://vitest.dev/)
+- [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/)
 
-```
-npm test
-```
-
-### Test file locations
-
-- Test files are placed next to their components (e.g., `Component.test.jsx`)
-- You can also organize tests in `__tests__` folders if preferred
-
-### Writing tests
-
-- Use `.test.js` or `.test.jsx` extensions for test files
-- See existing tests in `src/components/common/LoadingSpinner.test.jsx`, `src/components/jobs/JobCard.test.jsx`, etc., for examples
+---
