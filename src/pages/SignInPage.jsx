@@ -55,7 +55,18 @@ export default function SignInPage() {
     setError("");
     setLoading(true);
     try {
-      await signIn(formData.email, formData.password);
+      const user = await signIn(formData.email, formData.password);
+      // Ensure profile exists in 'profiles' collection after sign in
+      if (user && user.uid) {
+        const { createUserProfile } = await import(
+          "../services/firebase/users.js"
+        );
+        await createUserProfile(user.uid, {
+          email: user.email,
+          displayName: user.displayName || "",
+          id: user.uid,
+        });
+      }
       navigate("/feed");
     } catch (err) {
       setError(err.message);
