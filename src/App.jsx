@@ -16,7 +16,7 @@ import LoadingSpinner from "./components/common/LoadingSpinner";
 import ErrorBoundary from "./components/common/ErrorBoundary";
 import SEO from "./components/common/SEO";
 import analytics from "./services/analytics";
-import config from "./config/env";
+import { config } from "./config/env";
 import { HelmetProvider } from "react-helmet-async";
 import "./index.css";
 import { Web3Provider } from "./context/web3";
