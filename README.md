@@ -1,13 +1,15 @@
 # CareerOpen — Connecting Talent with Opportunity
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![React](https://img.shields.io/badge/frontend-React.js-61dafb?logo=react)](https://reactjs.org/)
-[![Node.js](https://img.shields.io/badge/backend-Node.js-3c873a?logo=node.js)](https://nodejs.org/)
-![License](https://img.shields.io/github/license/reuben-idan/CareerOpen-App)
+[![Frontend](https://img.shields.io/badge/frontend-React.js-61dafb?logo=react)](https://reactjs.org/)
+[![Backend](https://img.shields.io/badge/backend-Django-092E20?logo=django)](https://www.djangoproject.com/)
+[![Database](https://img.shields.io/badge/database-PostgreSQL-336791?logo=postgresql)](https://www.postgresql.org/)
+[![Deployment](https://img.shields.io/badge/deployment-AWS-232f3e?logo=amazonaws)](https://aws.amazon.com/)
 ![Build Status](https://img.shields.io/github/actions/workflow/status/reuben-idan/CareerOpen-App/backend.yml?branch=main)
 ![Last Commit](https://img.shields.io/github/last-commit/reuben-idan/CareerOpen-App)
 ![Open Issues](https://img.shields.io/github/issues/reuben-idan/CareerOpen-App)
 ![Repo Size](https://img.shields.io/github/repo-size/reuben-idan/CareerOpen-App)
+
 
 ---
 
