@@ -3,7 +3,11 @@
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![React](https://img.shields.io/badge/frontend-React.js-61dafb?logo=react)](https://reactjs.org/)
 [![Node.js](https://img.shields.io/badge/backend-Node.js-3c873a?logo=node.js)](https://nodejs.org/)
-[![MongoDB](https://img.shields.io/badge/database-MongoDB-47a248?logo=mongodb)](https://www.mongodb.com/)
+![License](https://img.shields.io/github/license/reuben-idan/CareerOpen-App)
+![Build Status](https://img.shields.io/github/actions/workflow/status/reuben-idan/CareerOpen-App/backend.yml?branch=main)
+![Last Commit](https://img.shields.io/github/last-commit/reuben-idan/CareerOpen-App)
+![Open Issues](https://img.shields.io/github/issues/reuben-idan/CareerOpen-App)
+![Repo Size](https://img.shields.io/github/repo-size/reuben-idan/CareerOpen-App)
 
 ---
 
