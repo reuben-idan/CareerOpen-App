@@ -14,15 +14,18 @@
 ## Overview
 
 CareerOpen is a modern job board platform engineered to seamlessly connect top talent with leading employers. With a focus on intuitive user experience, advanced job-matching, and robust analytics, CareerOpen empowers users to discover opportunities and employers to find the perfect fit.
+The **CareerOpen Backend** is a Django-based RESTful API powering a modern job board platform. It supports dynamic job posting, search, and application features with secure, role-based access for administrators and job seekers. Designed for scalability, performance, and seamless frontend integration.
 
 ---
 
-## Tech Stack
+## Project Goals
 
-- **Frontend:** React.js
-- **Backend:** Node.js
-- **Database:** MongoDB
-- **Testing:** Vitest, React Testing Library
+- RESTful API with CRUD operations for jobs, users, and categories
+- Role-based access control for admins and job seekers
+- PostgreSQL database with optimized queries and indexing
+- JWT authentication and secure permissions
+- Swagger/OpenAPI documentation
+- Production-grade deployment on AWS (EC2 + NGINX + Gunicorn)
 
 ---
 
@@ -39,8 +42,25 @@ CareerOpen is a modern job board platform engineered to seamlessly connect top t
 - Analytics Dashboard: Actionable insights for employers
 - User Reviews and Ratings: Community-driven feedback
 - Career Resources: Guidance and tips for job seekers
+- JWT-based user authentication and registration
+- Role-based access control (Admin, Recruiter, Candidate)
+- CRUD operations for job postings, applications, and categories
+- Search and filter jobs by location, industry, and type
+- Admin dashboard for job and user management
+- RESTful API with Swagger and ReDoc documentation
+
 
 ---
+## Tech Stack
+
+| Technology         | Purpose                             |
+|--------------------|--------------------------------------|
+| Django             | Backend framework                    |
+| Django REST Framework | API development framework        |
+| PostgreSQL         | Relational database (RDS or EC2)     |
+| JWT (SimpleJWT)    | Secure user authentication           |
+| Swagger / ReDoc    | API documentation                    |
+| AWS EC2 / RDS / S3 | Deployment and cloud infrastructure  |
 
 ## Design
 
@@ -48,76 +68,37 @@ CareerOpen offers a sleek, professional interface with interactive elements for 
 
 ---
 
-## Getting Started
 
-To run CareerOpen locally:
+careeropen-backend/
+├── config/              # Django project settings
+├── jobs/                # Job-related models, views, serializers
+├── users/               # Authentication and user roles
+├── core/                # Reusable utilities
+├── requirements.txt     # Dependencies
+├── manage.py            # Django CLI
+└── README.md
+```
 
-1. **Clone the repository**
-    ```bash
-    git clone https://github.com/reuben-idan/CareerOpen-App.git
-    cd CareerOpen-App
-    ```
+## Contribution Guidelines
 
-2. **Install dependencies**
-    ```bash
-    npm install
-    ```
-
-3. **Set up environment variables**
-    - Create a `.env` file based on `.env.example`
-    - Fill in required environment variables
-
-4. **Run the development server**
-    ```bash
-    npm start
-    ```
-    Visit [http://localhost:3000](http://localhost:3000) in your browser.
-
----
-
-## Scripts
-
-- `npm start` — Launches the app in development mode.
-- `npm test` — Runs unit and component tests.
-- `npm run build` — Builds the app for production.
-
----
-
-## Testing
-
-This project uses [Vitest](https://vitest.dev/) and [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/).
-
-- **To run all tests:**
-    ```bash
-    npm test
-    ```
-- **Test locations:** Test files are located next to components (e.g., `Component.test.jsx`), or in `__tests__` folders.
-- **Writing tests:** Use `.test.js` or `.test.jsx` extensions.
-
-Sample tests include:  
-- `src/components/common/LoadingSpinner.test.jsx`  
-- `src/components/jobs/JobCard.test.jsx`  
-
----
-
-## Contributing
-
-Contributions are welcome. Please review our [contribution guidelines](CONTRIBUTING.md) before submitting a pull request.
-
----
+1. Fork the repository
+2. Create your feature branch: `git checkout -b feature/your-feature`
+3. Commit your changes: `git commit -m 'Add feature X'`
+4. Push to the branch: `git push origin feature/your-feature`
+5. Open a pull request
 
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
 
----
+## Author
 
-## Contact
-
-Questions, feedback or support requests?  
-Reach out via [GitHub Issues](https://github.com/reuben-idan/CareerOpen-App/issues) or email at [reuben.idan@gmail.com].
+**Reuben Idan**  
+[LinkedIn](https://www.linkedin.com/in/reuben-idan/) | [GitHub](https://github.com/reuben-idan)
 
 ---
+
+> Backend system for CareerOpen – a modern platform that connects job seekers with opportunities through an accessible, secure, and performant API-first architecture.
 
 ## Resources
 
