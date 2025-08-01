@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.views import APIView
+from rest_framework.generics import ListAPIView
 from django_filters.rest_framework import DjangoFilterBackend
 
 from .models import Job, JobApplication, Category, Company
@@ -387,7 +388,7 @@ class CompanyViewSet(viewsets.ModelViewSet):
         serializer.save(created_by=self.request.user)
 
 
-class UserJobApplicationsView(APIView):
+class UserJobApplicationsView(ListAPIView):
     """
     List all job applications for the current user.
     """
@@ -397,16 +398,6 @@ class UserJobApplicationsView(APIView):
     
     def get_queryset(self):
         return JobApplication.objects.filter(applicant=self.request.user).order_by('-applied_at')
-    
-    def get(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.serializer_class(page, many=True)
-            return self.get_paginated_response(serializer.data)
-        
-        serializer = self.serializer_class(queryset, many=True)
-        return Response(serializer.data)
 
 
 class JobApplicationDetailView(APIView):
