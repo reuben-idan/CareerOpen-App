@@ -14,6 +14,7 @@ import {
   Bars3Icon,
   XMarkIcon,
   MagnifyingGlassIcon,
+  DocumentTextIcon,
 } from "@heroicons/react/24/outline";
 import UserProfileMenu from "./UserProfileMenu";
 import MobileDrawer from "./MobileDrawer";
@@ -64,6 +65,7 @@ const NavigationBar = () => {
   const navItems = [
     { path: "/", icon: HomeIcon, label: "Home" },
     { path: "/jobs", icon: BriefcaseIcon, label: "Jobs" },
+    { path: "/my-applications", icon: DocumentTextIcon, label: "My Applications" },
     { path: "/network", icon: UserGroupIcon, label: "Network" },
     { path: "/messages", icon: ChatBubbleLeftRightIcon, label: "Messages" },
   ];
