@@ -1,6 +1,47 @@
 from rest_framework import serializers
-from .models import Job, JobApplication
+from .models import Job, JobApplication, Category, Company
 from accounts.serializers import UserProfileSerializer
+
+
+class CategorySerializer(serializers.ModelSerializer):
+    """
+    Serializer for the Category model.
+    """
+    class Meta:
+        model = Category
+        fields = ['id', 'name', 'slug', 'description', 'icon', 'is_active', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'slug', 'created_at', 'updated_at']
+
+
+class CompanySerializer(serializers.ModelSerializer):
+    """
+    Serializer for the Company model.
+    """
+    class Meta:
+        model = Company
+        fields = [
+            'id', 'name', 'slug', 'description', 'website', 'logo', 'industry',
+            'founded_year', 'company_size', 'headquarters', 'is_verified',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'slug', 'is_verified', 'created_at', 'updated_at']
+    
+    def validate_logo(self, value):
+        """
+        Validate the uploaded logo file.
+        """
+        if value and value.size > 2 * 1024 * 1024:  # 2MB max
+            raise serializers.ValidationError("Logo file too large (max 2MB).")
+        return value
+    
+    def create(self, validated_data):
+        """
+        Set the company creator to the current user.
+        """
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            validated_data['created_by'] = request.user
+        return super().create(validated_data)
 
 class JobSerializer(serializers.ModelSerializer):
     """
@@ -48,19 +89,62 @@ class JobApplicationSerializer(serializers.ModelSerializer):
     class Meta:
         model = JobApplication
         fields = [
-            'id', 'job', 'applicant', 'cover_letter', 'status', 'applied_at',
+            'id', 'job', 'applicant', 'cover_letter', 'resume', 'status', 'applied_at',
             'updated_at', 'job_title', 'company_name'
         ]
         read_only_fields = ['id', 'applicant', 'applied_at', 'updated_at', 'job_title', 'company_name']
+    
+    def validate_resume(self, value):
+        """
+        Validate the uploaded resume file.
+        """
+        import os
+        from django.core.exceptions import ValidationError
+        
+        if value:
+            # Check file size (5MB max)
+            max_size = 5 * 1024 * 1024  # 5MB in bytes
+            if value.size > max_size:
+                raise serializers.ValidationError("File size must be no more than 5MB.")
+            
+            # Check file extension
+            valid_extensions = ['.pdf', '.doc', '.docx']
+            ext = os.path.splitext(value.name)[1].lower()
+            if ext not in valid_extensions:
+                raise serializers.ValidationError("Unsupported file type. Please upload a PDF, DOC, or DOCX file.")
+        
+        return value
 
     def create(self, validated_data):
         """
         Create and return a new JobApplication instance, given the validated data.
         The 'applicant' should be provided in the validated_data by the view.
         """
-        if 'applicant' not in validated_data:
-            raise serializers.ValidationError({"applicant": "This field is required."})
-        return super().create(validated_data)
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        logger.info(f"Creating JobApplication with validated_data: {validated_data}")
+        
+        # Log all required fields
+        required_fields = ['job', 'applicant', 'status']
+        for field in required_fields:
+            field_value = validated_data.get(field, "NOT PROVIDED")
+            logger.info(f"{field}: {field_value}")
+        
+        # Check for required fields
+        missing_fields = [field for field in required_fields if field not in validated_data]
+        if missing_fields:
+            error_msg = f"Missing required fields: {', '.join(missing_fields)}"
+            logger.error(error_msg)
+            raise serializers.ValidationError({"detail": error_msg})
+        
+        try:
+            instance = super().create(validated_data)
+            logger.info(f"Successfully created JobApplication with ID: {instance.id}")
+            return instance
+        except Exception as e:
+            logger.error(f"Error creating JobApplication: {str(e)}", exc_info=True)
+            raise
 
 
 class JobSearchSerializer(serializers.Serializer):

@@ -6,9 +6,12 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.views import APIView
 from django_filters.rest_framework import DjangoFilterBackend
 
-from .models import Job, JobApplication
-from .serializers import JobSerializer, JobApplicationSerializer, JobSearchSerializer
-from .permissions import IsJobOwnerOrReadOnly, IsApplicationOwnerOrReadOnly
+from .models import Job, JobApplication, Category, Company
+from .serializers import (
+    JobSerializer, JobApplicationSerializer, JobSearchSerializer,
+    CategorySerializer, CompanySerializer
+)
+from .permissions import IsJobOwnerOrReadOnly, IsApplicationOwnerOrReadOnly, IsAdminOrReadOnly, IsCompanyOwnerOrReadOnly
 
 class StandardResultsSetPagination(PageNumberPagination):
     page_size = 10
@@ -274,9 +277,19 @@ class JobApplicationCreateView(APIView):
     serializer_class = JobApplicationSerializer
 
     def post(self, request, job_id):
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        logger.info(f"Job application request received. Job ID: {job_id}")
+        logger.info(f"Request data: {request.data}")
+        logger.info(f"Request FILES: {request.FILES}")
+        
         try:
             job = Job.objects.get(id=job_id, is_active=True)
+            logger.info(f"Found job: {job.id} - {job.title}")
         except Job.DoesNotExist:
+            error_msg = f"Job not found or not active. Job ID: {job_id}"
+            logger.error(error_msg)
             return Response(
                 {"detail": "Job not found or not accepting applications."},
                 status=status.HTTP_404_NOT_FOUND
@@ -284,16 +297,94 @@ class JobApplicationCreateView(APIView):
         
         # Check if user already applied
         if JobApplication.objects.filter(job=job, applicant=request.user).exists():
+            error_msg = f"User {request.user.id} already applied to job {job.id}"
+            logger.warning(error_msg)
             return Response(
                 {"detail": "You have already applied to this job."},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        serializer = self.serializer_class(data=request.data)
+        # Log all incoming data
+        logger.info(f"Creating serializer with data: {request.data}")
+        logger.info(f"Files in request: {request.FILES}")
+        
+        # Create a mutable copy of the request data
+        data = request.data.copy()
+        
+        # Add job and applicant to the data
+        data['job'] = job.id
+        data['applicant'] = request.user.id
+        
+        logger.info(f"Final data being passed to serializer: {data}")
+        
+        serializer = self.serializer_class(data=data, context={'request': request})
+        
         if serializer.is_valid():
-            serializer.save(job=job, applicant=request.user, status='applied')
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            logger.info("Serializer is valid. Saving application...")
+            try:
+                application = serializer.save(job=job, applicant=request.user, status='applied')
+                logger.info(f"Application created successfully. ID: {application.id}")
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            except Exception as e:
+                logger.error(f"Error saving application: {str(e)}", exc_info=True)
+                return Response(
+                    {"detail": "An error occurred while processing your application."},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+        else:
+            logger.warning(f"Serializer validation errors: {serializer.errors}")
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CategoryViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows categories to be viewed or edited.
+    """
+    queryset = Category.objects.all().order_by('name')
+    serializer_class = CategorySerializer
+    pagination_class = StandardResultsSetPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name', 'description']
+    ordering_fields = ['name', 'created_at']
+    ordering = ['name']
+    permission_classes = [IsAdminOrReadOnly]
+    lookup_field = 'slug'
+    lookup_url_kwarg = 'slug'
+
+
+class CompanyViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows companies to be viewed or edited.
+    """
+    queryset = Company.objects.all().order_by('name')
+    serializer_class = CompanySerializer
+    pagination_class = StandardResultsSetPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend]
+    search_fields = ['name', 'description', 'industry', 'headquarters']
+    filterset_fields = ['industry', 'company_size', 'is_verified']
+    ordering_fields = ['name', 'created_at', 'founded_year']
+    ordering = ['name']
+    permission_classes = [IsAuthenticated, IsCompanyOwnerOrReadOnly]
+    lookup_field = 'slug'
+    lookup_url_kwarg = 'slug'
+    
+    def get_queryset(self):
+        """
+        Filter companies based on user role.
+        """
+        queryset = super().get_queryset()
+        
+        # Non-admin users can only see verified companies
+        if not self.request.user.is_staff:
+            queryset = queryset.filter(is_verified=True)
+            
+        return queryset
+    
+    def perform_create(self, serializer):
+        """
+        Set the creator of the company.
+        """
+        serializer.save(created_by=self.request.user)
 
 
 class UserJobApplicationsView(APIView):
@@ -303,16 +394,17 @@ class UserJobApplicationsView(APIView):
     permission_classes = [IsAuthenticated]
     serializer_class = JobApplicationSerializer
     pagination_class = StandardResultsSetPagination
-
+    
     def get_queryset(self):
-        return JobApplication.objects.filter(applicant=self.request.user)
-
+        return JobApplication.objects.filter(applicant=self.request.user).order_by('-applied_at')
+    
     def get(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.serializer_class(page, many=True)
             return self.get_paginated_response(serializer.data)
+        
         serializer = self.serializer_class(queryset, many=True)
         return Response(serializer.data)
 

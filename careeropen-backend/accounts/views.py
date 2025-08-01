@@ -1,7 +1,8 @@
-from rest_framework import generics, status, permissions
-from rest_framework.permissions import IsAuthenticated, BasePermission
+from rest_framework import generics, status, permissions, viewsets
+from rest_framework.permissions import IsAuthenticated, BasePermission, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.decorators import action
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth import get_user_model, authenticate
@@ -107,3 +108,69 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
 
     def get_object(self):
         return self.request.user
+
+
+class UserViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows users to be viewed or edited.
+    """
+    queryset = User.objects.all().order_by('-date_joined')
+    serializer_class = UserProfileSerializer
+    permission_classes = [IsAdminUser]  # Only admin users can access this viewset
+    lookup_field = 'id'
+    
+    def get_queryset(self):
+        """
+        Filter users based on query parameters.
+        """
+        queryset = super().get_queryset()
+        
+        # Filter by user type if provided
+        is_employer = self.request.query_params.get('is_employer')
+        if is_employer is not None:
+            is_employer = is_employer.lower() in ('true', '1', 't')
+            queryset = queryset.filter(is_employer=is_employer)
+            
+        # Filter by active status if provided
+        is_active = self.request.query_params.get('is_active')
+        if is_active is not None:
+            is_active = is_active.lower() in ('true', '1', 't')
+            queryset = queryset.filter(is_active=is_active)
+            
+        return queryset
+    
+    @action(detail=True, methods=['post'])
+    def activate(self, request, id=None):
+        """
+        Activate or deactivate a user account.
+        """
+        user = self.get_object()
+        is_active = request.data.get('is_active', True)
+        user.is_active = is_active
+        user.save()
+        
+        status_msg = 'activated' if is_active else 'deactivated'
+        return Response(
+            {'status': f'User {status_msg} successfully'},
+            status=status.HTTP_200_OK
+        )
+
+
+# For backward compatibility with existing URLs
+class UserListView(generics.ListAPIView):
+    """
+    List all users (admin only).
+    """
+    queryset = User.objects.all()
+    serializer_class = UserProfileSerializer
+    permission_classes = [IsAdminUser]
+
+
+class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    Retrieve, update or delete a user (admin only).
+    """
+    queryset = User.objects.all()
+    serializer_class = UserProfileSerializer
+    permission_classes = [IsAdminUser]
+    lookup_field = 'id'
