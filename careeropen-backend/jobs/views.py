@@ -3,6 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.views import APIView
 from django_filters.rest_framework import DjangoFilterBackend
 
 from .models import Job, JobApplication
@@ -77,7 +78,7 @@ class JobViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-class JobSearchView(views.APIView):
+class JobSearchView(APIView):
     """
     Advanced job search endpoint.
     """
@@ -102,7 +103,7 @@ class JobSearchView(views.APIView):
         return Response(serializer.data)
 
 
-class JobApplicationCreateView(views.APIView):
+class JobApplicationCreateView(APIView):
     """
     Create a job application.
     """
@@ -132,7 +133,7 @@ class JobApplicationCreateView(views.APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class UserJobApplicationsView(views.APIView):
+class UserJobApplicationsView(APIView):
     """
     List all job applications for the current user.
     """
@@ -153,7 +154,7 @@ class UserJobApplicationsView(views.APIView):
         return Response(serializer.data)
 
 
-class JobApplicationDetailView(views.APIView):
+class JobApplicationDetailView(APIView):
     """
     Retrieve, update or delete a job application.
     """

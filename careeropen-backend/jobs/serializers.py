@@ -29,9 +29,9 @@ class JobSerializer(serializers.ModelSerializer):
         return False
 
     def create(self, validated_data):
-        ""
+        """
         Create and return a new Job instance, given the validated data.
-        ""
+        """
         # The poster is set to the current user
         validated_data['poster'] = self.context['request'].user
         return super().create(validated_data)
@@ -56,7 +56,7 @@ class JobApplicationSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         """
         Create and return a new JobApplication instance, given the validated data.
-        ""
+        """
         # The applicant is set to the current user
         validated_data['applicant'] = self.context['request'].user
         return super().create(validated_data)
@@ -87,9 +87,9 @@ class JobSearchSerializer(serializers.Serializer):
     )
 
     def validate(self, data):
-        ""
+        """
         Validate that salary_min is less than salary_max if both are provided.
-        ""
+        """
         salary_min = data.get('salary_min')
         salary_max = data.get('salary_max')
         
