@@ -109,7 +109,7 @@ class JobSearchView(APIView):
         'created_at': ['gte', 'lte', 'date'],
         'company': ['exact', 'icontains'],
     }
-    search_fields = ['title', 'description', 'company', 'location', 'required_skills']
+    search_fields = ['title', 'description', 'company', 'location', 'requirements']
     ordering_fields = [
         'created_at', 'updated_at', 'salary_min', 'salary_max', 'title', 'company'
     ]

@@ -56,9 +56,10 @@ class JobApplicationSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         """
         Create and return a new JobApplication instance, given the validated data.
+        The 'applicant' should be provided in the validated_data by the view.
         """
-        # The applicant is set to the current user
-        validated_data['applicant'] = self.context['request'].user
+        if 'applicant' not in validated_data:
+            raise serializers.ValidationError({"applicant": "This field is required."})
         return super().create(validated_data)
 
 
