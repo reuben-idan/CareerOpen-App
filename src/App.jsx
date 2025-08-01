@@ -36,6 +36,7 @@ const NotificationPage = lazy(() => import("./pages/NotificationPage"));
 const SubscriptionPayment = lazy(() => import("./pages/SubscriptionPayment"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const SavedJobsPage = lazy(() => import("./pages/SavedJobsPage"));
+const APITest = lazy(() => import("./pages/APITest"));
 
 // Analytics wrapper component
 const AnalyticsWrapper = ({ children }) => {
@@ -138,6 +139,12 @@ const AuthenticatedRoutes = () => {
             <Route
               path="/saved-jobs"
               element={<PrivateRoute Component={SavedJobsPage} />}
+            />
+            
+            {/* Development Routes */}
+            <Route
+              path="/api-test"
+              element={<PrivateRoute Component={APITest} />}
             />
 
             {/* Fallback Route */}
