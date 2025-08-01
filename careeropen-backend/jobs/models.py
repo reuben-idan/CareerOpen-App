@@ -2,8 +2,108 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
+from django.core.validators import MinValueValidator, MaxValueValidator
+from django.urls import reverse
+from django.utils.text import slugify
 
 User = get_user_model()
+
+
+class Company(models.Model):
+    """
+    Model representing a company that can post jobs.
+    """
+    name = models.CharField(_('company name'), max_length=200, unique=True)
+    slug = models.SlugField(_('slug'), max_length=200, unique=True, blank=True)
+    description = models.TextField(_('company description'), blank=True)
+    website = models.URLField(_('website'), blank=True)
+    logo = models.ImageField(
+        _('company logo'),
+        upload_to='company_logos/',
+        blank=True,
+        null=True,
+        help_text=_('Upload the company logo')
+    )
+    industry = models.CharField(_('industry'), max_length=100, blank=True)
+    founded_year = models.PositiveIntegerField(
+        _('founded year'),
+        null=True,
+        blank=True,
+        validators=[
+            MinValueValidator(1800),
+            MaxValueValidator(timezone.now().year)
+        ]
+    )
+    company_size = models.CharField(
+        _('company size'),
+        max_length=20,
+        blank=True,
+        choices=[
+            ('1-10', '1-10 employees'),
+            ('11-50', '11-50 employees'),
+            ('51-200', '51-200 employees'),
+            ('201-500', '201-500 employees'),
+            ('501-1000', '501-1,000 employees'),
+            ('1001-5000', '1,001-5,000 employees'),
+            ('5001-10000', '5,001-10,000 employees'),
+            ('10001+', '10,000+ employees'),
+        ]
+    )
+    headquarters = models.CharField(_('headquarters'), max_length=200, blank=True)
+    is_verified = models.BooleanField(_('is verified'), default=False)
+    created_at = models.DateTimeField(_('created at'), auto_now_add=True)
+    updated_at = models.DateTimeField(_('updated at'), auto_now=True)
+
+    class Meta:
+        verbose_name = _('company')
+        verbose_name_plural = _('companies')
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
+
+    def get_absolute_url(self):
+        return reverse('company_detail', kwargs={'slug': self.slug})
+
+
+class Category(models.Model):
+    """
+    Model representing job categories (e.g., Software Development, Design, Marketing).
+    """
+    name = models.CharField(_('name'), max_length=100, unique=True)
+    slug = models.SlugField(_('slug'), max_length=100, unique=True, blank=True)
+    description = models.TextField(_('description'), blank=True)
+    icon = models.CharField(
+        _('icon'),
+        max_length=50,
+        blank=True,
+        help_text=_('Font Awesome icon class (e.g., "fas fa-code" for development)')
+    )
+    is_active = models.BooleanField(_('is active'), default=True)
+    created_at = models.DateTimeField(_('created at'), auto_now_add=True)
+    updated_at = models.DateTimeField(_('updated at'), auto_now=True)
+
+    class Meta:
+        verbose_name = _('category')
+        verbose_name_plural = _('categories')
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
+
+    def get_absolute_url(self):
+        return reverse('category_jobs', kwargs={'slug': self.slug})
+
 
 class Job(models.Model):
     """
@@ -15,7 +115,7 @@ class Job(models.Model):
     CONTRACT = 'contract'
     INTERNSHIP = 'internship'
     TEMPORARY = 'temporary'
-    
+
     JOB_TYPE_CHOICES = [
         (FULL_TIME, _('Full Time')),
         (PART_TIME, _('Part Time')),
@@ -23,29 +123,40 @@ class Job(models.Model):
         (INTERNSHIP, _('Internship')),
         (TEMPORARY, _('Temporary')),
     ]
-    
+
     # Status choices
     DRAFT = 'draft'
     PUBLISHED = 'published'
     CLOSED = 'closed'
-    
+
     STATUS_CHOICES = [
         (DRAFT, _('Draft')),
         (PUBLISHED, _('Published')),
         (CLOSED, _('Closed')),
     ]
-    
+
     # Job fields
     title = models.CharField(_('job title'), max_length=200)
     description = models.TextField(_('job description'))
     requirements = models.TextField(_('job requirements'), blank=True)
     responsibilities = models.TextField(_('job responsibilities'), blank=True)
-    
-    # Company information
-    company = models.CharField(_('company name'), max_length=200)
-    company_description = models.TextField(_('company description'), blank=True)
-    company_website = models.URLField(_('company website'), blank=True)
-    
+
+    # Company and category
+    company = models.ForeignKey(
+        Company,
+        on_delete=models.CASCADE,
+        related_name='jobs',
+        verbose_name=_('company'),
+        null=True,  # Temporarily allow null for data migration
+        blank=True
+    )
+    categories = models.ManyToManyField(
+        Category,
+        related_name='jobs',
+        verbose_name=_('categories'),
+        blank=True
+    )
+
     # Job details
     job_type = models.CharField(
         _('job type'),
