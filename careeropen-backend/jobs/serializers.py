@@ -64,38 +64,121 @@ class JobApplicationSerializer(serializers.ModelSerializer):
 
 class JobSearchSerializer(serializers.Serializer):
     """
-    Serializer for job search queries.
+    Serializer for job search queries with advanced filtering options.
     """
-    query = serializers.CharField(required=False, allow_blank=True)
-    location = serializers.CharField(required=False, allow_blank=True)
-    job_type = serializers.ChoiceField(
+    # Search and filter fields
+    search = serializers.CharField(
+        required=False, 
+        allow_blank=True,
+        help_text="Search term to filter jobs by title, description, company, or location"
+    )
+    location = serializers.CharField(
+        required=False, 
+        allow_blank=True,
+        help_text="Filter by job location (exact match or contains)"
+    )
+    job_type = serializers.MultipleChoiceField(
         choices=Job.JOB_TYPE_CHOICES,
         required=False,
-        allow_blank=True
+        help_text="Filter by one or more job types (comma-separated)"
     )
     salary_min = serializers.DecimalField(
-        max_digits=10,
+        max_digits=12,
         decimal_places=2,
         required=False,
-        min_value=0
+        min_value=0,
+        help_text="Filter by minimum salary"
     )
     salary_max = serializers.DecimalField(
-        max_digits=10,
+        max_digits=12,
         decimal_places=2,
         required=False,
-        min_value=0
+        min_value=0,
+        help_text="Filter by maximum salary"
     )
+    is_remote = serializers.BooleanField(
+        required=False,
+        allow_null=True,
+        help_text="Filter remote jobs (true/false)"
+    )
+    posted_after = serializers.DateField(
+        required=False,
+        help_text="Filter jobs posted after this date (YYYY-MM-DD)"
+    )
+    company = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        help_text="Filter by company name (exact match or contains)"
+    )
+    skills = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        help_text="Comma-separated list of skills to search for"
+    )
+    ordering = serializers.ChoiceField(
+        choices=[
+            ('created_at', 'Created At (ascending)'),
+            ('-created_at', 'Created At (descending)'),
+            ('title', 'Title (A-Z)'),
+            ('-title', 'Title (Z-A)'),
+            ('company', 'Company (A-Z)'),
+            ('-company', 'Company (Z-A)'),
+            ('salary_min', 'Salary (low to high)'),
+            ('-salary_min', 'Salary (high to low)')
+        ],
+        required=False,
+        default='-created_at',
+        help_text="Field to order results by (prefix with '-' for descending)"
+    )
+    page = serializers.IntegerField(
+        required=False,
+        min_value=1,
+        default=1,
+        help_text="Page number for pagination"
+    )
+    page_size = serializers.IntegerField(
+        required=False,
+        min_value=1,
+        max_value=100,
+        default=10,
+        help_text="Number of results per page (max 100)"
+    )
+
+    def validate_job_type(self, value):
+        """Convert comma-separated string to list if needed."""
+        if isinstance(value, str):
+            return [v.strip() for v in value.split(',') if v.strip()]
+        return value
+
+    def validate_skills(self, value):
+        """Convert comma-separated skills to list."""
+        if isinstance(value, str):
+            return [v.strip().lower() for v in value.split(',') if v.strip()]
+        return value
 
     def validate(self, data):
         """
-        Validate that salary_min is less than salary_max if both are provided.
+        Validate the search parameters.
         """
-        salary_min = data.get('salary_min')
-        salary_max = data.get('salary_max')
+        validated_data = super().validate(data)
         
-        if salary_min and salary_max and salary_min > salary_max:
-            raise serializers.ValidationError(
-                "Minimum salary cannot be greater than maximum salary."
-            )
+        # Validate salary range
+        salary_min = validated_data.get('salary_min')
+        salary_max = validated_data.get('salary_max')
+        
+        if salary_min is not None and salary_max is not None and salary_min > salary_max:
+            raise serializers.ValidationError({
+                'salary_min': 'Minimum salary cannot be greater than maximum salary.'
+            })
             
+        # Validate posted_after date
+        posted_after = validated_data.get('posted_after')
+        if posted_after and hasattr(posted_after, 'strftime'):
+            from django.utils import timezone
+            if posted_after > timezone.now().date():
+                raise serializers.ValidationError({
+                    'posted_after': 'Cannot filter by future dates.'
+                })
+        
+        return validated_data
         return data
