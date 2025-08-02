@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
 import { useUser } from "../auth";
-import { db } from "../../config/firebase";
-import { doc, getDoc, updateDoc, setDoc } from "firebase/firestore";
+import api from "../../services/api/api";
+import storageService from "../../services/api/storage";
 import PropTypes from "prop-types";
 
 const ProfileContext = createContext();
@@ -24,28 +24,30 @@ const ProfileProvider = ({ children }) => {
   const RETRY_DELAY = 1000; // 1 second
 
   // Create initial profile data
-  const createInitialProfile = (userId, initialData = {}) => {
+  const createInitialProfile = (initialData = {}) => {
     return {
-      name: initialData.name || user?.displayName || "Anonymous User",
+      name: initialData.name || user?.name || "Anonymous User",
       email: initialData.email || user?.email || "",
       title: initialData.title || "No title provided",
       bio: initialData.bio || "",
       location: initialData.location || "",
-      avatar: initialData.avatar || user?.photoURL || null,
-      stats: {
-        connections: 0,
-        profileViews: 0,
-        posts: 0,
-        likes: 0,
-      },
+      avatar: initialData.avatar || "",
+      phone: initialData.phone || "",
+      website: initialData.website || "",
       skills: initialData.skills || [],
       experience: initialData.experience || [],
       education: initialData.education || [],
       certifications: initialData.certifications || [],
       languages: initialData.languages || [],
       activities: initialData.activities || [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      stats: {
+        connections: initialData.stats?.connections || 0,
+        profileViews: initialData.stats?.profileViews || 0,
+        posts: initialData.stats?.posts || 0,
+        likes: initialData.stats?.likes || 0,
+      },
+      createdAt: initialData.createdAt || new Date().toISOString(),
+      updatedAt: initialData.updatedAt || new Date().toISOString(),
     };
   };
 
@@ -66,49 +68,31 @@ const ProfileProvider = ({ children }) => {
         setProfile(JSON.parse(cachedData));
       }
 
-      // Fetch from database
-      const profileRef = doc(db, "profiles", userId);
-      const profileSnap = await getDoc(profileRef);
-
-      if (profileSnap.exists()) {
-        const profileData = {
-          id: profileSnap.id,
-          ...profileSnap.data(),
-        };
+      // Fetch from backend API
+      const response = await api.get(`/users/${userId}`);
+      
+      if (response.data) {
+        const profileData = createInitialProfile(response.data);
         setProfile(profileData);
         localStorage.setItem(`profile_${userId}`, JSON.stringify(profileData));
-      } else {
-        // Create a new profile if it doesn't exist
-        const newProfile = {
-          id: userId,
-          name: "",
-          title: "",
-          bio: "",
-          location: "",
-          email: "",
-          phone: "",
-          website: "",
-          skills: [],
-          experience: [],
-          education: [],
-          photoURL: "",
-          coverPhoto: "",
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-
-        await setDoc(profileRef, newProfile);
-        setProfile(newProfile);
-        localStorage.setItem(`profile_${userId}`, JSON.stringify(newProfile));
+        return profileData;
       }
+      
+      // If no profile exists, create a default one
+      const newProfile = createInitialProfile({ userId });
+      await api.post('/users', newProfile);
+      setProfile(newProfile);
+      localStorage.setItem(`profile_${userId}`, JSON.stringify(newProfile));
+      return newProfile;
+      
     } catch (err) {
       console.error("Error fetching profile:", err);
-      setError(err.message);
+      setError(err.response?.data?.message || err.message);
       throw err;
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user]);
 
   const updateProfile = useCallback(
     async (updatedData) => {
@@ -120,20 +104,20 @@ const ProfileProvider = ({ children }) => {
       setError(null);
 
       try {
-        const profileRef = doc(db, "profiles", profile.id);
         const updateData = {
           ...updatedData,
           updatedAt: new Date().toISOString(),
         };
 
-        // Update in database
-        await updateDoc(profileRef, updateData);
-
+        // Update in backend
+        const response = await api.put(`/users/${profile.id}`, updateData);
+        
         // Update local state
         const updatedProfile = {
           ...profile,
-          ...updateData,
+          ...response.data,
         };
+        
         setProfile(updatedProfile);
 
         // Update cache
@@ -145,7 +129,7 @@ const ProfileProvider = ({ children }) => {
         return updatedProfile;
       } catch (err) {
         console.error("Error updating profile:", err);
-        setError(err.message);
+        setError(err.response?.data?.message || err.message);
         throw err;
       } finally {
         setLoading(false);
@@ -153,6 +137,67 @@ const ProfileProvider = ({ children }) => {
     },
     [profile]
   );
+  
+  // Upload profile picture
+  const uploadProfilePicture = useCallback(
+    async (file) => {
+      if (!profile?.id) {
+        throw new Error("No profile to update");
+      }
+      
+      setLoading(true);
+      setError(null);
+      
+      try {
+        // Upload the file using the storage service
+        const { url, path } = await storageService.uploadProfilePicture(file, profile.id);
+        
+        // Update the profile with the new avatar URL
+        return await updateProfile({ avatar: url });
+      } catch (err) {
+        console.error("Error uploading profile picture:", err);
+        setError(err.response?.data?.message || err.message);
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [profile, updateProfile]
+  );
+  
+  // Upload cover photo
+  const uploadCoverPhoto = useCallback(
+    async (file) => {
+      if (!profile?.id) {
+        throw new Error("No profile to update");
+      }
+      
+      setLoading(true);
+      setError(null);
+      
+      try {
+        // Upload the file using the storage service
+        const { url, path } = await storageService.uploadCoverPhoto(file, profile.id);
+        
+        // Update the profile with the new cover photo URL
+        return await updateProfile({ coverPhoto: url });
+      } catch (err) {
+        console.error("Error uploading cover photo:", err);
+        setError(err.response?.data?.message || err.message);
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [profile, updateProfile]
+  );
+  
+  // Automatically fetch profile when user changes
+  useEffect(() => {
+    if (user?.id) {
+      fetchProfileById(user.id);
+    }
+  }, [user?.id]);
 
   const value = {
     profile,
@@ -160,6 +205,8 @@ const ProfileProvider = ({ children }) => {
     error,
     fetchProfileById,
     updateProfile,
+    uploadProfilePicture,
+    uploadCoverPhoto,
     retryCount,
   };
 
