@@ -30,7 +30,7 @@ const JobDetail = lazy(() => import("./pages/JobDetail"));
 const Feed = lazy(() => import("./pages/Feed"));
 const MyNetwork = lazy(() => import("./pages/MyNetwork"));
 const Messages = lazy(() => import("./pages/Messages"));
-const SignupPage = lazy(() => import("./pages/SignUpPage"));
+const SignUpPage = lazy(() => import("./pages/SignUpPage"));
 const SigninPage = lazy(() => import("./pages/SignInPage"));
 const NotificationPage = lazy(() => import("./pages/NotificationPage"));
 const SubscriptionPayment = lazy(() => import("./pages/SubscriptionPayment"));
@@ -100,7 +100,7 @@ const AuthenticatedRoutes = () => {
             <Route path="/" element={<AuthRedirect />} />
             <Route
               path="/signup"
-              element={<AuthRoute Component={SignupPage} />}
+              element={<AuthRoute Component={SignUpPage} />}
             />
             <Route
               path="/signin"
