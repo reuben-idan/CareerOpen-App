@@ -34,17 +34,28 @@ ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=Csv(), default=[])
 # Custom user model
 AUTH_USER_MODEL = 'accounts.User'
 
-# Import development settings if in debug mode
+# Determine environment
 import sys
 TESTING = len(sys.argv) > 1 and sys.argv[1] == 'test'
+DEPLOY_ENV = os.getenv('DEPLOY_ENV', 'development').lower()
 
-# Import development settings if in debug mode
-if DEBUG and not TESTING:
-    try:
-        from .dev_settings import *  # noqa
-        print("Using development settings with fakeredis")
-    except ImportError:
-        print("Development settings not found, using production settings")
+# Import environment-specific settings
+if not TESTING:
+    if DEPLOY_ENV == 'production':
+        try:
+            from .prod_settings import *  # noqa
+            print(f"Using production settings (DEPLOY_ENV={DEPLOY_ENV})")
+        except ImportError as e:
+            print(f"Error importing production settings: {e}")
+            raise
+    elif DEBUG:
+        try:
+            from .dev_settings import *  # noqa
+            print("Using development settings with fakeredis")
+        except ImportError as e:
+            print(f"Development settings not found, using base settings: {e}")
+    else:
+        print(f"Using base settings (DEBUG={DEBUG}, DEPLOY_ENV={DEPLOY_ENV})")
 
 # Application definition
 
