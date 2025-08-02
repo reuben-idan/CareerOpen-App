@@ -34,6 +34,18 @@ ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=Csv(), default=[])
 # Custom user model
 AUTH_USER_MODEL = 'accounts.User'
 
+# Import development settings if in debug mode
+import sys
+TESTING = len(sys.argv) > 1 and sys.argv[1] == 'test'
+
+# Import development settings if in debug mode
+if DEBUG and not TESTING:
+    try:
+        from .dev_settings import *  # noqa
+        print("Using development settings with fakeredis")
+    except ImportError:
+        print("Development settings not found, using production settings")
+
 # Application definition
 
 INSTALLED_APPS = [
