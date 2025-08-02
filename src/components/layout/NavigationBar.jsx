@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useUser } from "../../context/auth";
+import useAuth from "../../hooks/useAuth";
 import { useTheme } from "../../context/ThemeContext";
 import analytics from "../../services/analytics";
 import {
@@ -20,7 +20,7 @@ import UserProfileMenu from "./UserProfileMenu";
 import MobileDrawer from "./MobileDrawer";
 
 const NavigationBar = () => {
-  const { user, signOutUser } = useUser();
+  const { user, signOut, profile, preferences } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
@@ -46,7 +46,7 @@ const NavigationBar = () => {
 
   const handleLogout = async () => {
     try {
-      await signOutUser();
+      await signOut();
       analytics.track("user_logout");
       navigate("/login");
     } catch (error) {

@@ -1,7 +1,8 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import PropTypes from "prop-types";
 import authService from "../../services/api/auth";
 import api from "../../services/api/api";
+import { useUserProfile } from "../user";
 
 // Create a Context for the user data
 const UserContext = createContext();
@@ -48,9 +49,9 @@ export const UserProvider = ({ children }) => {
   // Sign in user
   const signIn = async (email, password) => {
     try {
-      const user = await authService.login(email, password);
-      setUser(user);
-      return user;
+      const userData = await authService.login(email, password);
+      setUser(userData);
+      return userData;
     } catch (error) {
       console.error("Sign in error:", error);
       throw error;
@@ -68,16 +69,25 @@ export const UserProvider = ({ children }) => {
     }
   };
 
+  // Update user data
+  const updateUser = (userData) => {
+    setUser(prev => ({
+      ...prev,
+      ...userData
+    }));
+  };
+
+  const contextValue = {
+    user,
+    signUp,
+    signIn,
+    signOut,
+    updateUser,
+    isLoading,
+  };
+
   return (
-    <UserContext.Provider
-      value={{
-        user,
-        signUp,
-        signIn,
-        signOut,
-        isLoading,
-      }}
-    >
+    <UserContext.Provider value={contextValue}>
       {children}
     </UserContext.Provider>
   );

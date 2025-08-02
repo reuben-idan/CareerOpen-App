@@ -7,6 +7,7 @@ import {
   useLocation,
 } from "react-router-dom";
 import { UserProvider, useUser } from "./context/auth";
+import { UserProfileProvider } from "./context/user";
 import { ThemeProvider } from "./context/ThemeContext";
 import { ProfileProvider } from "./context/profile";
 import PropTypes from "prop-types";
@@ -22,6 +23,7 @@ import "./index.css";
 import { Web3Provider } from "./context/web3";
 import CookieConsent from "./components/common/CookieConsent";
 import { ToastProvider } from "./context/toast";
+import UserProfile from "./components/profile/UserProfile";
 
 // Lazy load components for better performance
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
@@ -91,57 +93,38 @@ const AuthenticatedRoutes = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900">
       {user && <NavigationBar />}
-      <main className={`${user ? "pt-16" : ""}`}>
-        <Suspense fallback={<LoadingSpinner />}>
-          <Routes>
-            {/* Auth Routes */}
-            <Route path="/" element={<AuthRedirect />} />
-            <Route
-              path="/signup"
-              element={<AuthRoute Component={SignUpPage} />}
-            />
-            <Route
-              path="/signin"
-              element={<AuthRoute Component={SigninPage} />}
-            />
-
-            {/* Public Routes */}
-            <Route path="/jobs" element={<JobList />} />
-            <Route path="/job/:jobId" element={<JobDetail />} />
-            <Route path="/feed" element={<Feed />} />
-
-            {/* Protected Routes */}
-            <Route
-              path="/profile/:userId"
-              element={<PrivateRoute Component={ProfilePage} />}
-            />
-            <Route
-              path="/subscription"
-              element={<PrivateRoute Component={SubscriptionPayment} />}
-            />
-            <Route
-              path="/network"
-              element={<PrivateRoute Component={MyNetwork} />}
-            />
-            <Route
-              path="/messages"
-              element={<PrivateRoute Component={Messages} />}
-            />
-            <Route
-              path="/notifications"
-              element={<PrivateRoute Component={NotificationPage} />}
-            />
-            <Route
-              path="/settings"
-              element={<PrivateRoute Component={SettingsPage} />}
-            />
-            <Route
-              path="/saved-jobs"
-              element={<PrivateRoute Component={SavedJobsPage} />}
-            />
-            <Route
+      <div className="flex flex-1">
+        <Sidebar />
+        <main className="flex-1 p-4 overflow-y-auto">
+          <ErrorBoundary>
+            <Suspense fallback={<LoadingSpinner fullPage />}>
+              <Routes>
+                <Route path="/" element={<Navigate to="/feed" />} />
+                <Route path="/signin" element={<SigninPage />} />
+                <Route path="/signup" element={<SignUpPage />} />
+                <Route path="/api-test" element={<APITest />} />
+                <Route element={<AuthenticatedRoutes />}>
+                  <Route path="/profile" element={<ProfilePage />} />
+                  <Route path="/profile/:userId" element={<UserProfile />} />
+                  <Route path="/jobs" element={<JobList />} />
+                  <Route path="/jobs/:id" element={<JobDetail />} />
+                  <Route path="/feed" element={<Feed />} />
+                  <Route path="/network" element={<MyNetwork />} />
+                  <Route path="/messages" element={<Messages />} />
+                  <Route path="/notifications" element={<NotificationPage />} />
+                  <Route path="/settings" element={<SettingsPage />} />
+                  <Route path="/settings/subscription" element={<SubscriptionPayment />} />
+                  <Route path="/saved-jobs" element={<SavedJobsPage />} />
+                  <Route path="/my-applications" element={<JobApplicationsPage />} />
+                </Route>
+              </Routes>
+            </Suspense>
+          </ErrorBoundary>
+        </main>
+      </div>
+      <CookieConsent />
               path="/my-applications"
               element={<PrivateRoute Component={JobApplicationsPage} />}
             />

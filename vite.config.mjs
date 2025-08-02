@@ -28,8 +28,6 @@ export default defineConfig({
         manualChunks: {
           "react-vendor": ["react", "react-dom"],
           router: ["react-router-dom"],
-          "firebase-core": ["firebase/app", "firebase/auth"],
-          "firebase-db": ["firebase/firestore", "firebase/storage"],
           "ui-components": ["@fortawesome/react-fontawesome", "react-icons"],
           utils: ["axios", "react-toastify"],
         },
@@ -41,10 +39,6 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: [
-      "firebase/app",
-      "firebase/auth",
-      "firebase/firestore",
-      "firebase/storage",
       "react",
       "react-dom",
       "react-router-dom",
