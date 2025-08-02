@@ -1,0 +1,72 @@
+groups:
+- name: redis_alerts
+  rules:
+  # Alert when Redis is down
+  - alert: RedisDown
+    expr: up{job="redis"} == 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Redis instance down"
+      description: "Redis instance {{ $labels.instance }} is down."
+
+  # Alert when Redis memory usage is high
+  - alert: RedisMemoryUsageHigh
+    expr: (redis_memory_used_bytes / redis_memory_max_bytes * 100) > 90
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High memory usage on Redis instance {{ $labels.instance }}"
+      description: "Redis memory usage is {{ $value | humanize }}% of max memory."
+
+  # Alert when memory fragmentation is high
+  - alert: RedisMemoryFragmentationHigh
+    expr: redis_mem_fragmentation_ratio > 1.5
+    for: 15m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High memory fragmentation on Redis instance {{ $labels.instance }}"
+      description: "Memory fragmentation ratio is {{ $value | humanize }}"
+
+  # Alert when cache hit rate is low
+  - alert: RedisCacheHitRateLow
+    expr: rate(redis_keyspace_hits_total[5m]) / (rate(redis_keyspace_hits_total[5m]) + rate(redis_keyspace_misses_total[5m])) < 0.8
+    for: 15m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Low cache hit rate on Redis instance {{ $labels.instance }}"
+      description: "Cache hit rate is {{ $value | humanizePercentage }}"
+
+  # Alert when connected clients are high
+  - alert: RedisTooManyConnections
+    expr: redis_connected_clients > 100
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High number of client connections on Redis instance {{ $labels.instance }}"
+      description: "{{ $value }} clients connected"
+
+  # Alert when Redis is running out of file descriptors
+  - alert: RedisFileDescriptorsHigh
+    expr: (process_open_fds / process_max_fds * 100) > 80
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High file descriptor usage on Redis instance {{ $labels.instance }}"
+      description: "{{ $value | humanize }}% of file descriptors in use"
+
+  # Alert when Redis replication is lagging
+  - alert: RedisReplicationLagging
+    expr: redis_master_repl_offset - redis_slave_repl_offset > 1000000  # 1MB lag
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Replication lag on Redis instance {{ $labels.instance }}"
+      description: "Replication lag is {{ $value | humanize }} bytes"

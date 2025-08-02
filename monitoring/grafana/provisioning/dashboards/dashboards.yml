@@ -1,0 +1,11 @@
+apiVersion: 1
+
+providers:
+  - name: 'Redis'
+    orgId: 1
+    folder: 'Redis Monitoring'
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/redis
