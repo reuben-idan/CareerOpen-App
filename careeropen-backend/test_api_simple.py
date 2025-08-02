@@ -16,10 +16,12 @@ def print_json_response(response, title):
 def test_endpoints():
     """Test the main API endpoints."""
     base_url = 'http://127.0.0.1:8000/api'
+    jobs_base_url = f"{base_url}/jobs"
+    auth_base_url = f"{base_url}/auth"
     
     # 1. Test public job listings
     print("\n[1/5] Testing public job listings...")
-    response = requests.get(f"{base_url}/jobs/")
+    response = requests.get(f"{jobs_base_url}/")
     print_json_response(response, "Job Listings")
     
     # 2. Test authentication
@@ -44,17 +46,17 @@ def test_endpoints():
     print("\n[3/5] Testing protected endpoints...")
     
     # Get user profile
-    response = requests.get(f"{base_url}/auth/me/", headers=headers)
+    response = requests.get(f"{auth_base_url}/me/", headers=headers)
     print_json_response(response, "User Profile")
     
     # Get job applications
-    response = requests.get(f"{base_url}/applications/", headers=headers)
+    response = requests.get(f"{jobs_base_url}/applications/", headers=headers)
     print_json_response(response, "Job Applications")
     
     # 4. Test job search
     print("\n[4/5] Testing job search...")
     response = requests.get(
-        f"{base_url}/jobs/search/",
+        f"{jobs_base_url}/search/",
         params={'search': 'developer'},
         headers=headers
     )
@@ -66,12 +68,12 @@ def test_endpoints():
     
     # First request
     start_time = time.time()
-    response1 = requests.get(f"{base_url}/jobs/")
+    response1 = requests.get(f"{jobs_base_url}/")
     time1 = (time.time() - start_time) * 1000
     
     # Second request
     start_time = time.time()
-    response2 = requests.get(f"{base_url}/jobs/")
+    response2 = requests.get(f"{jobs_base_url}/")
     time2 = (time.time() - start_time) * 1000
     
     print(f"First request: {time1:.2f}ms")
