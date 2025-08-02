@@ -6,6 +6,18 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView
 from django_filters.rest_framework import DjangoFilterBackend
+from django.core.cache import cache
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+from django.views.decorators.vary import vary_on_headers
+
+# Import custom permissions
+from .permissions import IsJobOwnerOrReadOnly, IsApplicationOwnerOrReadOnly, IsAdminOrReadOnly, IsCompanyOwnerOrReadOnly
+from accounts.views import IsEmployer
+from django.core.cache import cache
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+from django.views.decorators.vary import vary_on_cookie, vary_on_headers
 
 from .models import Job, JobApplication, Category, Company
 from .serializers import (
@@ -22,8 +34,11 @@ class StandardResultsSetPagination(PageNumberPagination):
 class JobViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows jobs to be viewed or edited.
+    Caching is applied to list and retrieve operations.
     """
     queryset = Job.objects.all().order_by('-created_at')
+    # Cache page for the requested url for 15 minutes
+    cache_timeout = 60 * 15  # 15 minutes
     serializer_class = JobSerializer
     pagination_class = StandardResultsSetPagination
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
@@ -37,12 +52,57 @@ class JobViewSet(viewsets.ModelViewSet):
         Instantiates and returns the list of permissions that this view requires.
         """
         if self.action in ['create']:
-            permission_classes = [IsAuthenticated]
+            permission_classes = [IsAuthenticated, IsEmployer]
         elif self.action in ['update', 'partial_update', 'destroy']:
             permission_classes = [IsAuthenticated, IsJobOwnerOrReadOnly]
+        elif self.action == 'apply':
+            # For job applications, we'll handle the permission in the view method
+            permission_classes = [IsAuthenticated]
         else:
             permission_classes = []
         return [permission() for permission in permission_classes]
+        
+    @method_decorator(cache_page(cache_timeout))
+    @method_decorator(vary_on_headers('Authorization'))
+    def list(self, request, *args, **kwargs):
+        """
+        List all jobs with caching.
+        The cache key is based on the request URL and user authentication.
+        """
+        # Generate a cache key based on the request
+        cache_key = f'jobs_list_{request.get_full_path()}'
+        
+        # Try to get the response from cache
+        cached_response = cache.get(cache_key)
+        if cached_response is not None:
+            return Response(cached_response)
+            
+        # If not in cache, get the response from the parent class
+        response = super().list(request, *args, **kwargs)
+        
+        # Cache the response
+        cache.set(cache_key, response.data, self.cache_timeout)
+        return response
+        
+    @method_decorator(cache_page(cache_timeout))
+    def retrieve(self, request, *args, **kwargs):
+        """
+        Retrieve a job with caching.
+        """
+        # Generate a cache key based on the request
+        cache_key = f'job_detail_{kwargs["pk"]}'
+        
+        # Try to get the response from cache
+        cached_response = cache.get(cache_key)
+        if cached_response is not None:
+            return Response(cached_response)
+            
+        # If not in cache, get the response from the parent class
+        response = super().retrieve(request, *args, **kwargs)
+        
+        # Cache the response
+        cache.set(cache_key, response.data, self.cache_timeout)
+        return response
 
     def perform_create(self, serializer):
         # Set the job poster to the current user
@@ -52,7 +112,15 @@ class JobViewSet(viewsets.ModelViewSet):
     def apply(self, request, pk=None):
         """
         Custom action to apply for a job.
+        Only job seekers can apply for jobs.
         """
+        # Ensure the user is a job seeker
+        if request.user.is_employer:
+            return Response(
+                {"detail": "Employers cannot apply for jobs. Please use a job seeker account."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+            
         job = self.get_object()
         if not job.is_active:
             return Response(
@@ -273,8 +341,9 @@ class JobSearchView(APIView):
 class JobApplicationCreateView(APIView):
     """
     Create a job application.
+    Only job seekers can apply for jobs.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, ~IsEmployer]  # Only non-employers (job seekers) can apply
     serializer_class = JobApplicationSerializer
 
     def post(self, request, job_id):
@@ -340,6 +409,7 @@ class JobApplicationCreateView(APIView):
 class CategoryViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows categories to be viewed or edited.
+    Caching is applied to list and retrieve operations.
     """
     queryset = Category.objects.all().order_by('name')
     serializer_class = CategorySerializer
@@ -351,11 +421,42 @@ class CategoryViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAdminOrReadOnly]
     lookup_field = 'slug'
     lookup_url_kwarg = 'slug'
+    cache_timeout = 60 * 30  # 30 minutes
+    
+    @method_decorator(cache_page(cache_timeout))
+    def list(self, request, *args, **kwargs):
+        """
+        List all categories with caching.
+        """
+        cache_key = f'categories_list_{request.get_full_path()}'
+        cached_response = cache.get(cache_key)
+        if cached_response is not None:
+            return Response(cached_response)
+            
+        response = super().list(request, *args, **kwargs)
+        cache.set(cache_key, response.data, self.cache_timeout)
+        return response
+        
+    @method_decorator(cache_page(cache_timeout))
+    def retrieve(self, request, *args, **kwargs):
+        """
+        Retrieve a category with caching.
+        """
+        cache_key = f'category_detail_{kwargs["slug"]}'
+        cached_response = cache.get(cache_key)
+        if cached_response is not None:
+            return Response(cached_response)
+            
+        response = super().retrieve(request, *args, **kwargs)
+        cache.set(cache_key, response.data, self.cache_timeout)
+        return response
 
 
 class CompanyViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows companies to be viewed or edited.
+    Only employers can create companies.
+    Caching is applied to list and retrieve operations.
     """
     queryset = Company.objects.all().order_by('name')
     serializer_class = CompanySerializer
@@ -368,6 +469,52 @@ class CompanyViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsCompanyOwnerOrReadOnly]
     lookup_field = 'slug'
     lookup_url_kwarg = 'slug'
+    cache_timeout = 60 * 30  # 30 minutes
+    
+    def get_permissions(self):
+        """
+        Instantiates and returns the list of permissions that this view requires.
+        """
+        if self.action in ['create']:
+            # Only employers can create companies
+            permission_classes = [IsAuthenticated, IsEmployer]
+        elif self.action in ['update', 'partial_update', 'destroy']:
+            # Only company owners or admins can update/delete
+            permission_classes = [IsAuthenticated, IsCompanyOwnerOrReadOnly]
+        else:
+            # Read permissions are allowed to any authenticated user
+            permission_classes = [IsAuthenticated]
+        return [permission() for permission in permission_classes]
+        
+    @method_decorator(cache_page(cache_timeout))
+    @method_decorator(vary_on_headers('Authorization'))
+    def list(self, request, *args, **kwargs):
+        """
+        List all companies with caching.
+        The cache key is based on the request URL and user authentication.
+        """
+        cache_key = f'companies_list_{request.get_full_path()}'
+        cached_response = cache.get(cache_key)
+        if cached_response is not None:
+            return Response(cached_response)
+            
+        response = super().list(request, *args, **kwargs)
+        cache.set(cache_key, response.data, self.cache_timeout)
+        return response
+        
+    @method_decorator(cache_page(cache_timeout))
+    def retrieve(self, request, *args, **kwargs):
+        """
+        Retrieve a company with caching.
+        """
+        cache_key = f'company_detail_{kwargs["slug"]}'
+        cached_response = cache.get(cache_key)
+        if cached_response is not None:
+            return Response(cached_response)
+            
+        response = super().retrieve(request, *args, **kwargs)
+        cache.set(cache_key, response.data, self.cache_timeout)
+        return response
     
     def get_queryset(self):
         """

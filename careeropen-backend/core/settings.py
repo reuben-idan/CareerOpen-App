@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     # 3rd-party
     'rest_framework',
     'rest_framework.authtoken',
+    'django_redis',
     'rest_framework_simplejwt',
     'corsheaders',
     'drf_yasg',
@@ -173,6 +174,37 @@ SIMPLE_JWT = {
 # CORS
 CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', cast=Csv(), default='http://localhost:3000')
 CORS_ALLOW_CREDENTIALS = True
+
+# Cache settings
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379/1',  # Use database 1 for default cache
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'PASSWORD': '',  # Add Redis password if required
+            'SOCKET_CONNECT_TIMEOUT': 5,  # seconds
+            'SOCKET_TIMEOUT': 5,  # seconds
+            'IGNORE_EXCEPTIONS': True,  # Prevents Redis errors from crashing the app
+        },
+        'KEY_PREFIX': 'careeropen',  # Cache key prefix
+    },
+    'sessions': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379/2',  # Use database 2 for sessions
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        },
+        'KEY_PREFIX': 'careeropen_sessions',
+    },
+}
+
+# Session engine - using Redis for session storage
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_CACHE_ALIAS = 'sessions'
+
+# Cache time to live is 15 minutes by default
+CACHE_TTL = 60 * 15
 
 # Logging Configuration
 LOGGING = {
