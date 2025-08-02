@@ -1,12 +1,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import { auth } from "../../config/firebase"; // Import Firebase auth
-import {
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signOut,
-} from "firebase/auth";
 import PropTypes from "prop-types";
+import authService from "../../services/api/auth";
+import api from "../../services/api/api";
 
 // Create a Context for the user data
 const UserContext = createContext();
@@ -17,29 +12,33 @@ export const UserProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true); // Loading state
 
   useEffect(() => {
-    // Set up the Firebase onAuthStateChanged listener
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      if (firebaseUser) {
-        setUser(firebaseUser); // Set Firebase user data
-      } else {
-        setUser(null); // No user, set null
+    // Check if user is already authenticated
+    const checkAuth = async () => {
+      try {
+        if (authService.isAuthenticated()) {
+          const userData = await authService.getCurrentUser();
+          setUser(userData);
+        } else {
+          setUser(null);
+        }
+      } catch (error) {
+        console.error("Auth check failed:", error);
+        setUser(null);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false); // Set loading to false after checking authentication
-    });
+    };
 
-    // Cleanup listener on unmount
-    return () => unsubscribe();
+    checkAuth();
   }, []);
 
   // Sign up new user
-  const signUp = async (email, password) => {
+  const signUp = async (userData) => {
     try {
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
-      return userCredential.user; // Return user data from Firebase
+      const user = await authService.register(userData);
+      // After successful registration, log the user in
+      await signIn(userData.email, userData.password);
+      return user;
     } catch (error) {
       console.error("Sign up error:", error);
       throw error;
@@ -49,12 +48,9 @@ export const UserProvider = ({ children }) => {
   // Sign in user
   const signIn = async (email, password) => {
     try {
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
-      return userCredential.user; // Return user data from Firebase
+      const user = await authService.login(email, password);
+      setUser(user);
+      return user;
     } catch (error) {
       console.error("Sign in error:", error);
       throw error;
@@ -62,12 +58,13 @@ export const UserProvider = ({ children }) => {
   };
 
   // Sign out user
-  const signOutUser = async () => {
+  const signOut = async () => {
     try {
-      await signOut(auth);
-      setUser(null); // Clear user state after signing out
+      await authService.logout();
+      setUser(null);
     } catch (error) {
       console.error("Sign out error:", error);
+      throw error;
     }
   };
 
@@ -77,7 +74,7 @@ export const UserProvider = ({ children }) => {
         user,
         signUp,
         signIn,
-        signOutUser,
+        signOut,
         isLoading,
       }}
     >

@@ -36,7 +36,7 @@ const peopleImages = [
 ];
 
 export default function SignInPage() {
-  const { signIn } = useUser();
+  const { signIn, user } = useUser();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: "",
@@ -44,6 +44,7 @@ export default function SignInPage() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -54,22 +55,35 @@ export default function SignInPage() {
     e.preventDefault();
     setError("");
     setLoading(true);
+    
     try {
-      const user = await signIn(formData.email, formData.password);
-      // Ensure profile exists in 'profiles' collection after sign in
-      if (user && user.uid) {
-        const { createUserProfile } = await import(
-          "../services/firebase/users.js"
-        );
-        await createUserProfile(user.uid, {
-          email: user.email,
-          displayName: user.displayName || "",
-          id: user.uid,
-        });
-      }
+      // Sign in the user using the backend authentication
+      await signIn(formData.email, formData.password);
+      
+      // The user will be automatically redirected by the auth context
+      // after a successful login
       navigate("/feed");
     } catch (err) {
-      setError(err.message);
+      // Handle different types of errors with user-friendly messages
+      if (err.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        if (err.response.status === 401) {
+          setError("Invalid email or password. Please try again.");
+        } else if (err.response.status === 400) {
+          setError("Invalid request. Please check your input and try again.");
+        } else if (err.response.status >= 500) {
+          setError("Server error. Please try again later.");
+        } else {
+          setError(err.response.data?.message || "An error occurred during sign in.");
+        }
+      } else if (err.request) {
+        // The request was made but no response was received
+        setError("Unable to connect to the server. Please check your internet connection.");
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        setError(err.message || "An unexpected error occurred.");
+      }
     } finally {
       setLoading(false);
     }

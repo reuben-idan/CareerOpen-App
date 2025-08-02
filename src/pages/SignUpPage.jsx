@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useUser } from "../context/auth";
-import { createUserProfile } from "../services/firebase/users.js";
+// Firebase import removed - using backend auth
 import { Logo } from "../components/common/Logo";
 import ImageUpload from "../components/common/ImageUpload";
 import logo from "../assets/logo.jpeg";
@@ -38,7 +38,7 @@ const peopleImages = [
 ];
 
 export default function SignUpPage() {
-  const { signUp } = useUser();
+  const { signUp, user } = useUser();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     firstName: "",
@@ -56,6 +56,7 @@ export default function SignUpPage() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [profileImage, setProfileImage] = useState(null);
 
   const handleChange = (e) => {
@@ -67,44 +68,50 @@ export default function SignUpPage() {
     e.preventDefault();
     setError("");
     setLoading(true);
+    
+    // Validate form data
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match");
       setLoading(false);
       return;
     }
-    try {
-      const { user } = await signUp(formData.email, formData.password);
+    
+    if (formData.password.length < 8) {
+      setError("Password must be at least 8 characters long");
+      setLoading(false);
+      return;
+    }
 
-      // Create initial profile data
-      const initialProfileData = {
-        ...formData,
-        id: user.uid,
-        displayName: `${formData.firstName} ${formData.lastName}`,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        connections: [],
-        pendingConnections: [],
-        experience: [],
-        education: [],
-        stats: {
-          profileViews: 0,
-          postViews: 0,
-          connections: 0,
-          endorsements: 0,
-        },
+    try {
+      // Register the user with the backend
+      const userData = {
+        email: formData.email,
+        password: formData.password,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        userType: formData.userType,
+        headline: formData.headline,
+        location: formData.location,
+        about: formData.about,
+        skills: formData.skills,
       };
 
-      // Store initial profile data in localStorage
-      localStorage.setItem(
-        `profile_${user.uid}`,
-        JSON.stringify(initialProfileData)
-      );
+      // Sign up the user (this will also create the profile)
+      await signUp(userData);
 
-      // Create user profile with default values
-      await createUserProfile(user.uid, initialProfileData);
+      // Handle profile image upload if provided
+      if (profileImage) {
+        try {
+          // The profile context will handle the upload after the profile is created
+          // No need to do anything here as the profile context will handle it
+        } catch (uploadError) {
+          console.error("Error uploading profile image:", uploadError);
+          // Continue with signup even if image upload fails
+        }
+      }
 
-      // Navigate to profile page instead of feed
-      navigate(`/profile/${user.uid}`);
+      // Redirect to feed after successful signup
+      navigate("/feed");
     } catch (err) {
       setError(err.message);
     } finally {
