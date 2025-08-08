@@ -5,6 +5,7 @@ import {
   Routes,
   Navigate,
   useLocation,
+  useNavigate,
 } from "react-router-dom";
 import { UserProvider, useUser } from "./context/auth";
 import { UserProfileProvider } from "./context/user";
@@ -70,8 +71,7 @@ const App = () => {
                   >
                     <AnalyticsWrapper>
                       <SEO />
-                      <AuthenticatedRoutes />
-                      <CookieConsent />
+                      <AppRoutes />
                     </AnalyticsWrapper>
                   </Router>
                 </ToastProvider>
@@ -84,7 +84,7 @@ const App = () => {
   );
 };
 
-const AuthenticatedRoutes = () => {
+const AppLayout = ({ children }) => {
   const { user } = useUser();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
@@ -96,51 +96,50 @@ const AuthenticatedRoutes = () => {
     <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900">
       {user && <NavigationBar />}
       <div className="flex flex-1">
-        <Sidebar />
+        {user && <Sidebar />}
         <main className="flex-1 p-4 overflow-y-auto">
           <ErrorBoundary>
             <Suspense fallback={<LoadingSpinner fullPage />}>
-              <Routes>
-                <Route path="/" element={<Navigate to="/feed" />} />
-                <Route path="/signin" element={<SigninPage />} />
-                <Route path="/signup" element={<SignUpPage />} />
-                <Route path="/api-test" element={<APITest />} />
-                <Route element={<AuthenticatedRoutes />}>
-                  <Route path="/profile" element={<ProfilePage />} />
-                  <Route path="/profile/:userId" element={<UserProfile />} />
-                  <Route path="/jobs" element={<JobList />} />
-                  <Route path="/jobs/:id" element={<JobDetail />} />
-                  <Route path="/feed" element={<Feed />} />
-                  <Route path="/network" element={<MyNetwork />} />
-                  <Route path="/messages" element={<Messages />} />
-                  <Route path="/notifications" element={<NotificationPage />} />
-                  <Route path="/settings" element={<SettingsPage />} />
-                  <Route path="/settings/subscription" element={<SubscriptionPayment />} />
-                  <Route path="/saved-jobs" element={<SavedJobsPage />} />
-                  <Route path="/my-applications" element={<JobApplicationsPage />} />
-                </Route>
-              </Routes>
+              {children}
             </Suspense>
           </ErrorBoundary>
+          <CookieConsent />
         </main>
       </div>
-      <CookieConsent />
-              path="/my-applications"
-              element={<PrivateRoute Component={JobApplicationsPage} />}
-            />
-
-            {/* Development Routes */}
-            <Route
-              path="/api-test"
-              element={<PrivateRoute Component={APITest} />}
-            />
-
-            {/* Fallback Route */}
-            <Route path="*" element={<Navigate to="/feed" replace />} />
-          </Routes>
-        </Suspense>
-      </main>
     </div>
+  );
+};
+
+const AppRoutes = () => {
+  return (
+    <Routes>
+      {/* Public Routes */}
+      <Route path="/signin" element={<AuthRoute Component={SigninPage} />} />
+      <Route path="/signup" element={<AuthRoute Component={SignUpPage} />} />
+      
+      {/* Protected Routes */}
+      <Route element={
+        <PrivateRoute>
+          <AppLayout />
+        </PrivateRoute>
+      }>
+        <Route path="/" element={<Navigate to="/feed" replace />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/profile/:userId" element={<UserProfile />} />
+        <Route path="/jobs" element={<JobList />} />
+        <Route path="/jobs/:id" element={<JobDetail />} />
+        <Route path="/feed" element={<Feed />} />
+        <Route path="/network" element={<MyNetwork />} />
+        <Route path="/messages" element={<Messages />} />
+        <Route path="/notifications" element={<NotificationPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/settings/subscription" element={<SubscriptionPayment />} />
+        <Route path="/saved-jobs" element={<SavedJobsPage />} />
+        <Route path="/my-applications" element={<JobApplicationsPage />} />
+        <Route path="/api-test" element={<APITest />} />
+        <Route path="*" element={<Navigate to="/feed" replace />} />
+      </Route>
+    </Routes>
   );
 };
 
@@ -153,14 +152,27 @@ const AuthRedirect = () => {
   );
 };
 
-const PrivateRoute = ({ Component }) => {
+const PrivateRoute = ({ children }) => {
   const { user } = useUser();
-  return user ? <Component /> : <Navigate to="/signin" replace />;
+  const location = useLocation();
+  
+  if (!user) {
+    return <Navigate to="/signin" state={{ from: location }} replace />;
+  }
+  
+  return children;
 };
 
 const AuthRoute = ({ Component }) => {
   const { user } = useUser();
-  return user ? <Navigate to="/feed" replace /> : <Component />;
+  const location = useLocation();
+  const from = location.state?.from?.pathname || "/feed";
+  
+  if (user) {
+    return <Navigate to={from} replace />;
+  }
+  
+  return <Component />;
 };
 
 PrivateRoute.propTypes = {
