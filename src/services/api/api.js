@@ -1,17 +1,44 @@
 import axios from 'axios';
 
-// Create axios instance with base URL
+const API_URL = 'http://localhost:8000/api';
+
+// Helper function to safely parse JSON
+const safeJsonParse = (data) => {
+  try {
+    return typeof data === 'string' ? JSON.parse(data) : data;
+  } catch (e) {
+    console.error('Failed to parse JSON:', e);
+    return data;
+  }
+};
+
+// Create axios instance with default config
 const api = axios.create({
-  baseURL: 'http://localhost:8000/api', // Default Django development server URL
+  baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true,
+  transformResponse: [
+    ...(axios.defaults.transformResponse || []),
+    (data) => {
+      // Ensure we always return parsed JSON
+      if (typeof data === 'string') {
+        try {
+          return JSON.parse(data);
+        } catch (e) {
+          return data;
+        }
+      }
+      return data;
+    },
+  ],
 });
 
-// Add request interceptor to add auth token to requests
+// Add a request interceptor to include the auth token in requests
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('access_token');
+    const token = localStorage.getItem('accessToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -24,8 +51,25 @@ api.interceptors.request.use(
 
 // Add response interceptor to handle token refresh
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Ensure response data is properly parsed
+    if (typeof response.data === 'string') {
+      try {
+        response.data = JSON.parse(response.data);
+      } catch (e) {
+        console.error('Failed to parse response data:', e);
+      }
+    }
+    return response;
+  },
   async (error) => {
+    // Handle network errors
+    if (!error.response) {
+      const networkError = new Error('Network Error: Unable to connect to the server. Please check your internet connection.');
+      networkError.isNetworkError = true;
+      return Promise.reject(networkError);
+    }
+
     const originalRequest = error.config;
 
     // If error is 401 and we haven't already tried to refresh the token
@@ -33,20 +77,31 @@ api.interceptors.response.use(
       originalRequest._retry = true;
       
       try {
-        const refreshToken = localStorage.getItem('refresh_token');
+        const refreshToken = localStorage.getItem('refreshToken');
         if (!refreshToken) {
-          // No refresh token, redirect to login
+          // No refresh token, clear auth and redirect to login
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
           window.location.href = '/login';
-          return Promise.reject(error);
+          return Promise.reject(new Error('Session expired. Please log in again.'));
         }
         
         // Try to refresh the token
-        const response = await axios.post('http://localhost:8000/api/token/refresh/', {
+        const response = await axios.post(`${API_URL}/token/refresh/`, {
           refresh: refreshToken,
+        }).catch(refreshError => {
+          // If refresh fails, clear auth and redirect to login
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          window.location.href = '/login';
+          return Promise.reject(new Error('Session expired. Please log in again.'));
         });
         
-        const { access } = response.data;
-        localStorage.setItem('access_token', access);
+        const { access, refresh } = response.data;
+        
+        // Store new tokens
+        localStorage.setItem('accessToken', access);
+        localStorage.setItem('refreshToken', refresh || refreshToken);
         
         // Update the authorization header
         originalRequest.headers.Authorization = `Bearer ${access}`;
@@ -54,16 +109,32 @@ api.interceptors.response.use(
         // Retry the original request
         return api(originalRequest);
       } catch (error) {
-        // If refresh fails, redirect to login
+        // If refresh fails, clear auth and redirect to login
         console.error('Failed to refresh token:', error);
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
         window.location.href = '/login';
-        return Promise.reject(error);
+        return Promise.reject(new Error('Session expired. Please log in again.'));
       }
     }
     
-    return Promise.reject(error);
+    // Handle other errors
+    const errorResponse = {
+      status: error.response.status,
+      statusText: error.response.statusText,
+      data: safeJsonParse(error.response.data),
+      headers: error.response.headers,
+    };
+    
+    const errorMessage = error.response.data?.detail || 
+                        error.response.data?.message || 
+                        error.response.statusText ||
+                        'An unexpected error occurred';
+    
+    const apiError = new Error(errorMessage);
+    apiError.response = errorResponse;
+    
+    return Promise.reject(apiError);
   }
 );
 

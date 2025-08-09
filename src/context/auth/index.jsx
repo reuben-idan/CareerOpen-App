@@ -54,6 +54,10 @@ export const UserProvider = ({ children }) => {
       return userData;
     } catch (error) {
       console.error("Sign in error:", error);
+      // Clear any existing tokens on failed login
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      setUser(null);
       throw error;
     }
   };
@@ -62,10 +66,15 @@ export const UserProvider = ({ children }) => {
   const signOut = async () => {
     try {
       await authService.logout();
-      setUser(null);
     } catch (error) {
       console.error("Sign out error:", error);
-      throw error;
+      // Continue with sign out even if the server call fails
+    } finally {
+      // Clear user state and tokens
+      setUser(null);
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      delete api.defaults.headers.common['Authorization'];
     }
   };
 
