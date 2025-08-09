@@ -7,14 +7,14 @@ import "react-toastify/dist/ReactToastify.css";
 
 const UserProfileMenu = () => {
   const [isDropdownOpen, setDropdownOpen] = useState(false);
-  const { user, signOutUser } = useUser();
+  const { user, signOut } = useUser();
   const navigate = useNavigate();
 
   const toggleDropdown = () => setDropdownOpen(!isDropdownOpen);
 
   const handleSignOut = async () => {
     try {
-      await signOutUser();
+      await signOut();
       toast.success("Successfully signed out!", {
         position: "top-right",
         autoClose: 3000,

@@ -68,8 +68,8 @@ const ProfileProvider = ({ children }) => {
         setProfile(JSON.parse(cachedData));
       }
 
-      // Fetch from backend API - using the correct auth endpoint
-      const response = await api.get(`/auth/users/${userId}/`);
+      // Use /auth/me/ for the current user's profile instead of /auth/users/{id}/
+      const response = await api.get('/auth/me/');
       
       if (response) {
         const profileData = createInitialProfile(response);
@@ -78,12 +78,9 @@ const ProfileProvider = ({ children }) => {
         return profileData;
       }
       
-      // If no profile exists, create a default one
-      const newProfile = createInitialProfile({ userId });
-      await api.post('/auth/users/', newProfile);
-      setProfile(newProfile);
-      localStorage.setItem(`profile_${userId}`, JSON.stringify(newProfile));
-      return newProfile;
+      // If no profile exists, we'll handle this case in the backend
+      // by returning a 404, which will be caught below
+      throw new Error('Profile not found');
       
     } catch (err) {
       console.error("Error fetching profile:", err);
