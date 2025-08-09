@@ -176,7 +176,7 @@ const AuthRoute = ({ Component }) => {
 };
 
 PrivateRoute.propTypes = {
-  Component: PropTypes.elementType.isRequired,
+  children: PropTypes.node.isRequired,
 };
 
 AuthRoute.propTypes = {

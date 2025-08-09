@@ -41,11 +41,11 @@ export default function SignUpPage() {
   const { signUp, user } = useUser();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
+    first_name: "",
+    last_name: "",
     email: "",
     password: "",
-    confirmPassword: "",
+    password2: "",
     userType: "jobseeker",
     headline: "Professional",
     location: "",
@@ -56,6 +56,7 @@ export default function SignUpPage() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
   const [success, setSuccess] = useState("");
   const [profileImage, setProfileImage] = useState(null);
 
@@ -67,17 +68,40 @@ export default function SignUpPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setFieldErrors({});
     setLoading(true);
     
-    // Validate form data
-    if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
-      setLoading(false);
-      return;
+    // Client-side validation
+    const errors = {};
+    
+    if (!formData.first_name?.trim()) {
+      errors.first_name = ["First name is required"];
     }
     
-    if (formData.password.length < 8) {
-      setError("Password must be at least 8 characters long");
+    if (!formData.last_name?.trim()) {
+      errors.last_name = ["Last name is required"];
+    }
+    
+    if (!formData.email?.trim()) {
+      errors.email = ["Email is required"];
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      errors.email = ["Please enter a valid email address"];
+    }
+    
+    if (!formData.password) {
+      errors.password = ["Password is required"];
+    } else if (formData.password.length < 8) {
+      errors.password = ["Password must be at least 8 characters long"];
+    }
+    
+    if (!formData.password2) {
+      errors.password2 = ["Please confirm your password"];
+    } else if (formData.password !== formData.password2) {
+      errors.password2 = ["Passwords do not match"];
+    }
+    
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
       setLoading(false);
       return;
     }
@@ -87,9 +111,10 @@ export default function SignUpPage() {
       const userData = {
         email: formData.email,
         password: formData.password,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        userType: formData.userType,
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        password2: formData.password2, // Add password2 for backend validation
+        is_employer: formData.userType === 'employer', // Map userType to is_employer
         headline: formData.headline,
         location: formData.location,
         about: formData.about,
@@ -110,10 +135,48 @@ export default function SignUpPage() {
         }
       }
 
-      // Redirect to feed after successful signup
-      navigate("/feed");
+      // Show success message and redirect
+      setSuccess("Registration successful! Redirecting...");
+      setTimeout(() => {
+        navigate("/feed");
+      }, 1500);
     } catch (err) {
-      setError(err.message);
+      setLoading(false);
+      
+      // Handle different types of errors
+      if (err.response?.data) {
+        const { data } = err.response;
+        
+        // Handle field validation errors
+        if (typeof data === 'object' && data !== null) {
+          // Handle non-field specific errors
+          if (data.detail) {
+            setError(data.detail);
+          } 
+          // Handle field-specific errors
+          else {
+            const formattedErrors = {};
+            Object.entries(data).forEach(([field, messages]) => {
+              // Convert array of errors to a single string if needed
+              formattedErrors[field] = Array.isArray(messages) ? messages.join(' ') : messages;
+            });
+            setFieldErrors(formattedErrors);
+            
+            // Set a general error message if no field errors were set
+            if (Object.keys(formattedErrors).length === 0) {
+              setError("Please check your input and try again.");
+            } else {
+              setError("Please fix the errors below.");
+            }
+          }
+        } else {
+          // Handle string error responses
+          setError(data.detail || data.message || "An error occurred during registration.");
+        }
+      } else {
+        setError(err.message || "An error occurred during registration.");
+      }
+      console.error("Registration error:", err);
     } finally {
       setLoading(false);
     }
@@ -150,34 +213,61 @@ export default function SignUpPage() {
           </div>
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="flex flex-col sm:flex-row gap-2">
-              <input
-                type="text"
-                name="firstName"
-                value={formData.firstName}
-                onChange={handleChange}
-                required
-                placeholder="First Name"
-                className="w-full sm:w-1/2 min-w-0 px-4 py-3 rounded-xl bg-white/60 dark:bg-gray-800/60 border border-gray-200/50 dark:border-gray-600/50 focus:ring-2 focus:ring-blue-500"
-              />
-              <input
-                type="text"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleChange}
-                required
-                placeholder="Last Name"
-                className="w-full sm:w-1/2 min-w-0 px-4 py-3 rounded-xl bg-white/60 dark:bg-gray-800/60 border border-gray-200/50 dark:border-gray-600/50 focus:ring-2 focus:ring-blue-500"
-              />
+              <div className="w-full sm:w-1/2">
+                <input
+                  type="text"
+                  name="first_name"
+                  value={formData.first_name}
+                  onChange={handleChange}
+                  required
+                  placeholder="First Name"
+                  className={`w-full px-4 py-3 rounded-xl bg-white/60 dark:bg-gray-800/60 border ${
+                    fieldErrors.first_name ? 'border-red-500' : 'border-gray-200/50 dark:border-gray-600/50'
+                  } focus:ring-2 focus:ring-blue-500`}
+                />
+                {fieldErrors.first_name && (
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                    {fieldErrors.first_name[0]}
+                  </p>
+                )}
+              </div>
+              <div className="w-full sm:w-1/2">
+                <input
+                  type="text"
+                  name="last_name"
+                  value={formData.last_name}
+                  onChange={handleChange}
+                  required
+                  placeholder="Last Name"
+                  className={`w-full px-4 py-3 rounded-xl bg-white/60 dark:bg-gray-800/60 border ${
+                    fieldErrors.last_name ? 'border-red-500' : 'border-gray-200/50 dark:border-gray-600/50'
+                  } focus:ring-2 focus:ring-blue-500`}
+                />
+                {fieldErrors.last_name && (
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                    {fieldErrors.last_name[0]}
+                  </p>
+                )}
+              </div>
             </div>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-              placeholder="Email"
-              className="w-full px-4 py-3 rounded-xl bg-white/60 dark:bg-gray-800/60 border border-gray-200/50 dark:border-gray-600/50 focus:ring-2 focus:ring-blue-500"
-            />
+            <div className="mb-1">
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                required
+                placeholder="Email"
+                className={`w-full px-4 py-3 rounded-xl bg-white/60 dark:bg-gray-800/60 border ${
+                  fieldErrors.email ? 'border-red-500' : 'border-gray-200/50 dark:border-gray-600/50'
+                } focus:ring-2 focus:ring-blue-500`}
+              />
+              {fieldErrors.email && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {fieldErrors.email[0]}
+                </p>
+              )}
+            </div>
             <input
               type="text"
               name="headline"
@@ -194,24 +284,42 @@ export default function SignUpPage() {
               placeholder="Location"
               className="w-full px-4 py-3 rounded-xl bg-white/60 dark:bg-gray-800/60 border border-gray-200/50 dark:border-gray-600/50 focus:ring-2 focus:ring-blue-500"
             />
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              placeholder="Password"
-              className="w-full px-4 py-3 rounded-xl bg-white/60 dark:bg-gray-800/60 border border-gray-200/50 dark:border-gray-600/50 focus:ring-2 focus:ring-blue-500"
-            />
-            <input
-              type="password"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              required
-              placeholder="Confirm Password"
-              className="w-full px-4 py-3 rounded-xl bg-white/60 dark:bg-gray-800/60 border border-gray-200/50 dark:border-gray-600/50 focus:ring-2 focus:ring-blue-500"
-            />
+            <div className="mb-1">
+              <input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                placeholder="Password"
+                className={`w-full px-4 py-3 rounded-xl bg-white/60 dark:bg-gray-800/60 border ${
+                  fieldErrors.password ? 'border-red-500' : 'border-gray-200/50 dark:border-gray-600/50'
+                } focus:ring-2 focus:ring-blue-500`}
+              />
+              {fieldErrors.password && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {fieldErrors.password[0]}
+                </p>
+              )}
+            </div>
+            <div className="mb-1">
+              <input
+                type="password"
+                name="password2"
+                value={formData.password2}
+                onChange={handleChange}
+                required
+                placeholder="Confirm Password"
+                className={`w-full px-4 py-3 rounded-xl bg-white/60 dark:bg-gray-800/60 border ${
+                  fieldErrors.password2 ? 'border-red-500' : 'border-gray-200/50 dark:border-gray-600/50'
+                } focus:ring-2 focus:ring-blue-500`}
+              />
+              {fieldErrors.password2 && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {fieldErrors.password2[0]}
+                </p>
+              )}
+            </div>
             <div className="flex gap-2">
               <button
                 type="button"
@@ -251,8 +359,13 @@ export default function SignUpPage() {
               />
             </div>
             {error && (
-              <div className="bg-red-100 text-red-700 px-4 py-2 rounded-xl text-center">
+              <div className="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 px-4 py-3 rounded-xl text-center border border-red-200 dark:border-red-800">
                 {error}
+              </div>
+            )}
+            {success && (
+              <div className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-4 py-3 rounded-xl text-center border border-green-200 dark:border-green-800">
+                {success}
               </div>
             )}
             <button

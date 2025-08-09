@@ -1,16 +1,7 @@
 import axios from 'axios';
+import { handleApiError } from '../../utils/apiErrorHandler';
 
 const API_URL = 'http://localhost:8000/api';
-
-// Helper function to safely parse JSON
-const safeJsonParse = (data) => {
-  try {
-    return typeof data === 'string' ? JSON.parse(data) : data;
-  } catch (e) {
-    console.error('Failed to parse JSON:', e);
-    return data;
-  }
-};
 
 // Create axios instance with default config
 const api = axios.create({
@@ -19,20 +10,7 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
   withCredentials: true,
-  transformResponse: [
-    ...(axios.defaults.transformResponse || []),
-    (data) => {
-      // Ensure we always return parsed JSON
-      if (typeof data === 'string') {
-        try {
-          return JSON.parse(data);
-        } catch (e) {
-          return data;
-        }
-      }
-      return data;
-    },
-  ],
+  timeout: 10000, // 10 seconds timeout
 });
 
 // Add a request interceptor to include the auth token in requests
@@ -45,7 +23,31 @@ api.interceptors.request.use(
     return config;
   },
   (error) => {
-    return Promise.reject(error);
+    // Handle request error before the request is sent
+    const errorInfo = handleApiError(error);
+    return Promise.reject(errorInfo);
+  }
+);
+
+// Add a response interceptor to handle errors globally
+api.interceptors.response.use(
+  (response) => {
+    // Any status code that lies within the range of 2xx causes this function to trigger
+    return response.data;
+  },
+  (error) => {
+    // Any status codes that fall outside the range of 2xx cause this function to trigger
+    const errorInfo = handleApiError(error);
+    
+    // Handle specific status codes
+    if (error.response?.status === 401) {
+      // Handle unauthorized (e.g., token expired)
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      // Optionally redirect to login or refresh token
+    }
+    
+    return Promise.reject(errorInfo);
   }
 );
 

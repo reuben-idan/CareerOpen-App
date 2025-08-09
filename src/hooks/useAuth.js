@@ -1,5 +1,5 @@
 import { useUser } from "../context/auth";
-import { useUserProfile } from "../context/user";
+import { useProfile } from "../context/profile";
 
 /**
  * Custom hook that combines authentication and user profile functionality
@@ -7,7 +7,7 @@ import { useUserProfile } from "../context/user";
  */
 const useAuth = () => {
   const auth = useUser();
-  const profile = useUserProfile();
+  const profile = useProfile();
 
   return {
     // Auth state

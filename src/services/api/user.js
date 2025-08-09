@@ -4,30 +4,33 @@ const userService = {
   // Get current user profile
   async getCurrentUser() {
     try {
-      const response = await api.get('/users/me/');
-      return response.data;
+      const response = await api.get('/auth/me/');
+      return response;
     } catch (error) {
-      throw error.response?.data || error.message;
+      console.error('Error getting current user:', error);
+      throw error;
     }
   },
 
   // Get user profile by ID
   async getUserProfile(userId) {
     try {
-      const response = await api.get(`/users/${userId}/`);
-      return response.data;
+      const response = await api.get(`/auth/users/${userId}/`);
+      return response;
     } catch (error) {
-      throw error.response?.data || error.message;
+      console.error('Error fetching user profile:', error);
+      throw error;
     }
   },
 
   // Update user profile
   async updateProfile(userId, profileData) {
     try {
-      const response = await api.patch(`/users/${userId}/`, profileData);
-      return response.data;
+      const response = await api.patch(`/auth/me/`, profileData);
+      return response;
     } catch (error) {
-      throw error.response?.data || error.message;
+      console.error('Error updating profile:', error);
+      throw error;
     }
   },
 

@@ -1,10 +1,11 @@
 from core.settings import *
+import os
 
 # Override database settings for development with SQLite
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': 'db.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
 
@@ -25,3 +26,6 @@ CORS_ALLOW_CREDENTIALS = True
 
 # Enable debug mode
 DEBUG = True
+
+# Set the default settings module to use these settings
+os.environ['DJANGO_SETTINGS_MODULE'] = 'core.temp_settings'

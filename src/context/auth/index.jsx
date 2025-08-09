@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback } from "rea
 import PropTypes from "prop-types";
 import authService from "../../services/api/auth";
 import api from "../../services/api/api";
-import { useUserProfile } from "../user";
+import { useProfile } from "../profile";
 
 // Create a Context for the user data
 const UserContext = createContext();

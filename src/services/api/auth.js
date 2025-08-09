@@ -4,7 +4,8 @@ const authService = {
   // Login user
   async login(email, password) {
     try {
-      const response = await api.post('/token/', { 
+      // First, get the JWT tokens using the login endpoint
+      const response = await api.post('/login/', { 
         email, 
         password 
       }).catch(error => {
@@ -15,7 +16,17 @@ const authService = {
         throw error;
       });
       
-      const { access, refresh } = response.data;
+      // Log the response for debugging
+      console.log('Login response:', response);
+      
+      // Extract tokens and user data from the response
+      // The backend returns: { user: {...}, access: '...', refresh: '...' }
+      if (!response || !response.user || !response.access || !response.refresh) {
+        console.error('Invalid login response format:', response);
+        throw new Error('Invalid server response. Please try again.');
+      }
+      
+      const { access, refresh, user: userData } = response;
       
       // Store tokens in localStorage
       localStorage.setItem('accessToken', access);
@@ -24,7 +35,10 @@ const authService = {
       // Set default auth header
       api.defaults.headers.common['Authorization'] = `Bearer ${access}`;
       
-      return this.getCurrentUser();
+      // Store user data in localStorage for initial render
+      localStorage.setItem('user', JSON.stringify(userData));
+      
+      return userData;
     } catch (error) {
       if (error.response) {
         // The request was made and the server responded with a status code
@@ -50,14 +64,38 @@ const authService = {
   // Get current user
   async getCurrentUser() {
     try {
-      const response = await api.get('/users/me/');
-      return response.data;
-    } catch (error) {
-      // If not authenticated, clear tokens
-      if (error.response?.status === 401) {
-        this.logout();
+      // First check if we have user data in localStorage
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        try {
+          return JSON.parse(storedUser);
+        } catch (e) {
+          console.error('Error parsing stored user data:', e);
+          // Continue to fetch fresh data if parsing fails
+        }
       }
-      throw error.response?.data || error.message;
+      
+      // If no stored user or parsing failed, fetch from server
+      const user = await api.get('/auth/me/');
+      
+      // Update the stored user data
+      if (user) {
+        localStorage.setItem('user', JSON.stringify(user));
+      }
+      
+      return user;
+    } catch (error) {
+      console.error('Error getting current user:', error);
+      
+      // If we have a 401 (Unauthorized), clear the stored tokens and user data
+      if (error.response?.status === 401) {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('user');
+        delete api.defaults.headers.common['Authorization'];
+      }
+      
+      throw error;
     }
   },
   
@@ -69,7 +107,7 @@ const authService = {
   // Register new user
   async register(userData) {
     try {
-      const response = await api.post('/users/register/', userData).catch(error => {
+      const response = await api.post('/auth/register/', userData).catch(error => {
         if (!error.response) {
           // Network error or server not responding
           throw new Error('Unable to connect to the server. Please check your connection and try again.');
