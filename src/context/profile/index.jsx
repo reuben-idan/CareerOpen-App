@@ -68,11 +68,11 @@ const ProfileProvider = ({ children }) => {
         setProfile(JSON.parse(cachedData));
       }
 
-      // Fetch from backend API
-      const response = await api.get(`/users/${userId}`);
+      // Fetch from backend API - using the correct auth endpoint
+      const response = await api.get(`/auth/users/${userId}/`);
       
-      if (response.data) {
-        const profileData = createInitialProfile(response.data);
+      if (response) {
+        const profileData = createInitialProfile(response);
         setProfile(profileData);
         localStorage.setItem(`profile_${userId}`, JSON.stringify(profileData));
         return profileData;
@@ -80,7 +80,7 @@ const ProfileProvider = ({ children }) => {
       
       // If no profile exists, create a default one
       const newProfile = createInitialProfile({ userId });
-      await api.post('/users', newProfile);
+      await api.post('/auth/users/', newProfile);
       setProfile(newProfile);
       localStorage.setItem(`profile_${userId}`, JSON.stringify(newProfile));
       return newProfile;
@@ -104,38 +104,24 @@ const ProfileProvider = ({ children }) => {
       setError(null);
 
       try {
-        const updateData = {
-          ...updatedData,
-          updatedAt: new Date().toISOString(),
-        };
-
-        // Update in backend
-        const response = await api.put(`/users/${profile.id}`, updateData);
-        
-        // Update local state
-        const updatedProfile = {
-          ...profile,
-          ...response.data,
-        };
-        
+        // Use the /auth/me/ endpoint for updating the current user's profile
+        const response = await api.patch('/auth/me/', updatedData);
+        const updatedProfile = createInitialProfile(response);
         setProfile(updatedProfile);
-
-        // Update cache
         localStorage.setItem(
-          `profile_${profile.id}`,
+          `profile_${user.id}`,
           JSON.stringify(updatedProfile)
         );
-
         return updatedProfile;
       } catch (err) {
         console.error("Error updating profile:", err);
-        setError(err.response?.data?.message || err.message);
+        setError(err.response?.data?.message || err.message || 'Failed to update profile');
         throw err;
       } finally {
         setLoading(false);
       }
     },
-    [profile]
+    [user?.id]
   );
   
   // Upload profile picture

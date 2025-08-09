@@ -5,7 +5,7 @@ const authService = {
   async login(email, password) {
     try {
       // First, get the JWT tokens using the login endpoint
-      const response = await api.post('/login/', { 
+      const response = await api.post('/auth/login/', { 
         email, 
         password 
       }).catch(error => {

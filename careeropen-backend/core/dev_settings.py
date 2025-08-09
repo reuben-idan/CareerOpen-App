@@ -1,9 +1,17 @@
 """
 Development settings for CareerOpen backend.
-Uses fakeredis for local development.
+Uses SQLite for database and fakeredis for caching in local development.
 """
 
-# Use fakeredis for development
+# Use SQLite for development
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': 'db.sqlite3',
+    }
+}
+
+# Use fakeredis for development caching
 CACHES = {
     'default': {
         'BACKEND': 'django_redis.cache.RedisCache',
@@ -36,3 +44,24 @@ class FakeConnectionFactory(django_redis.pool.ConnectionFactory):
         return fakeredis.FakeRedis()
 
 django_redis.pool.ConnectionFactory = FakeConnectionFactory
+
+# Enable debug logging for development
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+        },
+        '': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+        },
+    },
+}
