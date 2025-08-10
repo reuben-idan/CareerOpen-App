@@ -62,7 +62,6 @@ if not TESTING:
 
 INSTALLED_APPS = [
     # Django defaults
-    'django_prometheus',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -82,23 +81,27 @@ INSTALLED_APPS = [
     # Local apps
     'jobs',
     'accounts',
+    'network',
 ]
 
 MIDDLEWARE = [
-    'django_prometheus.middleware.PrometheusBeforeMiddleware',
+    # Temporarily disabled Prometheus middleware to resolve async/coroutine issues
+    # 'django_prometheus.middleware.PrometheusBeforeMiddleware',  # Prometheus metrics
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # For static files
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'django_prometheus.middleware.PrometheusAfterMiddleware',
-    # Custom middleware
+    # Temporarily disable XFrameOptionsMiddleware to test if it's causing the coroutine issue
+    # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'core.middleware.request_logger.RequestIdMiddleware',
-    'core.middleware.request_logger.RequestResponseLoggingMiddleware',
+    # Temporarily disable RequestResponseLoggingMiddleware to isolate the issue
+    # 'core.middleware.request_logger.RequestResponseLoggingMiddleware',
+    # Temporarily disabled Prometheus middleware to resolve async/coroutine issues
+    # 'django_prometheus.middleware.PrometheusAfterMiddleware',  # Prometheus metrics
 ]
 
 ROOT_URLCONF = 'core.urls'
@@ -234,7 +237,8 @@ SIMPLE_JWT = {
 
 # CORS settings
 CORS_ALLOW_ALL_ORIGINS = config('CORS_ALLOW_ALL_ORIGINS', default=True, cast=bool)
-CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', cast=Csv(), default='http://localhost:3000,http://127.0.0.1:3000')
+CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', cast=Csv(), 
+    default='http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173')
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = [
     'accept',
@@ -294,100 +298,8 @@ SESSION_CACHE_ALIAS = 'sessions'
 # Cache time to live is 15 minutes by default
 CACHE_TTL = 60 * 15
 
-# Logging Configuration
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'verbose': {
-            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
-            'style': '{',
-        },
-        'simple': {
-            'format': '{levelname} {asctime} {module} {message}',
-            'style': '{',
-        },
-        'django.server': {
-            '()': 'django.utils.log.ServerFormatter',
-            'format': '[{server_time}] {message}',
-            'style': '{',
-        },
-    },
-    'filters': {
-        'require_debug_true': {
-            '()': 'django.utils.log.RequireDebugTrue',
-        },
-    },
-    'handlers': {
-        'console': {
-            'level': 'DEBUG',
-            'class': 'logging.StreamHandler',
-            'formatter': 'simple',
-        },
-        'file': {
-            'level': 'DEBUG',
-            'class': 'logging.FileHandler',
-            'filename': os.path.join(BASE_DIR, 'debug.log'),
-            'formatter': 'verbose',
-        },
-        'mail_admins': {
-            'level': 'ERROR',
-            'class': 'django.utils.log.AdminEmailHandler',
-            'include_html': True,
-        },
-        'django.server': {
-            'level': 'INFO',
-            'class': 'logging.StreamHandler',
-            'formatter': 'django.server',
-        },
-    },
-    'loggers': {
-        'django': {
-            'handlers': ['console', 'file', 'mail_admins'],
-            'level': 'INFO',
-            'propagate': True,
-        },
-        'django.request': {
-            'handlers': ['console', 'file', 'mail_admins'],
-            'level': 'ERROR',
-            'propagate': False,
-        },
-        'django.server': {
-            'handlers': ['django.server'],
-            'level': 'INFO',
-            'propagate': False,
-        },
-        'django.db.backends': {
-            'level': 'DEBUG',
-            'handlers': ['console', 'file'],
-            'propagate': False,
-        },
-        'django.template': {
-            'level': 'DEBUG',
-            'handlers': ['console', 'file'],
-            'propagate': False,
-        },
-        'accounts': {
-            'handlers': ['console', 'file'],
-            'level': 'DEBUG',
-            'propagate': False,
-        },
-        '': {
-            'handlers': ['console', 'file'],
-            'level': 'DEBUG',
-        },
-    },
-}
+# Import enhanced logging configuration
+from .temp_logging_enhanced import LOGGING
 
-# Custom logging for development
-if DEBUG:
-    LOGGING['loggers']['django.db.backends'] = {
-        'level': 'DEBUG',
-        'handlers': ['console'],
-        'propagate': False,
-    }
-    LOGGING['loggers']['django.request'] = {
-        'level': 'DEBUG',
-        'handlers': ['console', 'file'],
-        'propagate': True,
-    }
+# Logging Configuration - Enhanced for debugging
+# LOGGING is now imported from temp_logging.py

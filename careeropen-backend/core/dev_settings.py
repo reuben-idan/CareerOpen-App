@@ -4,10 +4,15 @@ Supports both SQLite (default) and PostgreSQL for database.
 Uses fakeredis for caching in local development.
 """
 import os
+import sys
+from pathlib import Path
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
+
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # Database configuration
 # Use PostgreSQL if DB_ENGINE is set to postgres, otherwise fall back to SQLite
@@ -58,12 +63,23 @@ CACHES = {
 import fakeredis
 import django_redis.pool
 
-# Patch the connection pool to use fakeredis
-class FakeConnectionFactory(django_redis.pool.ConnectionFactory):
-    def get_connection(self, params):
-        return fakeredis.FakeRedis()
+# Configure Redis connection
+REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+CACHE_REDIS_DB = os.getenv('CACHE_REDIS_DB', '1')
+SESSION_REDIS_DB = os.getenv('SESSION_REDIS_DB', '2')
 
-django_redis.pool.ConnectionFactory = FakeConnectionFactory
+# Patch the connection pool to use fakeredis in development
+if os.getenv('USE_FAKEREDIS', 'True').lower() == 'true':
+    class FakeConnectionFactory(django_redis.pool.ConnectionFactory):
+        def get_connection(self, params):
+            return fakeredis.FakeRedis(encoding='utf-8', decode_responses=True)
+    
+    django_redis.pool.ConnectionFactory = FakeConnectionFactory
+    CACHES['default']['OPTIONS']['SERIALIZER'] = 'django_redis.serializers.json.JSONSerializer'
+
+# Ensure logs directory exists
+LOGS_DIR = os.path.join(BASE_DIR, 'logs')
+os.makedirs(LOGS_DIR, exist_ok=True)
 
 # Enable debug logging for development
 LOGGING = {
@@ -84,18 +100,36 @@ LOGGING = {
             'style': '{',
         },
     },
+    'filters': {
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse',
+        },
+    },
     'handlers': {
         'console': {
             'level': 'DEBUG',
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
+            'stream': sys.stdout,
         },
         'file': {
             'level': 'DEBUG',
-            'class': 'logging.FileHandler',
-            'filename': 'debug.log',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(LOGS_DIR, 'django_debug.log'),
+            'maxBytes': 1024 * 1024 * 5,  # 5 MB
+            'backupCount': 5,
             'formatter': 'verbose',
-            'mode': 'w',  # Overwrite existing log file
+        },
+        'error_file': {
+            'level': 'ERROR',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(LOGS_DIR, 'django_error.log'),
+            'maxBytes': 1024 * 1024 * 5,  # 5 MB
+            'backupCount': 5,
+            'formatter': 'verbose',
         },
         'django.server': {
             'level': 'DEBUG',
@@ -109,23 +143,28 @@ LOGGING = {
             'level': 'INFO',
             'propagate': True,
         },
+        'django.server': {
+            'handlers': ['django.server', 'console', 'file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
         'django.request': {
-            'handlers': ['console', 'file'],
+            'handlers': ['console', 'file', 'error_file'],
             'level': 'DEBUG',
             'propagate': False,
         },
         'django.db.backends': {
             'handlers': ['console', 'file'],
-            'level': 'DEBUG',
-            'propagate': False,
-        },
-        'django.server': {
-            'handlers': ['django.server'],
-            'level': 'DEBUG',
+            'level': 'INFO',  # Set to DEBUG to see all database queries
             'propagate': False,
         },
         'accounts': {
-            'handlers': ['console', 'file'],
+            'handlers': ['console', 'file', 'error_file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'core': {
+            'handlers': ['console', 'file', 'error_file'],
             'level': 'DEBUG',
             'propagate': True,
         },

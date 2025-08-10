@@ -1,4 +1,6 @@
+from datetime import datetime
 from rest_framework import serializers
+from django.utils import timezone
 from .models import Job, JobApplication, Category, Company
 from accounts.serializers import UserProfileSerializer
 
@@ -45,37 +47,101 @@ class CompanySerializer(serializers.ModelSerializer):
 
 class JobSerializer(serializers.ModelSerializer):
     """
-    Serializer for the Job model.
+    Enhanced serializer for the Job model with comprehensive validation and additional fields.
     """
     poster = UserProfileSerializer(read_only=True)
     has_applied = serializers.SerializerMethodField()
     application_count = serializers.IntegerField(read_only=True)
-
+    company_name = serializers.CharField(source='company.name', read_only=True)
+    company_logo = serializers.SerializerMethodField()
+    categories_detail = CategorySerializer(source='categories', many=True, read_only=True)
+    is_owner = serializers.SerializerMethodField()
+    
     class Meta:
         model = Job
         fields = [
-            'id', 'title', 'description', 'company', 'location', 'job_type',
-            'salary_min', 'salary_max', 'is_active', 'created_at', 'updated_at',
-            'poster', 'has_applied', 'application_count'
+            'id', 'title', 'slug', 'description', 'requirements', 'responsibilities',
+            'company', 'company_name', 'company_logo', 'categories', 'categories_detail',
+            'job_type', 'location', 'is_remote', 'salary_min', 'salary_max',
+            'salary_currency', 'status', 'is_active', 'application_deadline',
+            'application_url', 'created_at', 'updated_at', 'published_at', 'closed_at',
+            'poster', 'has_applied', 'application_count', 'is_owner'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at', 'poster', 'has_applied', 'application_count']
+        read_only_fields = [
+            'id', 'slug', 'created_at', 'updated_at', 'published_at', 'closed_at',
+            'poster', 'has_applied', 'application_count', 'is_owner', 'company_name',
+            'company_logo', 'categories_detail'
+        ]
+        extra_kwargs = {
+            'company': {'required': True},
+            'application_deadline': {
+                'input_formats': ['%Y-%m-%dT%H:%M:%S', 'iso-8601'],
+                'help_text': 'Format: YYYY-MM-DDTHH:MM:SS or ISO-8601'
+            }
+        }
 
     def get_has_applied(self, obj):
-        """
-        Check if the current user has applied to this job.
-        """
+        """Check if the current user has applied to this job."""
         request = self.context.get('request')
         if request and request.user.is_authenticated:
             return obj.applications.filter(applicant=request.user).exists()
         return False
 
+    def get_company_logo(self, obj):
+        """Get the absolute URL of the company logo if it exists."""
+        if obj.company and obj.company.logo:
+            request = self.context.get('request')
+            if request is not None:
+                return request.build_absolute_uri(obj.company.logo.url)
+            return obj.company.logo.url
+        return None
+
+    def get_is_owner(self, obj):
+        """Check if the current user is the owner of the job."""
+        request = self.context.get('request')
+        return request and request.user == obj.poster
+
+    def validate_application_deadline(self, value):
+        """Ensure application deadline is in the future."""
+        if value and value < timezone.now():
+            raise serializers.ValidationError("Application deadline must be in the future.")
+        return value
+
+    def validate_salary(self, data):
+        """Validate that salary_max is greater than or equal to salary_min."""
+        if data.get('salary_min') and data.get('salary_max'):
+            if data['salary_min'] > data['salary_max']:
+                raise serializers.ValidationError({
+                    'salary_max': 'Maximum salary must be greater than or equal to minimum salary.'
+                })
+        return data
+
     def create(self, validated_data):
-        """
-        Create and return a new Job instance, given the validated data.
-        """
-        # The poster is set to the current user
+        """Create a new job with the current user as the poster."""
+        # Set the poster to the current user
         validated_data['poster'] = self.context['request'].user
+        
+        # Set published_at if the job is being published
+        if validated_data.get('status') == Job.PUBLISHED:
+            validated_data['published_at'] = timezone.now()
+        
         return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        """Update a job with proper status tracking."""
+        # Handle status changes
+        if 'status' in validated_data:
+            new_status = validated_data['status']
+            
+            # If changing to published and not already published
+            if new_status == Job.PUBLISHED and instance.status != Job.PUBLISHED:
+                validated_data['published_at'] = timezone.now()
+            
+            # If changing to closed and not already closed
+            elif new_status == Job.CLOSED and instance.status != Job.CLOSED:
+                validated_data['closed_at'] = timezone.now()
+        
+        return super().update(instance, validated_data)
 
 
 class JobApplicationSerializer(serializers.ModelSerializer):

@@ -33,19 +33,36 @@ class StandardResultsSetPagination(PageNumberPagination):
 
 class JobViewSet(viewsets.ModelViewSet):
     """
-    API endpoint that allows jobs to be viewed or edited.
-    Caching is applied to list and retrieve operations.
+    Enhanced API endpoint for job management with comprehensive CRUD operations.
+    Includes advanced filtering, search, ordering, and caching capabilities.
     """
     queryset = Job.objects.all().order_by('-created_at')
-    # Cache page for the requested url for 15 minutes
-    cache_timeout = 60 * 15  # 15 minutes
     serializer_class = JobSerializer
     pagination_class = StandardResultsSetPagination
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['job_type', 'location', 'is_active']
-    search_fields = ['title', 'description', 'company', 'location']
-    ordering_fields = ['created_at', 'salary_min', 'salary_max']
+    filterset_fields = {
+        'job_type': ['exact', 'in'],
+        'location': ['exact', 'icontains'],
+        'is_active': ['exact'],
+        'is_remote': ['exact'],
+        'company': ['exact'],
+        'categories': ['exact', 'in'],
+        'salary_min': ['gte', 'lte', 'exact'],
+        'salary_max': ['gte', 'lte', 'exact'],
+        'status': ['exact', 'in'],
+        'created_at': ['date', 'gte', 'lte'],
+        'application_deadline': ['date', 'gte', 'lte', 'isnull'],
+    }
+    search_fields = [
+        'title', 'description', 'requirements', 'responsibilities',
+        'company__name', 'location', 'categories__name'
+    ]
+    ordering_fields = [
+        'created_at', 'updated_at', 'published_at', 'salary_min',
+        'salary_max', 'title', 'company__name', 'application_deadline'
+    ]
     ordering = ['-created_at']
+    cache_timeout = 60 * 15  # 15 minutes
 
     def get_permissions(self):
         """
@@ -54,20 +71,59 @@ class JobViewSet(viewsets.ModelViewSet):
         if self.action in ['create']:
             permission_classes = [IsAuthenticated, IsEmployer]
         elif self.action in ['update', 'partial_update', 'destroy']:
-            permission_classes = [IsAuthenticated, IsJobOwnerOrReadOnly]
-        elif self.action == 'apply':
-            # For job applications, we'll handle the permission in the view method
-            permission_classes = [IsAuthenticated]
+            permission_classes = [IsAuthenticated, IsJobOwnerOrReadOnly | IsAdminUser]
+        elif self.action in ['apply', 'my_applications']:
+            permission_classes = [IsAuthenticated, ~IsEmployer]
+        elif self.action in ['my_jobs', 'drafts']:
+            permission_classes = [IsAuthenticated, IsEmployer]
         else:
             permission_classes = []
         return [permission() for permission in permission_classes]
+    
+    def get_queryset(self):
+        """
+        Custom queryset to filter jobs based on user role and request parameters.
+        """
+        queryset = super().get_queryset()
+        user = self.request.user
+        
+        # For non-authenticated users or non-employers, only show published and active jobs
+        if not user.is_authenticated or not hasattr(user, 'is_employer') or not user.is_employer:
+            queryset = queryset.filter(status=Job.PUBLISHED, is_active=True)
+        # For employers, show their own jobs regardless of status
+        elif self.action in ['my_jobs', 'drafts'] or 'my_jobs' in self.request.query_params:
+            queryset = queryset.filter(poster=user)
+        
+        # Apply additional filters from query parameters
+        company = self.request.query_params.get('company')
+        if company:
+            queryset = queryset.filter(company_id=company)
+            
+        # Filter by application deadline
+        deadline_filter = self.request.query_params.get('deadline_filter')
+        if deadline_filter == 'expired':
+            queryset = queryset.filter(application_deadline__lt=timezone.now())
+        elif deadline_filter == 'upcoming':
+            queryset = queryset.filter(
+                application_deadline__isnull=False,
+                application_deadline__gte=timezone.now()
+            )
+            
+        return queryset.select_related('company', 'poster').prefetch_related('categories')
+    
+    def get_serializer_context(self):
+        """
+        Extra context provided to the serializer class.
+        """
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
         
     @method_decorator(cache_page(cache_timeout))
     @method_decorator(vary_on_headers('Authorization'))
     def list(self, request, *args, **kwargs):
         """
-        List all jobs with caching.
-        The cache key is based on the request URL and user authentication.
+        List all jobs with caching and advanced filtering.
         """
         # Generate a cache key based on the request
         cache_key = f'jobs_list_{request.get_full_path()}'
@@ -87,7 +143,7 @@ class JobViewSet(viewsets.ModelViewSet):
     @method_decorator(cache_page(cache_timeout))
     def retrieve(self, request, *args, **kwargs):
         """
-        Retrieve a job with caching.
+        Retrieve a job with caching and permission checks.
         """
         # Generate a cache key based on the request
         cache_key = f'job_detail_{kwargs["pk"]}'
@@ -96,8 +152,6 @@ class JobViewSet(viewsets.ModelViewSet):
         cached_response = cache.get(cache_key)
         if cached_response is not None:
             return Response(cached_response)
-            
-        # If not in cache, get the response from the parent class
         response = super().retrieve(request, *args, **kwargs)
         
         # Cache the response
@@ -421,131 +475,476 @@ class JobApplicationCreateView(APIView):
 
 class CategoryViewSet(viewsets.ModelViewSet):
     """
-    API endpoint that allows categories to be viewed or edited.
-    Caching is applied to list and retrieve operations.
+    Enhanced API endpoint for category management with comprehensive CRUD operations.
+    Includes advanced filtering, search, ordering, and caching capabilities.
     """
     queryset = Category.objects.all().order_by('name')
     serializer_class = CategorySerializer
     pagination_class = StandardResultsSetPagination
-    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['name', 'description']
-    ordering_fields = ['name', 'created_at']
-    ordering = ['name']
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend]
+    search_fields = ['name', 'description', 'keywords']
+    filterset_fields = {
+        'is_active': ['exact'],
+        'is_featured': ['exact'],
+        'created_at': ['date', 'gte', 'lte'],
+        'updated_at': ['date', 'gte', 'lte'],
+    }
+    ordering_fields = [
+        'name', 'created_at', 'updated_at', 'job_count', 'is_featured', 'display_order'
+    ]
+    ordering = ['display_order', 'name']
     permission_classes = [IsAdminOrReadOnly]
     lookup_field = 'slug'
     lookup_url_kwarg = 'slug'
-    cache_timeout = 60 * 30  # 30 minutes
+    cache_timeout = 60 * 60 * 24  # 24 hours (categories don't change often)
     
-    @method_decorator(cache_page(cache_timeout))
-    def list(self, request, *args, **kwargs):
+    def get_queryset(self):
         """
-        List all categories with caching.
+        Custom queryset to filter categories based on user role and request parameters.
         """
-        cache_key = f'categories_list_{request.get_full_path()}'
-        cached_response = cache.get(cache_key)
-        if cached_response is not None:
-            return Response(cached_response)
-            
-        response = super().list(request, *args, **kwargs)
-        cache.set(cache_key, response.data, self.cache_timeout)
-        return response
+        queryset = super().get_queryset()
         
-    @method_decorator(cache_page(cache_timeout))
-    def retrieve(self, request, *args, **kwargs):
-        """
-        Retrieve a category with caching.
-        """
-        cache_key = f'category_detail_{kwargs["slug"]}'
-        cached_response = cache.get(cache_key)
-        if cached_response is not None:
-            return Response(cached_response)
+        # For non-admin users, only return active categories
+        if not self.request.user.is_staff:
+            queryset = queryset.filter(is_active=True)
             
-        response = super().retrieve(request, *args, **kwargs)
-        cache.set(cache_key, response.data, self.cache_timeout)
-        return response
-
-
-class CompanyViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows companies to be viewed or edited.
-    Only employers can create companies.
-    Caching is applied to list and retrieve operations.
-    """
-    queryset = Company.objects.all().order_by('name')
-    serializer_class = CompanySerializer
-    pagination_class = StandardResultsSetPagination
-    filter_backends = [filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend]
-    search_fields = ['name', 'description', 'industry', 'headquarters']
-    filterset_fields = ['industry', 'company_size', 'is_verified']
-    ordering_fields = ['name', 'created_at', 'founded_year']
-    ordering = ['name']
-    permission_classes = [IsAuthenticated, IsCompanyOwnerOrReadOnly]
-    lookup_field = 'slug'
-    lookup_url_kwarg = 'slug'
-    cache_timeout = 60 * 30  # 30 minutes
+        # Annotate with job count if requested
+        if 'include_job_count' in self.request.query_params:
+            queryset = queryset.annotate(
+                job_count=Count('job', filter=Q(job__is_active=True, job__status=Job.PUBLISHED))
+            )
+            
+        return queryset
     
-    def get_permissions(self):
+    def get_serializer_context(self):
         """
-        Instantiates and returns the list of permissions that this view requires.
+        Extra context provided to the serializer class.
         """
-        if self.action in ['create']:
-            # Only employers can create companies
-            permission_classes = [IsAuthenticated, IsEmployer]
-        elif self.action in ['update', 'partial_update', 'destroy']:
-            # Only company owners or admins can update/delete
-            permission_classes = [IsAuthenticated, IsCompanyOwnerOrReadOnly]
-        else:
-            # Read permissions are allowed to any authenticated user
-            permission_classes = [IsAuthenticated]
-        return [permission() for permission in permission_classes]
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
         
     @method_decorator(cache_page(cache_timeout))
     @method_decorator(vary_on_headers('Authorization'))
     def list(self, request, *args, **kwargs):
         """
-        List all companies with caching.
-        The cache key is based on the request URL and user authentication.
+        List all categories with caching and advanced filtering.
         """
-        cache_key = f'companies_list_{request.get_full_path()}'
+        # Generate a cache key based on the request
+        cache_key = f'categories_list_{request.get_full_path()}'
+        
+        # Try to get the response from cache
         cached_response = cache.get(cache_key)
         if cached_response is not None:
             return Response(cached_response)
             
+        # If not in cache, get the response from the parent class
         response = super().list(request, *args, **kwargs)
+        
+        # Cache the response
         cache.set(cache_key, response.data, self.cache_timeout)
         return response
         
     @method_decorator(cache_page(cache_timeout))
     def retrieve(self, request, *args, **kwargs):
         """
-        Retrieve a company with caching.
+        Retrieve a category with caching and permission checks.
         """
-        cache_key = f'company_detail_{kwargs["slug"]}'
+        # Generate a cache key based on the request
+        cache_key = f'category_detail_{kwargs["slug"]}'
+        
+        # Try to get the response from cache
         cached_response = cache.get(cache_key)
         if cached_response is not None:
             return Response(cached_response)
             
+        # If not in cache, get the response from the parent class
         response = super().retrieve(request, *args, **kwargs)
+        
+        # Cache the response
         cache.set(cache_key, response.data, self.cache_timeout)
         return response
     
-    def get_queryset(self):
-        """
-        Filter companies based on user role.
-        """
-        queryset = super().get_queryset()
+    @action(detail=False, methods=['get'])
+    def featured(self, request):
+        """List all featured categories (public endpoint)."""
+        queryset = self.filter_queryset(
+            self.get_queryset().filter(is_featured=True, is_active=True)
+        ).order_by('display_order', 'name')
         
-        # Non-admin users can only see verified companies
-        if not self.request.user.is_staff:
-            queryset = queryset.filter(is_verified=True)
+        # Apply pagination
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
             
-        return queryset
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['post'])
+    def feature(self, request, slug=None):
+        """Feature a category (admin only)."""
+        category = self.get_object()
+        
+        if category.is_featured:
+            return Response(
+                {'detail': 'This category is already featured.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        category.is_featured = True
+        category.featured_at = timezone.now()
+        category.save()
+        
+        # Clear cache for this category
+        cache.delete(f'category_detail_{category.slug}')
+        
+        serializer = self.get_serializer(category)
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['post'])
+    def unfeature(self, request, slug=None):
+        """Remove category from featured list (admin only)."""
+        category = self.get_object()
+        
+        if not category.is_featured:
+            return Response(
+                {'detail': 'This category is not featured.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        category.is_featured = False
+        category.featured_at = None
+        category.save()
+        
+        # Clear cache for this category
+        cache.delete(f'category_detail_{category.slug}')
+        
+        serializer = self.get_serializer(category)
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['get'])
+    def jobs(self, request, slug=None):
+        """List all jobs in this category (public endpoint)."""
+        category = self.get_object()
+        jobs = Job.objects.filter(
+            categories=category,
+            is_active=True,
+            status=Job.PUBLISHED
+        ).order_by('-created_at')
+        
+        # Apply pagination
+        page = self.paginate_queryset(jobs)
+        if page is not None:
+            serializer = JobSerializer(
+                page, many=True, context={'request': request}
+            )
+            return self.get_paginated_response(serializer.data)
+            
+        serializer = JobSerializer(jobs, many=True, context={'request': request})
+        return Response(serializer.data)
     
     def perform_create(self, serializer):
+        """Create a new category with the current user as the creator."""
+        category = serializer.save()
+        
+        # If the user is an admin and no display order is provided, set it to the next available
+        if self.request.user.is_staff and not category.display_order:
+            max_order = Category.objects.aggregate(Max('display_order'))['display_order__max'] or 0
+            category.display_order = max_order + 1
+            category.save()
+    
+    def perform_update(self, serializer):
+        """Update a category with proper tracking."""
+        instance = serializer.save()
+        
+        # Clear cache for this category
+        cache.delete(f'category_detail_{instance.slug}')
+    
+    def perform_destroy(self, instance):
+        """Delete a category and clear its cache."""
+        category_slug = instance.slug
+        instance.delete()
+        # Clear cache for this category
+        cache.delete(f'category_detail_{category_slug}')
+
+
+class CompanyViewSet(viewsets.ModelViewSet):
+    """
+    Enhanced API endpoint for company management with comprehensive CRUD operations.
+    Includes advanced filtering, search, ordering, and caching capabilities.
+    """
+    queryset = Company.objects.all().order_by('name')
+    serializer_class = CompanySerializer
+    pagination_class = StandardResultsSetPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend]
+    search_fields = [
+        'name', 'description', 'industry', 'headquarters', 'website',
+        'tagline', 'specialties'
+    ]
+    filterset_fields = {
+        'industry': ['exact', 'icontains'],
+        'company_size': ['exact', 'in'],
+        'is_verified': ['exact'],
+        'founded_year': ['exact', 'gte', 'lte'],
+        'created_at': ['date', 'gte', 'lte'],
+        'headquarters': ['exact', 'icontains'],
+        'tags': ['exact', 'in'],
+    }
+    ordering_fields = [
+        'name', 'created_at', 'updated_at', 'founded_year', 'company_size'
+    ]
+    ordering = ['name']
+    permission_classes = [IsAuthenticated, IsCompanyOwnerOrReadOnly]
+    lookup_field = 'slug'
+    lookup_url_kwarg = 'slug'
+    cache_timeout = 60 * 30  # 30 minutes
+
+    def get_permissions(self):
         """
-        Set the creator of the company.
+        Instantiates and returns the list of permissions that this view requires.
         """
-        serializer.save(created_by=self.request.user)
+        if self.action in ['create']:
+            permission_classes = [IsAuthenticated, IsEmployer]
+        elif self.action in ['update', 'partial_update', 'destroy']:
+            permission_classes = [IsAuthenticated, IsCompanyOwnerOrReadOnly | IsAdminUser]
+        elif self.action in ['my_companies', 'verify', 'unverify']:
+            permission_classes = [IsAuthenticated, IsEmployer | IsAdminUser]
+        elif self.action in ['featured']:
+            permission_classes = []  # Public endpoint
+        else:
+            permission_classes = [IsAuthenticated]
+        return [permission() for permission in permission_classes]
+    
+    def get_queryset(self):
+        """
+        Custom queryset to filter companies based on user role and request parameters.
+        """
+        queryset = super().get_queryset()
+        user = self.request.user
+        
+        # Apply filters from query parameters
+        is_featured = self.request.query_params.get('is_featured')
+        if is_featured is not None:
+            queryset = queryset.filter(is_featured=is_featured.lower() == 'true')
+        
+        # For non-authenticated users, only return verified companies
+        if not user.is_authenticated:
+            return queryset.filter(is_verified=True, is_active=True)
+            
+        # If user is an admin, return all companies
+        if user.is_staff:
+            return queryset
+            
+        # If user is an employer, return their companies and verified companies
+        if hasattr(user, 'is_employer') and user.is_employer:
+            if self.action == 'my_companies':
+                return queryset.filter(created_by=user)
+            return queryset.filter(Q(created_by=user) | Q(is_verified=True))
+            
+        # For regular users, only return verified and active companies
+        return queryset.filter(is_verified=True, is_active=True)
+    
+    def get_serializer_context(self):
+        """
+        Extra context provided to the serializer class.
+        """
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
+
+    @method_decorator(cache_page(cache_timeout))
+    @method_decorator(vary_on_headers('Authorization'))
+    def list(self, request, *args, **kwargs):
+        """
+        List all companies with caching and advanced filtering.
+        """
+        # Generate a cache key based on the request
+        cache_key = f'companies_list_{request.get_full_path()}'
+        
+        # Try to get the response from cache
+        cached_response = cache.get(cache_key)
+        if cached_response is not None:
+            return Response(cached_response)
+            
+        # If not in cache, get the response from the parent class
+        response = super().list(request, *args, **kwargs)
+        
+        # Cache the response
+        cache.set(cache_key, response.data, self.cache_timeout)
+        return response
+        
+    @method_decorator(cache_page(cache_timeout))
+    def retrieve(self, request, *args, **kwargs):
+        """
+        Retrieve a company with caching and permission checks.
+        """
+        # Generate a cache key based on the request
+        cache_key = f'company_detail_{kwargs["slug"]}'
+        
+        # Try to get the response from cache
+        cached_response = cache.get(cache_key)
+        if cached_response is not None:
+            return Response(cached_response)
+            
+        # If not in cache, get the response from the parent class
+        response = super().retrieve(request, *args, **kwargs)
+        
+        # Cache the response
+        cache.set(cache_key, response.data, self.cache_timeout)
+        return response
+    
+    @action(detail=False, methods=['get'])
+    def my_companies(self, request):
+        """List all companies created by the current user (employer)."""
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+            
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['post'])
+    def verify(self, request, slug=None):
+        """Mark a company as verified (admin only)."""
+        company = self.get_object()
+        
+        if company.is_verified:
+            return Response(
+                {'detail': 'This company is already verified.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        company.is_verified = True
+        company.verified_at = timezone.now()
+        company.verified_by = request.user
+        company.save()
+        
+        # Clear cache for this company
+        cache.delete(f'company_detail_{company.slug}')
+        
+        serializer = self.get_serializer(company)
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['post'])
+    def unverify(self, request, slug=None):
+        """Mark a company as unverified (admin only)."""
+        company = self.get_object()
+        
+        if not company.is_verified:
+            return Response(
+                {'detail': 'This company is not verified.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        company.is_verified = False
+        company.verified_at = None
+        company.verified_by = None
+        company.save()
+        
+        # Clear cache for this company
+        cache.delete(f'company_detail_{company.slug}')
+        
+        serializer = self.get_serializer(company)
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['post'])
+    def feature(self, request, slug=None):
+        """Feature a company (admin only)."""
+        if not request.user.is_staff:
+            return Response(
+                {'detail': 'Only administrators can perform this action.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+            
+        company = self.get_object()
+        
+        if company.is_featured:
+            return Response(
+                {'detail': 'This company is already featured.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        company.is_featured = True
+        company.featured_at = timezone.now()
+        company.save()
+        
+        # Clear cache for this company
+        cache.delete(f'company_detail_{company.slug}')
+        
+        serializer = self.get_serializer(company)
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['post'])
+    def unfeature(self, request, slug=None):
+        """Remove company from featured list (admin only)."""
+        if not request.user.is_staff:
+            return Response(
+                {'detail': 'Only administrators can perform this action.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+            
+        company = self.get_object()
+        
+        if not company.is_featured:
+            return Response(
+                {'detail': 'This company is not featured.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        company.is_featured = False
+        company.featured_at = None
+        company.save()
+        
+        # Clear cache for this company
+        cache.delete(f'company_detail_{company.slug}')
+        
+        serializer = self.get_serializer(company)
+        return Response(serializer.data)
+    
+    @action(detail=False, methods=['get'])
+    def featured(self, request):
+        """List all featured companies (public endpoint)."""
+        queryset = self.filter_queryset(
+            self.get_queryset().filter(is_featured=True, is_verified=True, is_active=True)
+        )
+        
+        # Apply pagination
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+            
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+    
+    def perform_create(self, serializer):
+        """Create a new company with the current user as the creator."""
+        company = serializer.save(created_by=self.request.user)
+        
+        # If the user is an admin, auto-verify the company
+        if self.request.user.is_staff:
+            company.is_verified = True
+            company.verified_at = timezone.now()
+            company.verified_by = self.request.user
+            company.save()
+    
+    def perform_update(self, serializer):
+        """Update a company with proper tracking."""
+        instance = serializer.save()
+        
+        # Clear cache for this company
+        cache.delete(f'company_detail_{instance.slug}')
+    
+    def perform_destroy(self, instance):
+        """Delete a company and clear its cache."""
+        company_slug = instance.slug
+        instance.delete()
+        # Clear cache for this company
+        cache.delete(f'company_detail_{company_slug}')
 
 
 class UserJobApplicationsView(ListAPIView):

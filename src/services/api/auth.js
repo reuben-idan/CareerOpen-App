@@ -1,147 +1,263 @@
 import api from './api';
 
+// Token storage keys
+const TOKEN_KEYS = {
+  ACCESS: 'accessToken',
+  REFRESH: 'refreshToken',
+  USER: 'user',
+};
+
+// Token refresh queue
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
+/**
+ * Authentication service for handling user authentication and token management
+ */
 const authService = {
-  // Login user
+  /**
+   * Login a user with email and password
+   * @param {string} email - User's email
+   * @param {string} password - User's password
+   * @returns {Promise<Object>} User data
+   */
   async login(email, password) {
     try {
-      // First, get the JWT tokens using the login endpoint
-      const response = await api.post('/auth/login/', { 
-        email, 
-        password 
-      }).catch(error => {
-        if (!error.response) {
-          // Network error or server not responding
-          throw new Error('Unable to connect to the server. Please check your connection and try again.');
-        }
-        throw error;
-      });
+      const response = await api.post('/auth/login/', { email, password });
       
-      // Log the response for debugging
-      console.log('Login response:', response);
-      
-      // Extract tokens and user data from the response
-      // The backend returns: { user: {...}, access: '...', refresh: '...' }
-      if (!response || !response.user || !response.access || !response.refresh) {
-        console.error('Invalid login response format:', response);
-        throw new Error('Invalid server response. Please try again.');
+      if (!response || !response.data) {
+        throw new Error('No data received from server');
       }
       
-      const { access, refresh, user: userData } = response;
+      const { access, refresh, user: userData } = response.data;
       
-      // Store tokens in localStorage
-      localStorage.setItem('accessToken', access);
-      localStorage.setItem('refreshToken', refresh);
+      if (!access || !refresh || !userData) {
+        console.error('Invalid response format from server:', response.data);
+        throw new Error('Invalid response format from server');
+      }
       
-      // Set default auth header
-      api.defaults.headers.common['Authorization'] = `Bearer ${access}`;
-      
-      // Store user data in localStorage for initial render
-      localStorage.setItem('user', JSON.stringify(userData));
+      // Store tokens and user data
+      this.setAuthTokens({ access, refresh });
+      this.setUser(userData);
       
       return userData;
     } catch (error) {
-      if (error.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
-        throw error.response.data || 'Login failed. Please check your credentials and try again.';
-      } else if (error.request) {
-        // The request was made but no response was received
-        throw new Error('No response from server. Please try again later.');
+      // Clear any existing auth data on error
+      this.clearAuth();
+      
+      // Handle different types of errors
+      if (error && error.response) {
+        // Server responded with an error status
+        const { status, data } = error.response;
+        const errorMessage = (data && (data.detail || data.message)) || 'Login failed. Please try again.';
+        
+        console.error(`Login error (${status}):`, errorMessage);
+        
+        if (status === 400) {
+          throw new Error('Invalid email or password');
+        } else if (status === 401) {
+          throw new Error('Your session has expired. Please log in again.');
+        } else if (status >= 500) {
+          console.error('Server error during login:', error.response);
+          throw new Error('Server error. Please try again later.');
+        } else {
+          throw new Error(errorMessage);
+        }
+      } else if (error && error.request) {
+        // Request was made but no response received
+        console.error('No response from server:', error.request);
+        throw new Error('Unable to connect to the server. Please check your connection.');
+      } else if (error && error.message) {
+        // Something happened in setting up the request
+        console.error('Request setup error:', error.message);
+        throw new Error(error.message);
       } else {
-        // Something happened in setting up the request that triggered an Error
-        throw error.message || 'An error occurred during login.';
+        // Unknown error
+        console.error('Unknown login error:', error);
+        throw new Error('An unexpected error occurred during login.');
       }
     }
   },
   
-  // Logout user
+  /**
+   * Logout the current user
+   */
   logout() {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    delete api.defaults.headers.common['Authorization'];
+    this.clearAuth();
   },
   
-  // Get current user
-  async getCurrentUser() {
+  /**
+   * Get the current authenticated user
+   * @param {boolean} forceRefresh - Force refresh from server
+   * @returns {Promise<Object>} User data
+   */
+  async getCurrentUser(forceRefresh = false) {
+    // Return cached user if available and not forcing refresh
+    if (!forceRefresh) {
+      const cachedUser = this.getCachedUser();
+      if (cachedUser) {
+        return cachedUser;
+      }
+    }
+    
     try {
-      // First check if we have user data in localStorage
-      const storedUser = localStorage.getItem('user');
-      if (storedUser) {
-        try {
-          return JSON.parse(storedUser);
-        } catch (e) {
-          console.error('Error parsing stored user data:', e);
-          // Continue to fetch fresh data if parsing fails
-        }
+      const response = await api.get('/auth/me/');
+      const userData = response.data?.data || response.data;
+      
+      if (!userData?.id) {
+        throw new Error('Invalid user data received');
       }
       
-      // If no stored user or parsing failed, fetch from server
-      const user = await api.get('/auth/me/');
-      
-      // Update the stored user data
-      if (user) {
-        localStorage.setItem('user', JSON.stringify(user));
-      }
-      
-      return user;
+      this.setUser(userData);
+      return userData;
     } catch (error) {
-      console.error('Error getting current user:', error);
-      
-      // If we have a 401 (Unauthorized), clear the stored tokens and user data
-      if (error.response?.status === 401) {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('user');
-        delete api.defaults.headers.common['Authorization'];
-      }
-      
+      this.clearAuth();
       throw error;
     }
   },
   
-  // Check if user is authenticated
-  isAuthenticated() {
-    return !!localStorage.getItem('accessToken');
-  },
-  
-  // Register new user
+  /**
+   * Register a new user
+   * @param {Object} userData - User registration data
+   * @returns {Promise<Object>} New user data
+   */
   async register(userData) {
     try {
-      const response = await api.post('/auth/register/', userData).catch(error => {
-        if (!error.response) {
-          // Network error or server not responding
-          throw new Error('Unable to connect to the server. Please check your connection and try again.');
-        }
-        throw error;
-      });
+      const response = await api.post('/auth/register/', userData);
+      const { access, refresh, user } = response.data;
       
-      return response.data;
-    } catch (error) {
-      if (error.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
-        const errorData = error.response.data;
-        if (typeof errorData === 'object' && errorData !== null) {
-          // Handle validation errors from the server
-          if (errorData.email) {
-            throw new Error(errorData.email[0]);
-          } else if (errorData.username) {
-            throw new Error(errorData.username[0]);
-          } else if (errorData.password) {
-            throw new Error(errorData.password[0]);
-          } else if (errorData.non_field_errors) {
-            throw new Error(errorData.non_field_errors[0]);
-          }
-        }
-        throw errorData || 'Registration failed. Please check your information and try again.';
-      } else if (error.request) {
-        // The request was made but no response was received
-        throw new Error('No response from server. Please try again later.');
-      } else {
-        // Something happened in setting up the request that triggered an Error
-        throw error.message || 'An error occurred during registration.';
+      if (!access || !refresh || !user) {
+        throw new Error('Registration successful but incomplete response from server');
       }
+      
+      this.setAuthTokens({ access, refresh });
+      this.setUser(user);
+      
+      return user;
+    } catch (error) {
+      if (error.response?.data) {
+        throw new Error(
+          error.response.data.detail || 
+          Object.values(error.response.data).flat().join('\n') ||
+          'Registration failed. Please check your information and try again.'
+        );
+      }
+      throw error;
     }
+  },
+  
+  /**
+   * Refresh the access token using the refresh token
+   * @returns {Promise<string>} New access token
+   */
+  async refreshToken() {
+    if (isRefreshing) {
+      return new Promise((resolve, reject) => {
+        failedQueue.push({ resolve, reject });
+      });
+    }
+    
+    isRefreshing = true;
+    const refreshToken = this.getRefreshToken();
+    
+    if (!refreshToken) {
+      this.clearAuth();
+      throw new Error('No refresh token available');
+    }
+    
+    try {
+      const response = await api.post('/auth/token/refresh/', { refresh: refreshToken });
+      const { access } = response.data;
+      
+      if (!access) {
+        throw new Error('No access token in refresh response');
+      }
+      
+      this.setAccessToken(access);
+      processQueue(null, access);
+      return access;
+    } catch (error) {
+      processQueue(error, null);
+      this.clearAuth();
+      throw error;
+    } finally {
+      isRefreshing = false;
+    }
+  },
+  
+  // Helper methods
+  setAuthTokens({ access, refresh }) {
+    if (access) {
+      localStorage.setItem(TOKEN_KEYS.ACCESS, access);
+      api.defaults.headers.common['Authorization'] = `Bearer ${access}`;
+    }
+    if (refresh) {
+      localStorage.setItem(TOKEN_KEYS.REFRESH, refresh);
+    }
+  },
+  
+  setUser(user) {
+    if (user && user.id) {
+      localStorage.setItem(TOKEN_KEYS.USER, JSON.stringify(user));
+    }
+  },
+  
+  getAccessToken() {
+    return localStorage.getItem(TOKEN_KEYS.ACCESS);
+  },
+  
+  getRefreshToken() {
+    return localStorage.getItem(TOKEN_KEYS.REFRESH);
+  },
+  
+  getCachedUser() {
+    try {
+      const userStr = localStorage.getItem(TOKEN_KEYS.USER);
+      return userStr ? JSON.parse(userStr) : null;
+    } catch (error) {
+      console.error('Error parsing user data:', error);
+      return null;
+    }
+  },
+  
+  clearAuth() {
+    // Clear all auth-related items from localStorage
+    [TOKEN_KEYS.ACCESS, TOKEN_KEYS.REFRESH, TOKEN_KEYS.USER].forEach(key => {
+      try {
+        localStorage.removeItem(key);
+      } catch (e) {
+        console.error('Error removing item from localStorage:', e);
+      }
+    });
+    
+    // Safely delete the Authorization header
+    try {
+      if (api && api.defaults && api.defaults.headers && api.defaults.headers.common) {
+        delete api.defaults.headers.common['Authorization'];
+      } else if (api && api.defaults) {
+        // If headers.common doesn't exist, ensure it's an empty object
+        api.defaults.headers = api.defaults.headers || {};
+        api.defaults.headers.common = api.defaults.headers.common || {};
+        delete api.defaults.headers.common['Authorization'];
+      }
+    } catch (e) {
+      console.error('Error clearing Authorization header:', e);
+    }
+  },
+  
+  isAuthenticated() {
+    return !!this.getAccessToken();
   },
   
   // Update user profile

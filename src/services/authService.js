@@ -88,12 +88,17 @@ export const authService = {
   // Login user
   login: async (email, password) => {
     try {
-      const response = await api.post('/token/', { email, password });
-      const { access, refresh } = response.data;
+      const response = await api.post('/auth/login/', { email, password });
+      const { access, refresh, user } = response.data;
       
       // Store tokens in localStorage
       localStorage.setItem('accessToken', access);
       localStorage.setItem('refreshToken', refresh);
+      
+      // Store user data in localStorage
+      if (user) {
+        localStorage.setItem('user', JSON.stringify(user));
+      }
       
       // Set default auth header
       api.defaults.headers.common['Authorization'] = `Bearer ${access}`;

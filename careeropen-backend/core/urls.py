@@ -3,6 +3,7 @@ URL configuration for core project.
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.utils import timezone
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
@@ -11,6 +12,7 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
     TokenVerifyView,
 )
+from . import views
 
 # Swagger/OpenAPI schema view
 schema_view = get_schema_view(
@@ -28,6 +30,9 @@ schema_view = get_schema_view(
 
 # API URL patterns
 api_patterns = [
+    # Health check
+    path('health/', views.HealthCheckView.as_view(), name='health_check'),
+    
     # Authentication
     path('auth/', include('accounts.urls')),  # Includes token and user endpoints
     
@@ -38,6 +43,7 @@ api_patterns = [
     
     # Apps
     path('jobs/', include('jobs.urls')),  # Job-related endpoints
+    path('network/', include('network.urls')),  # Network-related endpoints (connections, messages, etc.)
 ]
 
 urlpatterns = [

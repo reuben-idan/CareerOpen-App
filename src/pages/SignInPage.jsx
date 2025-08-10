@@ -58,11 +58,15 @@ export default function SignInPage() {
     
     try {
       // Sign in the user using the backend authentication
-      await signIn(formData.email, formData.password);
+      const userData = await signIn(formData.email, formData.password);
       
-      // The user will be automatically redirected by the auth context
-      // after a successful login
-      navigate("/feed");
+      // Redirect to the user's profile page after successful login
+      if (userData && userData.id) {
+        navigate(`/profile/${userData.id}`);
+      } else {
+        // Fallback to feed if user data is not available
+        navigate("/feed");
+      }
     } catch (err) {
       // Handle different types of errors with user-friendly messages
       if (err.response) {

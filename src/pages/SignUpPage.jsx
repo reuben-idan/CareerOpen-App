@@ -107,23 +107,38 @@ export default function SignUpPage() {
     }
 
     try {
-      // Register the user with the backend
+      // Register the user with the backend - only include fields expected by the backend
       const userData = {
         email: formData.email,
         password: formData.password,
         first_name: formData.first_name,
         last_name: formData.last_name,
-        password2: formData.password2, // Add password2 for backend validation
-        is_employer: formData.userType === 'employer', // Map userType to is_employer
+        password2: formData.password2,
+        is_employer: formData.userType === 'employer'  // Map userType to is_employer
+      };
+      
+      // Note: Additional profile fields (headline, location, about, skills)
+      // should be updated in a separate API call after successful registration
+
+      // Sign up the user
+      const newUser = await signUp(userData);
+      
+      // Prepare profile update data
+      const profileData = {
         headline: formData.headline,
         location: formData.location,
         about: formData.about,
-        skills: formData.skills,
+        skills: formData.skills
       };
-
-      // Sign up the user (this will also create the profile)
-      await signUp(userData);
-
+      
+      // Update the user's profile with additional data
+      try {
+        await authService.updateProfile(newUser.id, profileData);
+      } catch (profileError) {
+        console.error("Error updating profile:", profileError);
+        // Continue with signup even if profile update fails
+      }
+      
       // Handle profile image upload if provided
       if (profileImage) {
         try {
@@ -135,11 +150,17 @@ export default function SignUpPage() {
         }
       }
 
-      // Show success message and redirect
-      setSuccess("Registration successful! Redirecting...");
-      setTimeout(() => {
+      // Show success message and redirect to profile
+      setSuccess("Registration successful! Redirecting to your profile...");
+      // The signUp function already handles the login and user data
+      // We can get the user data from the auth context
+      const user = await signIn(userData.email, userData.password);
+      if (user && user.id) {
+        navigate(`/profile/${user.id}`);
+      } else {
+        // Fallback to feed if user data is not available
         navigate("/feed");
-      }, 1500);
+      }
     } catch (err) {
       setLoading(false);
       
@@ -169,14 +190,18 @@ export default function SignUpPage() {
               setError("Please fix the errors below.");
             }
           }
-        } else {
-          // Handle string error responses
-          setError(data.detail || data.message || "An error occurred during registration.");
         }
-      } else {
-        setError(err.message || "An error occurred during registration.");
       }
-      console.error("Registration error:", err);
+      
+      // Set a generic error message if no specific error was caught above
+      if (!error && err.message) {
+        setError(err.message);
+      } else if (!error) {
+        setError('An unexpected error occurred. Please try again.');
+      }
+      
+      // Scroll to the top to show the error message
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setLoading(false);
     }

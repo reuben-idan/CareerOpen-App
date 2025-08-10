@@ -22,7 +22,6 @@ import { config } from "./config/env";
 import { HelmetProvider } from "react-helmet-async";
 import "./index.css";
 import { Web3Provider } from "./context/web3";
-import CookieConsent from "./components/common/CookieConsent";
 import { ToastProvider } from "./context/toast";
 import UserProfile from "./components/profile/UserProfile";
 
@@ -103,7 +102,6 @@ const AppLayout = ({ children }) => {
               {children}
             </Suspense>
           </ErrorBoundary>
-          <CookieConsent />
         </main>
       </div>
     </div>
