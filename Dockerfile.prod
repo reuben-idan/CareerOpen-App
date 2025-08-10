@@ -1,0 +1,45 @@
+# Build stage
+FROM node:18 as frontend-builder
+WORKDIR /app/frontend
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
+
+# Production stage
+FROM python:3.12-slim
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app \
+    DJANGO_SETTINGS_MODULE=core.settings.production \
+    PORT=8000
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set work directory
+WORKDIR /app
+
+# Install Python dependencies
+COPY careeropen-backend/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy backend code
+COPY careeropen-backend/ .
+
+# Copy frontend build
+COPY --from=frontend-builder /app/dist /app/frontend/dist
+
+# Collect static files
+RUN python manage.py collectstatic --noinput
+
+# Run Gunicorn
+CMD gunicorn core.wsgi:application --bind 0.0.0.0:$PORT --workers 3 --worker-class gthread --threads 3
+
+# Expose the port the app runs on
+EXPOSE $PORT
