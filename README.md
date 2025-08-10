@@ -13,7 +13,7 @@
 ## 📚 Documentation
 
 - [API Documentation](https://github.com/reuben-idan/CareerOpen-App/tree/main/docs/API.md)
-- [Database Documentation](https://drive.google.com/file/d/1CnBocvxPnq-kLQl3ozreMV-jppPoT0cJ/view?usp=sharing)
+- [Database Schema & ERD](https://drive.google.com/file/d/1CnBocvxPnq-kLQl3ozreMV-jppPoT0cJ/view?usp=sharing)
 - [Frontend Architecture](https://github.com/reuben-idan/CareerOpen-App/tree/main/docs/FRONTEND.md)
 - [Deployment Guide](https://github.com/reuben-idan/CareerOpen-App/tree/main/docs/DEPLOYMENT.md)
 
