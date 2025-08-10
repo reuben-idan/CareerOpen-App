@@ -88,32 +88,7 @@
 
 ## 🔧 Environment Variables
 
-### Backend (`.env` in `careeropen-backend/`)
-```env
-# Django
-DEBUG=True
-SECRET_KEY=your-secret-key-here
-ALLOWED_HOSTS=localhost,127.0.0.1
 
-# Database
-DATABASE_URL=postgres://user:password@localhost:5432/careeropen
-
-# Redis
-REDIS_URL=redis://localhost:6379/0
-
-# CORS
-CORS_ALLOWED_ORIGINS=http://localhost:3000
-
-# Email (for production)
-EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
-DEFAULT_FROM_EMAIL=noreply@careeropen.com
-
-# AWS (for production)
-AWS_ACCESS_KEY_ID=your-aws-access-key
-AWS_SECRET_ACCESS_KEY=your-aws-secret-key
-AWS_STORAGE_BUCKET_NAME=your-bucket-name
-AWS_S3_REGION_NAME=your-region
-```
 
 ### Frontend (`.env` in project root)
 ```env
