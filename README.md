@@ -10,103 +10,178 @@
 ![Open Issues](https://img.shields.io/github/issues/reuben-idan/CareerOpen-App)
 ![Repo Size](https://img.shields.io/github/repo-size/reuben-idan/CareerOpen-App)
 
+## 🚀 Quick Start
 
----
+### Prerequisites
+- Node.js 16+ and npm 8+
+- Python 3.9+
+- PostgreSQL 13+
+- Redis (for caching and async tasks)
 
-## Overview
+### Backend Setup
 
-CareerOpen is a modern job board platform engineered to seamlessly connect top talent with leading employers. With a focus on intuitive user experience, advanced job-matching, and robust analytics, CareerOpen empowers users to discover opportunities and employers to find the perfect fit.
-The **CareerOpen Backend** is a Django-based RESTful API powering a modern job board platform. It supports dynamic job posting, search, and application features with secure, role-based access for administrators and job seekers. Designed for scalability, performance, and seamless frontend integration.
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/reuben-idan/CareerOpen-App.git
+   cd CareerOpen-App/careeropen-backend
+   ```
 
----
+2. **Set up a virtual environment**
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
 
-## Project Goals
+3. **Install dependencies**
+   ```bash
+   pip install -r requirements.txt
+   pip install -r requirements-dev.txt  # For development
+   ```
 
-- RESTful API with CRUD operations for jobs, users, and categories
-- Role-based access control for admins and job seekers
-- PostgreSQL database with optimized queries and indexing
-- JWT authentication and secure permissions
-- Swagger/OpenAPI documentation
-- Production-grade deployment on AWS (EC2 + NGINX + Gunicorn)
+4. **Set up environment variables**
+   Create a `.env` file in the `careeropen-backend` directory with:
+   ```env
+   DEBUG=True
+   SECRET_KEY=your-secret-key-here
+   DATABASE_URL=postgres://user:password@localhost:5432/careeropen
+   REDIS_URL=redis://localhost:6379/0
+   ALLOWED_HOSTS=localhost,127.0.0.1
+   CORS_ALLOWED_ORIGINS=http://localhost:3000
+   ```
 
----
+5. **Run database migrations**
+   ```bash
+   python manage.py migrate
+   ```
 
-## Features
+6. **Create a superuser**
+   ```bash
+   python manage.py createsuperuser
+   ```
 
-- User Registration: Secure sign-up for employers and job seekers
-- Advanced Job Search: Powerful filters by location, job type, and more
-- Resume Uploads: Effortless document management
-- Job Alerts: Personalized email notifications
-- Company Profiles: Rich employer branding
-- Application Tracking: Real-time status updates
-- Responsive Design: Mobile-friendly UI
-- Secure Payments: For premium listings and services
-- Analytics Dashboard: Actionable insights for employers
-- User Reviews and Ratings: Community-driven feedback
-- Career Resources: Guidance and tips for job seekers
-- JWT-based user authentication and registration
-- Role-based access control (Admin, Recruiter, Candidate)
-- CRUD operations for job postings, applications, and categories
-- Search and filter jobs by location, industry, and type
-- Admin dashboard for job and user management
-- RESTful API with Swagger and ReDoc documentation
+7. **Start the development server**
+   ```bash
+   python manage.py runserver
+   ```
 
+### Frontend Setup
 
----
-## Tech Stack
+1. **Navigate to the frontend directory**
+   ```bash
+   cd ../  # From the backend directory
+   ```
 
-| Technology         | Purpose                             |
-|--------------------|--------------------------------------|
-| Django             | Backend framework                    |
-| Django REST Framework | API development framework        |
-| PostgreSQL         | Relational database (RDS or EC2)     |
-| JWT (SimpleJWT)    | Secure user authentication           |
-| Swagger / ReDoc    | API documentation                    |
-| AWS EC2 / RDS / S3 | Deployment and cloud infrastructure  |
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
 
-## Design
+3. **Start the development server**
+   ```bash
+   npm run dev
+   ```
 
-CareerOpen offers a sleek, professional interface with interactive elements for an efficient and enjoyable user journey across all devices.
+4. **Open in your browser**
+   ```
+   http://localhost:3000
+   ```
 
----
+## 🔧 Environment Variables
 
+### Backend (`.env` in `careeropen-backend/`)
+```env
+# Django
+DEBUG=True
+SECRET_KEY=your-secret-key-here
+ALLOWED_HOSTS=localhost,127.0.0.1
 
-careeropen-backend/
-├── config/              # Django project settings
-├── jobs/                # Job-related models, views, serializers
-├── users/               # Authentication and user roles
-├── core/                # Reusable utilities
-├── requirements.txt     # Dependencies
-├── manage.py            # Django CLI
-└── README.md
+# Database
+DATABASE_URL=postgres://user:password@localhost:5432/careeropen
+
+# Redis
+REDIS_URL=redis://localhost:6379/0
+
+# CORS
+CORS_ALLOWED_ORIGINS=http://localhost:3000
+
+# Email (for production)
+EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
+DEFAULT_FROM_EMAIL=noreply@careeropen.com
+
+# AWS (for production)
+AWS_ACCESS_KEY_ID=your-aws-access-key
+AWS_SECRET_ACCESS_KEY=your-aws-secret-key
+AWS_STORAGE_BUCKET_NAME=your-bucket-name
+AWS_S3_REGION_NAME=your-region
 ```
 
-## Contribution Guidelines
+### Frontend (`.env` in project root)
+```env
+VITE_API_BASE_URL=http://localhost:8000/api
+VITE_APP_NAME=CareerOpen
+VITE_APP_ENV=development
+```
+
+## 🛠 Development Tools
+
+### Backend
+- **Linting**: `flake8 .`
+- **Type Checking**: `mypy .`
+- **Testing**: `pytest`
+- **Code Formatting**: `black .`
+
+### Frontend
+- **Linting**: `npm run lint`
+- **Testing**: `npm test`
+- **Code Formatting**: `npx prettier --write .`
+
+## 🏗 Project Structure
+
+```
+careeropen/
+├── careeropen-backend/     # Django backend
+│   ├── config/            # Project settings
+│   ├── jobs/              # Job-related models/views
+│   ├── users/             # User authentication
+│   ├── core/              # Shared utilities
+│   ├── manage.py
+│   └── requirements/
+│       ├── base.txt
+│       └── dev.txt
+│
+├── src/                   # React frontend
+│   ├── components/        # Reusable components
+│   ├── pages/             # Page components
+│   ├── services/          # API services
+│   └── App.jsx            # Main App component
+│
+├── public/                # Static files
+└── package.json           # Frontend dependencies
+```
+
+## 🤝 Contributing
 
 1. Fork the repository
-2. Create your feature branch: `git checkout -b feature/your-feature`
-3. Commit your changes: `git commit -m 'Add feature X'`
-4. Push to the branch: `git push origin feature/your-feature`
+2. Create your feature branch: `git checkout -b feature/amazing-feature`
+3. Commit your changes: `git commit -m 'Add some amazing feature'`
+4. Push to the branch: `git push origin feature/amazing-feature`
 5. Open a pull request
 
-## License
+## 📄 License
 
-This project is licensed under the [MIT License](LICENSE).
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Author
+## 👨‍💻 Author
 
 **Reuben Idan**  
 [LinkedIn](https://www.linkedin.com/in/reuben-idan/) | [GitHub](https://github.com/reuben-idan)
 
----
+## 📚 Resources
 
-> Backend system for CareerOpen – a modern platform that connects job seekers with opportunities through an accessible, secure, and performant API-first architecture.
-
-## Resources
-
-- [Create React App Documentation](https://facebook.github.io/create-react-app/docs/getting-started)
+- [Django Documentation](https://docs.djangoproject.com/)
+- [Django REST Framework](https://www.django-rest-framework.org/)
 - [React Documentation](https://reactjs.org/)
-- [Vitest Documentation](https://vitest.dev/)
-- [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/)
-
----
+- [Vite Documentation](https://vitejs.dev/)
+- [Tailwind CSS](https://tailwindcss.com/)
+- [React Query Documentation](https://tanstack.com/query/latest)
+- [Vitest](https://vitest.dev/)

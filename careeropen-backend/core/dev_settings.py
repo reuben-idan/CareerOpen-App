@@ -1,15 +1,35 @@
 """
 Development settings for CareerOpen backend.
-Uses SQLite for database and fakeredis for caching in local development.
+Supports both SQLite (default) and PostgreSQL for database.
+Uses fakeredis for caching in local development.
 """
+import os
+from dotenv import load_dotenv
 
-# Use SQLite for development
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': 'db.sqlite3',
+# Load environment variables from .env file
+load_dotenv()
+
+# Database configuration
+# Use PostgreSQL if DB_ENGINE is set to postgres, otherwise fall back to SQLite
+if os.getenv('DB_ENGINE') == 'django.db.backends.postgresql':
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('DB_NAME', 'careeropen'),
+            'USER': os.getenv('DB_USER', 'postgres'),
+            'PASSWORD': os.getenv('DB_PASSWORD', ''),
+            'HOST': os.getenv('DB_HOST', 'localhost'),
+            'PORT': os.getenv('DB_PORT', '5432'),
+        }
     }
-}
+else:
+    # Fall back to SQLite
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'db.sqlite3'),
+        }
+    }
 
 # Use fakeredis for development caching
 CACHES = {
