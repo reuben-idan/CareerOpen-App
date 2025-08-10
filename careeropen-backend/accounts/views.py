@@ -99,6 +99,17 @@ class UserRegistrationView(generics.CreateAPIView):
             }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+import logging
+from rest_framework.exceptions import APIException
+from rest_framework import status
+
+logger = logging.getLogger(__name__)
+
+class UserProfileError(APIException):
+    status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+    default_detail = 'An error occurred while processing your profile.'
+    default_code = 'user_profile_error'
+
 class UserProfileView(generics.RetrieveUpdateAPIView):
     """
     View to retrieve or update the current user's profile.
@@ -107,7 +118,86 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_object(self):
-        return self.request.user
+        user = None
+        try:
+            user = self.request.user
+            if not user or not hasattr(user, 'id'):
+                error_msg = "Invalid or missing user in request"
+                logger.error(f"[UserProfileView] {error_msg}")
+                raise UserProfileError(detail=error_msg)
+                
+            logger.info(f"[UserProfileView] Getting profile for user: {getattr(user, 'email', 'unknown')} (ID: {getattr(user, 'id', 'unknown')})")
+            
+            # Debug: Log request headers and user details
+            logger.debug(f"[UserProfileView] Request method: {getattr(self.request, 'method', 'unknown')}")
+            logger.debug(f"[UserProfileView] Request path: {getattr(self.request, 'path', 'unknown')}")
+            logger.debug(f"[UserProfileView] Request headers: {dict(getattr(self.request, 'headers', {}))}")
+            logger.debug(f"[UserProfileView] User details - ID: {getattr(user, 'id', 'unknown')}, Email: {getattr(user, 'email', 'unknown')}, Is Active: {getattr(user, 'is_active', 'unknown')}")
+            
+            # Check if user has a profile, create one if not
+            try:
+                # First, try to get the profile directly
+                if not hasattr(user, 'profile'):
+                    logger.info(f"[UserProfileView] User model does not have 'profile' attribute, trying direct query...")
+                    from .models import UserProfile
+                    try:
+                        profile = UserProfile.objects.get(user=user)
+                        logger.info(f"[UserProfileView] Found profile via direct query: {profile.id}")
+                        return profile
+                    except UserProfile.DoesNotExist:
+                        logger.info(f"[UserProfileView] No profile found for user {user.id}, creating one...")
+                        profile = UserProfile.objects.create(user=user)
+                        logger.info(f"[UserProfileView] Created new profile for user {user.id} (Profile ID: {profile.id})")
+                        return profile
+                
+                # If we get here, user has a profile attribute
+                profile = user.profile
+                logger.debug(f"[UserProfileView] Retrieved profile via user.profile: {getattr(profile, 'id', 'no-id')}")
+                return profile
+                
+            except UserProfile.DoesNotExist:
+                logger.info(f"[UserProfileView] UserProfile.DoesNotExist for user {user.id}, creating profile...")
+                from .models import UserProfile
+                try:
+                    profile = UserProfile.objects.create(user=user)
+                    logger.info(f"[UserProfileView] Created new profile for user {user.id} (Profile ID: {profile.id})")
+                    return profile
+                except Exception as e:
+                    error_msg = f"Error creating profile for user {user.id}: {str(e)}"
+                    logger.error(f"[UserProfileView] {error_msg}", exc_info=True)
+                    raise UserProfileError(detail=error_msg)
+                    
+            except Exception as e:
+                error_msg = f"Unexpected error accessing profile for user {user.id}: {str(e)}"
+                logger.error(f"[UserProfileView] {error_msg}", exc_info=True)
+                logger.error(f"[UserProfileView] User model fields: {[f for f in user._meta.get_fields() if hasattr(f, 'name')]}")
+                raise UserProfileError(detail=error_msg) 
+                
+        except UserProfileError as upe:
+            logger.error(f"[UserProfileView] UserProfileError: {str(upe)}", exc_info=True)
+            if hasattr(self, 'request') and hasattr(self.request, 'user'):
+                logger.error(f"[UserProfileView] Current user in error handler: {getattr(self.request.user, 'id', 'unknown')}")
+            raise  # Re-raise our custom error
+            
+        except Exception as e:
+            error_msg = f"Unexpected error in UserProfileView.get_object: {str(e)}"
+            logger.error(f"[UserProfileView] {error_msg}", exc_info=True, stack_info=True)
+            if user:
+                logger.error(f"[UserProfileView] User object type: {type(user)}")
+                logger.error(f"[UserProfileView] User object attributes: {[attr for attr in dir(user) if not attr.startswith('_')]}")
+            if hasattr(self, 'request'):
+                logger.error(f"[UserProfileView] Request method: {getattr(self.request, 'method', 'unknown')}")
+                logger.error(f"[UserProfileView] Request path: {getattr(self.request, 'path', 'unknown')}")
+            raise UserProfileError(detail=error_msg)
+    
+    def get_serializer_context(self):
+        """Add request to the serializer context."""
+        context = super().get_serializer_context()
+        context.update({
+            'request': self.request,
+            'user': self.request.user
+        })
+        return context
 
 
 class UserViewSet(viewsets.ModelViewSet):

@@ -87,7 +87,30 @@ class UserProfileSerializer(serializers.ModelSerializer):
     """
     Serializer for user profile data.
     """
+    email = serializers.EmailField(source='user.email', read_only=True)
+    first_name = serializers.CharField(source='user.first_name')
+    last_name = serializers.CharField(source='user.last_name')
+    is_active = serializers.BooleanField(source='user.is_active', read_only=True)
+    date_joined = serializers.DateTimeField(source='user.date_joined', read_only=True)
+    is_employer = serializers.BooleanField(source='user.is_employer', read_only=True)
+
     class Meta:
-        model = User
-        fields = ('id', 'email', 'first_name', 'last_name', 'is_active', 'date_joined')
-        read_only_fields = ('id', 'email', 'is_active', 'date_joined')
+        from .models import UserProfile
+        model = UserProfile
+        fields = ('id', 'email', 'first_name', 'last_name', 'is_active', 
+                 'date_joined', 'is_employer', 'phone_number', 'bio', 
+                 'profile_picture', 'location', 'website', 'github', 
+                 'linkedin', 'twitter', 'resume', 'skills')
+        read_only_fields = ('id', 'email', 'is_active', 'date_joined', 'is_employer')
+    
+    def update(self, instance, validated_data):
+        # Update user data if present
+        user_data = validated_data.pop('user', {})
+        if user_data:
+            user = instance.user
+            for attr, value in user_data.items():
+                setattr(user, attr, value)
+            user.save()
+        
+        # Update profile data
+        return super().update(instance, validated_data)
