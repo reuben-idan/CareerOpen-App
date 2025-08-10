@@ -78,6 +78,10 @@ class UserLoginView(APIView):
             'access': str(refresh.access_token),
         })
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 class UserRegistrationView(generics.CreateAPIView):
     """
     View to register a new user.
@@ -87,17 +91,62 @@ class UserRegistrationView(generics.CreateAPIView):
     permission_classes = [permissions.AllowAny]  # Allow unauthenticated access
 
     def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            user = serializer.save()
-            # Generate tokens for the new user
-            refresh = RefreshToken.for_user(user)
-            return Response({
-                'user': UserProfileSerializer(user).data,
-                'refresh': str(refresh),
-                'access': str(refresh.access_token),
-            }, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        logger.info(f"Registration request received with data: {request.data}")
+        
+        try:
+            serializer = self.get_serializer(data=request.data)
+            if serializer.is_valid():
+                logger.info("Serializer is valid, attempting to save user...")
+                try:
+                    user = serializer.save()
+                    logger.info(f"User created successfully with email: {user.email}")
+                    
+                    # Generate tokens for the new user
+                    try:
+                        refresh = RefreshToken.for_user(user)
+                        logger.info("Refresh token generated successfully")
+                        
+                        # Get user profile data
+                        try:
+                            user_data = UserProfileSerializer(user).data
+                            logger.info("User profile data serialized successfully")
+                            
+                            return Response({
+                                'user': user_data,
+                                'refresh': str(refresh),
+                                'access': str(refresh.access_token),
+                            }, status=status.HTTP_201_CREATED)
+                            
+                        except Exception as e:
+                            logger.error(f"Error serializing user profile: {str(e)}", exc_info=True)
+                            return Response(
+                                {'error': 'Error processing user data', 'details': str(e)},
+                                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                            )
+                            
+                    except Exception as e:
+                        logger.error(f"Error generating tokens: {str(e)}", exc_info=True)
+                        return Response(
+                            {'error': 'Error generating authentication tokens', 'details': str(e)},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                        )
+                        
+                except Exception as e:
+                    logger.error(f"Error saving user: {str(e)}", exc_info=True)
+                    return Response(
+                        {'error': 'Error creating user account', 'details': str(e)},
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                    )
+            
+            logger.warning(f"Invalid registration data: {serializer.errors}")
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            
+        except Exception as e:
+            logger.critical(f"Unexpected error in registration: {str(e)}", exc_info=True)
+            return Response(
+                {'error': 'An unexpected error occurred during registration', 'details': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 import logging
 from rest_framework.exceptions import APIException

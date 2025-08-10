@@ -304,13 +304,23 @@ LOGGING = {
             'style': '{',
         },
         'simple': {
-            'format': '{levelname} {message}',
+            'format': '{levelname} {asctime} {module} {message}',
             'style': '{',
+        },
+        'django.server': {
+            '()': 'django.utils.log.ServerFormatter',
+            'format': '[{server_time}] {message}',
+            'style': '{',
+        },
+    },
+    'filters': {
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
         },
     },
     'handlers': {
         'console': {
-            'level': 'DEBUG',  # Changed from 'INFO' to 'DEBUG' to capture all logs
+            'level': 'DEBUG',
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
         },
@@ -320,22 +330,64 @@ LOGGING = {
             'filename': os.path.join(BASE_DIR, 'debug.log'),
             'formatter': 'verbose',
         },
+        'mail_admins': {
+            'level': 'ERROR',
+            'class': 'django.utils.log.AdminEmailHandler',
+            'include_html': True,
+        },
+        'django.server': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'django.server',
+        },
     },
     'loggers': {
-        'jobs': {
-            'handlers': ['console', 'file'],
-            'level': 'DEBUG',
-            'propagate': True,
-        },
         'django': {
-            'handlers': ['console', 'file'],
+            'handlers': ['console', 'file', 'mail_admins'],
             'level': 'INFO',
             'propagate': True,
         },
         'django.request': {
+            'handlers': ['console', 'file', 'mail_admins'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'django.server': {
+            'handlers': ['django.server'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'django.db.backends': {
+            'level': 'DEBUG',
+            'handlers': ['console', 'file'],
+            'propagate': False,
+        },
+        'django.template': {
+            'level': 'DEBUG',
+            'handlers': ['console', 'file'],
+            'propagate': False,
+        },
+        'accounts': {
             'handlers': ['console', 'file'],
             'level': 'DEBUG',
             'propagate': False,
         },
+        '': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+        },
     },
 }
+
+# Custom logging for development
+if DEBUG:
+    LOGGING['loggers']['django.db.backends'] = {
+        'level': 'DEBUG',
+        'handlers': ['console'],
+        'propagate': False,
+    }
+    LOGGING['loggers']['django.request'] = {
+        'level': 'DEBUG',
+        'handlers': ['console', 'file'],
+        'propagate': True,
+    }

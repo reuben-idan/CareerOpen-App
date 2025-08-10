@@ -33,8 +33,8 @@ const JobDetail = lazy(() => import("./pages/JobDetail"));
 const Feed = lazy(() => import("./pages/Feed"));
 const MyNetwork = lazy(() => import("./pages/MyNetwork"));
 const Messages = lazy(() => import("./pages/Messages"));
-const SignUpPage = lazy(() => import("./pages/SignUpPage"));
-const SigninPage = lazy(() => import("./pages/SignInPage"));
+const SignUpPage = lazy(() => import("./pages/SignUpPage.jsx"));
+const SignInPage = lazy(() => import("./pages/SignInPage.jsx"));
 const NotificationPage = lazy(() => import("./pages/NotificationPage"));
 const SubscriptionPayment = lazy(() => import("./pages/SubscriptionPayment"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
@@ -114,7 +114,7 @@ const AppRoutes = () => {
   return (
     <Routes>
       {/* Public Routes */}
-      <Route path="/signin" element={<AuthRoute Component={SigninPage} />} />
+      <Route path="/signin" element={<AuthRoute Component={SignInPage} />} />
       <Route path="/signup" element={<AuthRoute Component={SignUpPage} />} />
       
       {/* Protected Routes */}

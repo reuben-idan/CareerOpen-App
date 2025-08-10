@@ -54,54 +54,58 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         required=True,
         style={'input_type': 'password'}
     )
+    is_employer = serializers.BooleanField(
+        required=False,
+        default=False
+    )
 
     class Meta:
         model = User
-        fields = ('email', 'first_name', 'last_name', 'password', 'password2')
+        fields = ('email', 'first_name', 'last_name', 'password', 'password2', 'is_employer')
         extra_kwargs = {
             'first_name': {'required': True},
-            'last_name': {'required': True}
+            'last_name': {'required': True},
+            'email': {'required': True}
         }
 
     def validate(self, attrs):
-        if attrs['password'] != attrs['password2']:
+        if attrs.get('password') != attrs.get('password2'):
             raise serializers.ValidationError({"password": "Password fields didn't match."})
         return attrs
 
     def create(self, validated_data):
-        # Remove password2 from the data
-        validated_data.pop('password2', None)
-        is_employer = validated_data.pop('is_employer', False)
-        
-        user = User.objects.create_user(
-            email=validated_data['email'],
-            first_name=validated_data['first_name'],
-            last_name=validated_data['last_name'],
-            password=validated_data['password'],
-            is_employer=is_employer
-        )
-        return user
+        try:
+            # Remove password2 from the data
+            password2 = validated_data.pop('password2', None)
+            is_employer = validated_data.pop('is_employer', False)
+            
+            user = User.objects.create_user(
+                email=validated_data['email'],
+                first_name=validated_data['first_name'],
+                last_name=validated_data['last_name'],
+                password=validated_data['password'],
+                is_employer=is_employer
+            )
+            return user
+        except Exception as e:
+            raise serializers.ValidationError({"error": str(e)})
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
     """
     Serializer for user profile data.
+    This now works directly with the User model instead of a separate Profile model.
     """
-    email = serializers.EmailField(source='user.email', read_only=True)
-    first_name = serializers.CharField(source='user.first_name')
-    last_name = serializers.CharField(source='user.last_name')
-    is_active = serializers.BooleanField(source='user.is_active', read_only=True)
-    date_joined = serializers.DateTimeField(source='user.date_joined', read_only=True)
-    is_employer = serializers.BooleanField(source='user.is_employer', read_only=True)
+    is_active = serializers.BooleanField(read_only=True)
+    date_joined = serializers.DateTimeField(read_only=True)
+    is_employer = serializers.BooleanField(required=False)
+    is_staff = serializers.BooleanField(read_only=True)
 
     class Meta:
-        from .models import UserProfile
-        model = UserProfile
+        model = User
         fields = ('id', 'email', 'first_name', 'last_name', 'is_active', 
-                 'date_joined', 'is_employer', 'phone_number', 'bio', 
-                 'profile_picture', 'location', 'website', 'github', 
-                 'linkedin', 'twitter', 'resume', 'skills')
-        read_only_fields = ('id', 'email', 'is_active', 'date_joined', 'is_employer')
+                 'date_joined', 'is_employer', 'is_staff')
+        read_only_fields = ('id', 'email', 'is_active', 'date_joined', 'is_employer', 'is_staff')
     
     def update(self, instance, validated_data):
         # Update user data if present

@@ -138,13 +138,19 @@ class JobViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Create the application
-        application = JobApplication.objects.create(
-            job=job,
-            applicant=request.user,
-            status='applied',
-            cover_letter=request.data.get('cover_letter', '')
-        )
+        # Create the application with safe data access
+        application_data = {
+            'job': job,
+            'applicant': request.user,
+            'status': 'applied',
+            'cover_letter': request.data.get('cover_letter', ''),
+            'resume': request.data.get('resume')  # Safely get resume if provided
+        }
+        
+        # Remove None values to prevent overriding model defaults
+        application_data = {k: v for k, v in application_data.items() if v is not None}
+        
+        application = JobApplication.objects.create(**application_data)
         
         serializer = JobApplicationSerializer(application)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -374,20 +380,27 @@ class JobApplicationCreateView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Log all incoming data
-        logger.info(f"Creating serializer with data: {request.data}")
-        logger.info(f"Files in request: {request.FILES}")
+        # Log incoming data (safely)
+        logger.info("Creating serializer with data: %s", str(request.data)[:500])  # Limit log size
+        logger.info("Files in request: %s", list(request.FILES.keys()) if hasattr(request, 'FILES') else 'No files')
         
-        # Create a mutable copy of the request data
-        data = request.data.copy()
+        # Create a mutable copy of the request data with only the fields we expect
+        data = {
+            'job': job.id,
+            'applicant': request.user.id,
+            'status': 'applied',
+            'cover_letter': request.data.get('cover_letter', ''),
+            'resume': request.FILES.get('resume')  # Get file from FILES, not data
+        }
         
-        # Add job and applicant to the data
-        data['job'] = job.id
-        data['applicant'] = request.user.id
+        # Log the final data being passed to serializer (excluding file content)
+        log_data = data.copy()
+        if 'resume' in log_data and log_data['resume']:
+            log_data['resume'] = f'<File: {log_data["resume"].name} ({log_data["resume"].size} bytes)>'
+        logger.info("Final data being passed to serializer: %s", log_data)
         
-        logger.info(f"Final data being passed to serializer: {data}")
-        
-        serializer = self.serializer_class(data=data, context={'request': request})
+        # Initialize serializer with the cleaned data
+        serializer = self.serializer_class(data=data, context={'request': request, 'job': job})
         
         if serializer.is_valid():
             logger.info("Serializer is valid. Saving application...")
