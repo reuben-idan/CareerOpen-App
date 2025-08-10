@@ -15,15 +15,16 @@
 - [API Documentation](https://github.com/reuben-idan/CareerOpen-App/tree/main/docs/API.md)
 - [Database Schema & ERD](https://drive.google.com/file/d/1CnBocvxPnq-kLQl3ozreMV-jppPoT0cJ/view?usp=sharing)
 - [Frontend Architecture](https://github.com/reuben-idan/CareerOpen-App/tree/main/docs/FRONTEND.md)
-- [Deployment Guide](https://github.com/reuben-idan/CareerOpen-App/tree/main/docs/DEPLOYMENT.md)
+- [Deployment Guide](DEPLOYMENT.md)
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js 16+ and npm 8+
-- Python 3.9+
-- PostgreSQL 13+
-- Redis (for caching and async tasks)
+- Node.js 18+ and npm 9+
+- Python 3.12+
+- PostgreSQL 15+
+- Redis 7+ (for caching and async tasks)
+- Docker (optional, for containerized deployment)
 
 ### Backend Setup
 
@@ -93,9 +94,33 @@
    http://localhost:3000
    ```
 
+## 🌐 Live Demo
+
+Experience CareerOpen live:
+- **Frontend**: [careeropen.vercel.app](https://careeropen.vercel.app)
+- **API**: [careeropen-api.onrender.com](https://careeropen-api.onrender.com)
+
+## 🚀 Deployment
+
+### One-Click Deploy
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/reuben-idan/CareerOpen-App)
+
+### Manual Deployment
+
+Refer to the [Deployment Guide](DEPLOYMENT.md) for detailed instructions on setting up the application in production.
+
 ## 🔧 Environment Variables
 
-
+### Backend (`.env` in project root)
+```env
+DEBUG=False
+SECRET_KEY=your-secret-key-here
+DATABASE_URL=postgres://user:password@localhost:5432/careeropen
+REDIS_URL=redis://localhost:6379/0
+ALLOWED_HOSTS=your-domain.com,www.your-domain.com
+CORS_ALLOWED_ORIGINS=https://your-frontend-domain.com
+```
 
 ### Frontend (`.env` in project root)
 ```env
