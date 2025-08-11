@@ -4,6 +4,7 @@ API documentation for the network app.
 This module contains API documentation and schema definitions for the network app.
 """
 from rest_framework import permissions
+from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 
 # API documentation description
 API_DESCRIPTION = """
@@ -69,19 +70,16 @@ Example paginated response:
 ```
 """
 
-# Create schema view for API documentation
-schema_view = get_schema_view(
-    openapi.Info(
-        title="CareerOpen Network API",
-        default_version='v1',
-        description=description,
-        terms_of_service="https://www.careeropen.app/terms/",
-        contact=openapi.Contact(email="api@careeropen.app"),
-        license=openapi.License(name="MIT License"),
-    ),
-    public=True,
-    permission_classes=[permissions.AllowAny],
-)
+# Common parameters
+AUTH_HEADER = [
+    OpenApiParameter(
+        name='Authorization',
+        type=str,
+        location=OpenApiParameter.HEADER,
+        description="JWT token in format 'Bearer <token>'",
+        required=True
+    )
+]
 
 # Common response schemas
 error_response_schema = {
