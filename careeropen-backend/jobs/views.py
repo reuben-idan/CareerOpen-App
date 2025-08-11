@@ -485,14 +485,13 @@ class CategoryViewSet(viewsets.ModelViewSet):
     search_fields = ['name', 'description', 'keywords']
     filterset_fields = {
         'is_active': ['exact'],
-        'is_featured': ['exact'],
         'created_at': ['date', 'gte', 'lte'],
         'updated_at': ['date', 'gte', 'lte'],
     }
     ordering_fields = [
-        'name', 'created_at', 'updated_at', 'job_count', 'is_featured', 'display_order'
+        'name', 'created_at', 'updated_at'
     ]
-    ordering = ['display_order', 'name']
+    ordering = ['name']
     permission_classes = [IsAdminOrReadOnly]
     lookup_field = 'slug'
     lookup_url_kwarg = 'slug'
