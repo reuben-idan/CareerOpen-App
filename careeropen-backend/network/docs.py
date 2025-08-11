@@ -1,11 +1,12 @@
 """
 API documentation for the network app.
+
+This module contains API documentation and schema definitions for the network app.
 """
-from drf_yasg import openapi
-from drf_yasg.views import get_schema_view
 from rest_framework import permissions
 
-description = """
+# API documentation description
+API_DESCRIPTION = """
 # CareerOpen Network API
 
 This API provides endpoints for managing user connections, following relationships, 
