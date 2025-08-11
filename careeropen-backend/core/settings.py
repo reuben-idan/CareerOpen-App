@@ -29,7 +29,13 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-test-key-1234567890')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=Csv(), default=[])
+# Default ALLOWED_HOSTS for development
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+
+# Allow overriding via environment variable
+env_hosts = config('ALLOWED_HOSTS', default='')
+if env_hosts:
+    ALLOWED_HOSTS.extend(host.strip() for host in env_hosts.split(','))
 
 
 # Custom user model
