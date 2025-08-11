@@ -22,7 +22,14 @@ ALLOWED_HOSTS = [
     'www.careeropen.com',
     'localhost',
     '127.0.0.1',
+    '.onrender.com',  # Allow all render.com subdomains
 ]
+
+# Extend ALLOWED_HOSTS from environment variable if set
+import os
+env_hosts = os.getenv('ALLOWED_HOSTS')
+if env_hosts:
+    ALLOWED_HOSTS.extend(host.strip() for host in env_hosts.split(','))
 
 # Redis configuration for production
 REDIS_URL = os.getenv('REDIS_URL', 'redis://redis:6379')
