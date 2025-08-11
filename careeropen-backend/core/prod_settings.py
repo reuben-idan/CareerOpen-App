@@ -25,14 +25,6 @@ SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_AGE = 1209600  # 2 weeks in seconds
 SESSION_SAVE_EVERY_REQUEST = True
 
-# For Render.com specific settings
-RENDER = os.getenv('RENDER', 'false').lower() == 'true'
-if RENDER:
-    # Ensure we're using the correct host
-    RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
-    if RENDER_EXTERNAL_HOSTNAME:
-        ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
-
 # Allowed hosts
 ALLOWED_HOSTS = [
     'careeropen-api.onrender.com',
@@ -43,11 +35,21 @@ ALLOWED_HOSTS = [
     '.onrender.com',  # Allow all render.com subdomains
 ]
 
+# For Render.com specific settings
+RENDER = os.getenv('RENDER', 'false').lower() == 'true'
+if RENDER:
+    # Ensure we're using the correct host
+    RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+    if RENDER_EXTERNAL_HOSTNAME and RENDER_EXTERNAL_HOSTNAME not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+
 # Extend ALLOWED_HOSTS from environment variable if set
-import os
 env_hosts = os.getenv('ALLOWED_HOSTS')
 if env_hosts:
-    ALLOWED_HOSTS.extend(host.strip() for host in env_hosts.split(','))
+    for host in env_hosts.split(','):
+        host = host.strip()
+        if host and host not in ALLOWED_HOSTS:
+            ALLOWED_HOSTS.append(host)
 
 # Redis configuration for production
 REDIS_URL = os.getenv('REDIS_URL', 'redis://redis:6379')
