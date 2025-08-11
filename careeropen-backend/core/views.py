@@ -1,4 +1,4 @@
-""
+"""
 Core views for the CareerOpen application.
 """
 from rest_framework.views import APIView
