@@ -1,2 +1,10 @@
 2025-08-11 14:17:09 [INFO] django.utils.autoreload.run_with_reloader:668 - Watching for file changes with StatReloader
 2025-08-11 14:17:09 [INFO] django.utils.autoreload.run_with_reloader:668 - Watching for file changes with StatReloader
+2025-08-11 17:07:18 [INFO] django.utils.autoreload.trigger_reload:266 - C:\Users\reube\CareerOpen-App\careeropen-backend\core\settings.py changed, reloading.
+2025-08-11 17:07:18 [INFO] django.utils.autoreload.trigger_reload:266 - C:\Users\reube\CareerOpen-App\careeropen-backend\core\settings.py changed, reloading.
+2025-08-11 17:07:21 [INFO] django.utils.autoreload.run_with_reloader:668 - Watching for file changes with StatReloader
+2025-08-11 17:07:21 [INFO] django.utils.autoreload.run_with_reloader:668 - Watching for file changes with StatReloader
+2025-08-11 17:31:24 [INFO] django.utils.autoreload.trigger_reload:266 - C:\Users\reube\CareerOpen-App\careeropen-backend\core\settings.py changed, reloading.
+2025-08-11 17:31:24 [INFO] django.utils.autoreload.trigger_reload:266 - C:\Users\reube\CareerOpen-App\careeropen-backend\core\settings.py changed, reloading.
+2025-08-11 17:31:27 [INFO] django.utils.autoreload.run_with_reloader:668 - Watching for file changes with StatReloader
+2025-08-11 17:31:27 [INFO] django.utils.autoreload.run_with_reloader:668 - Watching for file changes with StatReloader

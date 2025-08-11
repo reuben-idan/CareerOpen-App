@@ -30,7 +30,7 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-test-key-1234567890')
 DEBUG = config('DEBUG', default=True, cast=bool)
 
 # Default ALLOWED_HOSTS for development
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'careeropen-api.onrender.com']
 
 # Allow overriding via environment variable
 env_hosts = config('ALLOWED_HOSTS', default='')
