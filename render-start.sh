@@ -7,7 +7,7 @@ if [[ -z "$PORT" ]]; then
     PORT=8000
 fi
 
-exec gunicorn core.wsgi:application \
+exec gunicorn wsgi:application \
      --bind 0.0.0.0:$PORT \
      --workers 3 \
      --worker-class gthread \
