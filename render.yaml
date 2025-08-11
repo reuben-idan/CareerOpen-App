@@ -5,9 +5,11 @@ services:
     env: python
     region: oregon  # Choose a region closest to your users
     buildCommand: |
-      pip install -r requirements.txt && 
+      cd careeropen-backend && \
+      pip install -r requirements.txt && \
       python manage.py collectstatic --noinput
-    startCommand: "gunicorn wsgi_prod:application"
+    startCommand: "cd careeropen-backend && gunicorn wsgi:application"
+    preDeployCommand: "cd careeropen-backend && python manage.py migrate --noinput"
     envVars:
       - key: PYTHON_VERSION
         value: 3.10.13
