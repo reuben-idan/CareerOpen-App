@@ -30,6 +30,7 @@ whitenoise>=6.6,<7.0
 django-prometheus>=2.3.0,<3.0.0
 prometheus-client>=0.19.0,<0.20.0
 grafana-dashboard-manager>=0.1.0,<0.2.0
+python-json-logger>=2.0.0,<3.0.0
 
 # Production
 gunicorn>=22.0,<23.0
