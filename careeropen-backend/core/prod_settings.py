@@ -65,8 +65,26 @@ DATABASES = {
 }
 
 # Static files (CSS, JavaScript, Images)
-STATIC_ROOT = '/var/www/static'
-MEDIA_ROOT = '/var/www/media'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_URL = '/static/'
+
+# Media files
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_URL = '/media/'
+
+# Ensure the staticfiles directory exists
+os.makedirs(STATIC_ROOT, exist_ok=True)
+os.makedirs(MEDIA_ROOT, exist_ok=True)
+
+# WhiteNoise configuration for static files
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Add WhiteNoise to middleware (should be after SecurityMiddleware and before other middleware)
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+    # ... other middleware ...
+]
 
 # Email settings
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -128,10 +146,12 @@ LOGGING = {
     },
 }
 
-# CORS settings
+# CORS settings - Update with your Render.com URL after deployment
 CORS_ALLOWED_ORIGINS = [
     'https://careeropen.com',
     'https://www.careeropen.com',
+    # Add your Render.com URL here after deployment, e.g.,
+    # 'https://your-app-name.onrender.com'
 ]
 
 # CSRF trusted origins

@@ -1,0 +1,53 @@
+# Render configuration for CareerOpen App
+services:
+  - type: web
+    name: careeropen-backend
+    env: python
+    region: oregon  # Choose a region closest to your users
+    buildCommand: "pip install -r requirements.txt && python manage.py collectstatic --noinput"
+    startCommand: "gunicorn careeropen_backend.wsgi:application"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.13
+      - key: DJANGO_SETTINGS_MODULE
+        value: core.settings
+      - key: DEPLOY_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: "*"  # Will be overridden by Render's environment
+      - key: DATABASE_URL
+        fromDatabase:
+          name: careeropen-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: careeropen-redis
+          property: connectionString
+
+  - type: redis
+    name: careeropen-redis
+    plan: free
+    ipAllowList: []
+
+  - type: postgres
+    name: careeropen-db
+    plan: free
+    ipAllowList: []
+    databaseName: careeropen
+    user: careeropen_user
+
+# Add this section if you want to manage environment variables in one place
+# envVars:
+#   - key: SENTRY_DSN
+#     description: "Sentry DSN for error tracking"
+#   - key: AWS_ACCESS_KEY_ID
+#     description: "AWS Access Key for S3"
+#   - key: AWS_SECRET_ACCESS_KEY
+#     description: "AWS Secret Key for S3"
+#   - key: AWS_STORAGE_BUCKET_NAME
+#     description: "S3 Bucket name for media storage"
