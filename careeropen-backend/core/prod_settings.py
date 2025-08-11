@@ -15,6 +15,15 @@ SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
+# Allowed hosts
+ALLOWED_HOSTS = [
+    'careeropen-api.onrender.com',
+    'careeropen.com',
+    'www.careeropen.com',
+    'localhost',
+    '127.0.0.1',
+]
+
 # Redis configuration for production
 REDIS_URL = os.getenv('REDIS_URL', 'redis://redis:6379')
 CACHES = {
