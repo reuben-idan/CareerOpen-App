@@ -2,6 +2,12 @@
 # Exit on error
 set -o errexit
 
+# Change to the project directory
+cd "$(dirname "$0")" || exit 1
+
+# Set Python path to include the current directory
+export PYTHONPATH=$PYTHONPATH:$(pwd)
+
 # Start Gunicorn with the application
 # Using 2 workers for the free tier (adjust based on your needs)
 exec gunicorn --worker-tmp-dir /dev/shm \
@@ -10,4 +16,5 @@ exec gunicorn --worker-tmp-dir /dev/shm \
   --worker-class=gthread \
   --log-file=- \
   --bind=0.0.0.0:${PORT:-10000} \
-  careeropen_backend.wsgi:application
+  --pythonpath . \
+  core.wsgi:application
