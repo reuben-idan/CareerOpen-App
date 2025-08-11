@@ -687,8 +687,7 @@ class CompanyViewSet(viewsets.ModelViewSet):
         'is_verified': ['exact'],
         'founded_year': ['exact', 'gte', 'lte'],
         'created_at': ['date', 'gte', 'lte'],
-        'headquarters': ['exact', 'icontains'],
-        'tags': ['exact', 'in'],
+        'headquarters': ['exact', 'icontains']
     }
     ordering_fields = [
         'name', 'created_at', 'updated_at', 'founded_year', 'company_size'
