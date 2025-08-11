@@ -4,7 +4,7 @@ import { XMarkIcon } from "@heroicons/react/24/outline";
 import { Dialog } from "@headlessui/react";
 import { useUser } from "../../context/auth";
 import analytics from "../../services/analytics";
-import { uploadProfilePicture, uploadCoverPhoto } from "../../services/storage";
+import storageService from "../../services/api/storage";
 import ImageUpload from "../common/ImageUpload";
 
 const EditProfileModal = ({ isOpen = false, onClose, profile, onUpdate }) => {
@@ -105,11 +105,11 @@ const EditProfileModal = ({ isOpen = false, onClose, profile, onUpdate }) => {
     if (profileImageFile) {
       setIsUploadingImage(true);
       try {
-        const profileURL = await uploadProfilePicture(
+        const result = await storageService.uploadProfilePicture(
           profileImageFile,
           user.uid
         );
-        uploads.photoURL = profileURL;
+        uploads.photoURL = result.url;
       } catch (error) {
         console.error("Error uploading profile picture:", error);
         throw new Error("Failed to upload profile picture");
@@ -121,8 +121,8 @@ const EditProfileModal = ({ isOpen = false, onClose, profile, onUpdate }) => {
     if (coverImageFile) {
       setIsUploadingImage(true);
       try {
-        const coverURL = await uploadCoverPhoto(coverImageFile, user.uid);
-        uploads.coverPhoto = coverURL;
+        const result = await storageService.uploadCoverPhoto(coverImageFile, user.uid);
+        uploads.coverPhoto = result.url;
       } catch (error) {
         console.error("Error uploading cover photo:", error);
         throw new Error("Failed to upload cover photo");
