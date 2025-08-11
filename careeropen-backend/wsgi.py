@@ -19,7 +19,7 @@ if str(project_root) not in sys.path:
 # Set environment variables for production on Render
 if os.getenv('RENDER', '').lower() == 'true':
     os.environ.setdefault('DEPLOY_ENV', 'production')
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.prod_settings')
     print("Running on Render with production settings")
 else:
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
