@@ -8,7 +8,7 @@ services:
       cd careeropen-backend && \
       pip install -r requirements.txt && \
       python manage.py collectstatic --noinput
-    startCommand: "cd careeropen-backend && gunicorn wsgi:application"
+    startCommand: "cd careeropen-backend && gunicorn wsgi:application --bind 0.0.0.0:$PORT"
     preDeployCommand: "cd careeropen-backend && python manage.py migrate --noinput"
     envVars:
       - key: PYTHON_VERSION
