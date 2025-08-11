@@ -13,6 +13,7 @@ drf-yasg>=1.21,<2.0
 # Configuration
 python-decouple>=3.8,<4.0
 django-environ==0.12.0
+dj-database-url>=2.0.0,<3.0.0
 
 # Security
 django-cors-headers>=4.3,<5.0

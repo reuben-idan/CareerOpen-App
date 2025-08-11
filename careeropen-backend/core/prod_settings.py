@@ -1,4 +1,4 @@
-""
+"""
 Production settings for CareerOpen backend.
 These settings are used when DEPLOY_ENV=production
 """
@@ -53,15 +53,14 @@ CACHE_MIDDLEWARE_KEY_PREFIX = 'careeropen'
 CACHE_MIDDLEWARE_ALIAS = 'default'
 
 # Database
+# Render will provide DATABASE_URL environment variable
+import dj_database_url
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('POSTGRES_DB', 'careeropen'),
-        'USER': os.getenv('POSTGRES_USER', 'careeropen'),
-        'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
-        'HOST': os.getenv('POSTGRES_HOST', 'db'),
-        'PORT': os.getenv('POSTGRES_PORT', '5432'),
-    }
+    'default': dj_database_url.config(
+        default=os.getenv('DATABASE_URL', 'postgresql://careeropen:password@localhost:5432/careeropen'),
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
 }
 
 # Static files (CSS, JavaScript, Images)
@@ -91,9 +90,10 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.sendgrid.net')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'apikey')
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+EMAIL_HOST_USER = os.getenv('SENDGRID_USERNAME', '')
+EMAIL_HOST_PASSWORD = os.getenv('SENDGRID_API_KEY', '')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@careeropen.com')
+SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
 # Logging
 LOGGING = {
@@ -115,12 +115,6 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
         },
-        'file': {
-            'level': 'WARNING',
-            'class': 'logging.FileHandler',
-            'filename': '/var/log/django/error.log',
-            'formatter': 'verbose',
-        },
         'mail_admins': {
             'level': 'ERROR',
             'class': 'django.utils.log.AdminEmailHandler',
@@ -129,35 +123,39 @@ LOGGING = {
     },
     'loggers': {
         'django': {
-            'handlers': ['console', 'file', 'mail_admins'],
+            'handlers': ['console', 'mail_admins'],
             'level': 'INFO',
             'propagate': True,
         },
         'jobs': {
-            'handlers': ['console', 'file'],
+            'handlers': ['console'],
             'level': 'INFO',
             'propagate': True,
         },
         'accounts': {
-            'handlers': ['console', 'file'],
+            'handlers': ['console'],
             'level': 'INFO',
             'propagate': True,
         },
     },
 }
 
-# CORS settings - Update with your Render.com URL after deployment
+# CORS settings
 CORS_ALLOWED_ORIGINS = [
     'https://careeropen.com',
     'https://www.careeropen.com',
-    # Add your Render.com URL here after deployment, e.g.,
-    # 'https://your-app-name.onrender.com'
+    'https://careeropen-api.onrender.com',
+    'http://localhost:3000',  # For local development
+    'http://127.0.0.1:3000'   # For local development
 ]
 
 # CSRF trusted origins
 CSRF_TRUSTED_ORIGINS = [
     'https://careeropen.com',
     'https://www.careeropen.com',
+    'https://careeropen-api.onrender.com',
+    'http://localhost:3000',  # For local development
+    'http://127.0.0.1:3000'   # For local development
 ]
 
 # Security headers
