@@ -7,6 +7,7 @@ and production WSGI servers.
 import os
 import sys
 from pathlib import Path
+import logging
 
 # Add the project directory to the Python path
 project_root = Path(__file__).resolve().parent
@@ -26,9 +27,31 @@ else:
     if not os.getenv('DEPLOY_ENV'):
         os.environ.setdefault('DEPLOY_ENV', 'development')
 
+# Ensure the logs directory exists
+logs_dir = os.path.join(Path(__file__).resolve().parent, 'logs')
+try:
+    os.makedirs(logs_dir, exist_ok=True)
+    print(f"Created logs directory at: {logs_dir}")
+except Exception as e:
+    print(f"Warning: Could not create logs directory at {logs_dir}: {e}")
+    # Fall back to a directory we know exists
+    logs_dir = '/tmp/careeropen/logs'
+    os.makedirs(logs_dir, exist_ok=True)
+    print(f"Using fallback logs directory: {logs_dir}")
+
 # This application object is used by any WSGI server configured to use this file.
 from django.core.wsgi import get_wsgi_application
-application = get_wsgi_application()
+
+# Configure logging to ensure we capture any startup errors
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+try:
+    application = get_wsgi_application()
+    logger.info("WSGI application initialized successfully")
+except Exception as e:
+    logger.exception("Error initializing WSGI application")
+    raise
 
 # Debug information
 print("=" * 50)

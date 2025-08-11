@@ -221,6 +221,7 @@ LOGGING = {
             'maxBytes': 1024 * 1024 * 5,  # 5 MB
             'backupCount': 5,
             'formatter': 'verbose',
+            'delay': True,  # Don't create the file until it's actually needed
         },
     },
     'loggers': {
