@@ -12,7 +12,7 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
     TokenVerifyView,
 )
-from . import views
+from .views import HealthCheckView, WelcomeView
 
 # Swagger/OpenAPI schema view
 schema_view = get_schema_view(
@@ -31,7 +31,7 @@ schema_view = get_schema_view(
 # API URL patterns
 api_patterns = [
     # Health check
-    path('health/', views.HealthCheckView.as_view(), name='health_check'),
+    path('health/', HealthCheckView.as_view(), name='health_check'),
     
     # Authentication
     path('auth/', include('accounts.urls')),  # Includes token and user endpoints
@@ -47,6 +47,9 @@ api_patterns = [
 ]
 
 urlpatterns = [
+    # Root URL - Welcome page with API documentation
+    path('', WelcomeView.as_view(), name='welcome'),
+    
     # Admin
     path('admin/', admin.site.urls),
     
@@ -57,4 +60,7 @@ urlpatterns = [
     path('api/docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('api/redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
     path('api/schema.json', schema_view.without_ui(cache_timeout=0), name='schema-json'),
+    
+    # Redirect all other paths to the welcome page
+    path('<path:path>/', WelcomeView.as_view()),
 ]
