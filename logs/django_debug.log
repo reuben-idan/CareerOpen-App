@@ -16,3 +16,7 @@
 2025-08-11 18:19:15 [INFO] django.utils.autoreload.trigger_reload:266 - C:\Users\reube\CareerOpen-App\careeropen-backend\core\urls.py changed, reloading.
 2025-08-11 18:19:18 [INFO] django.utils.autoreload.run_with_reloader:668 - Watching for file changes with StatReloader
 2025-08-11 18:19:18 [INFO] django.utils.autoreload.run_with_reloader:668 - Watching for file changes with StatReloader
+2025-08-11 18:32:22 [INFO] django.utils.autoreload.trigger_reload:266 - C:\Users\reube\CareerOpen-App\careeropen-backend\core\urls.py changed, reloading.
+2025-08-11 18:32:22 [INFO] django.utils.autoreload.trigger_reload:266 - C:\Users\reube\CareerOpen-App\careeropen-backend\core\urls.py changed, reloading.
+2025-08-11 18:32:24 [INFO] django.utils.autoreload.run_with_reloader:668 - Watching for file changes with StatReloader
+2025-08-11 18:32:24 [INFO] django.utils.autoreload.run_with_reloader:668 - Watching for file changes with StatReloader

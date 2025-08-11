@@ -1,10 +1,13 @@
 """
 URL configuration for core project.
 """
+import os
 from django.contrib import admin
-from django.urls import path, include
-from django.utils import timezone
+from django.urls import path, include, re_path
+from django.views.generic import RedirectView
+from django.conf import settings
 from rest_framework import permissions
+from rest_framework import routers
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from rest_framework_simplejwt.views import (
@@ -14,19 +17,30 @@ from rest_framework_simplejwt.views import (
 )
 from .views import HealthCheckView, WelcomeView
 
+# Create a router for the API
+router = routers.DefaultRouter()
+
 # Swagger/OpenAPI schema view
 schema_view = get_schema_view(
     openapi.Info(
         title="CareerOpen API",
         default_version='v1',
-        description="API documentation for CareerOpen application",
+        description="""
+        API documentation for CareerOpen application.
+        This API provides endpoints for managing job applications, user accounts, and professional networking.
+        """,
         terms_of_service="https://www.careeropen.app/terms/",
         contact=openapi.Contact(email="contact@careeropen.app"),
         license=openapi.License(name="MIT License"),
     ),
     public=True,
     permission_classes=(permissions.AllowAny,),
+    url=os.getenv('API_BASE_URL', 'https://careeropen-api.onrender.com'),
 )
+
+# Add a schema info function for drf-yasg
+def schema_info():
+    return schema_view.with_ui('swagger', cache_timeout=0)
 
 # API URL patterns
 api_patterns = [
@@ -43,7 +57,12 @@ api_patterns = [
     
     # Apps
     path('jobs/', include('jobs.urls')),  # Job-related endpoints
-    path('network/', include('network.urls')),  # Network-related endpoints (connections, messages, etc.)
+    path('network/', include('network.urls')),  # Network-related endpoints
+    
+    # API Documentation
+    path('docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+    path('openapi.json', schema_view.without_ui(cache_timeout=0), name='schema-json'),
 ]
 
 urlpatterns = [
@@ -54,12 +73,19 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     
     # API
-    path('api/', include(api_patterns)),
+    path('api/v1/', include(api_patterns)),
     
-    # API Documentation
-    path('api/docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
-    path('api/redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
-    path('api/schema.json', schema_view.without_ui(cache_timeout=0), name='schema-json'),
+    # Redirect old API URLs to v1
+    path('api/', include([
+        path('', RedirectView.as_view(url='/api/v1/')),
+        path('docs/', RedirectView.as_view(url='/api/v1/docs/')),
+        path('redoc/', RedirectView.as_view(url='/api/v1/redoc/')),
+    ])),
+    
+    # API Documentation (legacy support)
+    re_path(r'^api/docs(?P<format>\.json|\.yaml)$', 
+            schema_view.without_ui(cache_timeout=0), 
+            name='schema-json'),
     
     # Redirect all other paths to the welcome page
     path('<path:path>/', WelcomeView.as_view()),
