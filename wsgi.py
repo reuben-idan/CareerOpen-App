@@ -24,22 +24,26 @@ if str(project_root) not in sys.path:
     print(f"Adding to path: {project_root}")
     sys.path.insert(0, str(project_root))
 
-# Set the Django settings module
+# Set the Django settings module with production as default
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
+os.environ.setdefault('DEPLOY_ENV', 'production')  # Force production environment
+
 print(f"DJANGO_SETTINGS_MODULE: {os.environ.get('DJANGO_SETTINGS_MODULE')}")
+print(f"DEPLOY_ENV: {os.environ.get('DEPLOY_ENV')}")
 
 # This application object is used by any WSGI server configured to use this file.
 print("Importing Django WSGI application...")
 try:
     from django.core.wsgi import get_wsgi_application
+    
+    # Ensure settings are properly loaded
+    from django.conf import settings
+    print(f"Using settings: {settings.SETTINGS_MODULE}")
+    print(f"DEBUG: {settings.DEBUG}")
+    print(f"ALLOWED_HOSTS: {getattr(settings, 'ALLOWED_HOSTS', [])}")
+    
     application = get_wsgi_application()
     print("WSGI application loaded successfully!")
 except Exception as e:
     print(f"Error loading WSGI application: {str(e)}")
     raise
-
-# For debugging in production
-if os.environ.get('DEBUG', '').lower() == 'true':
-    print(f"Python path: {sys.path}")
-    print(f"Current working directory: {os.getcwd()}")
-    print(f"DJANGO_SETTINGS_MODULE: {os.environ.get('DJANGO_SETTINGS_MODULE')}")
