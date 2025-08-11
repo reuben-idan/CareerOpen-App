@@ -16,8 +16,11 @@ if str(project_root) not in sys.path:
     print(f"Adding to path: {project_root}")
     sys.path.insert(0, str(project_root))
 
-# Set the Django settings module
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
+# Set the Django settings module based on environment
+if os.getenv('RENDER', '').lower() == 'true':
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.prod_settings')
+else:
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
 
 # This application object is used by any WSGI server configured to use this file.
 from django.core.wsgi import get_wsgi_application
