@@ -111,7 +111,7 @@ LOGGING = {
     },
     'handlers': {
         'console': {
-            'level': 'INFO',
+            'level': 'WARNING',  # Changed from INFO to WARNING to reduce verbosity
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
         },
@@ -124,18 +124,23 @@ LOGGING = {
     'loggers': {
         'django': {
             'handlers': ['console', 'mail_admins'],
-            'level': 'INFO',
-            'propagate': True,
+            'level': 'WARNING',  # Changed from INFO to WARNING to reduce verbosity
+            'propagate': False,  # Changed to False to prevent duplicate logs
         },
         'jobs': {
             'handlers': ['console'],
-            'level': 'INFO',
-            'propagate': True,
+            'level': 'WARNING',  # Changed from INFO to WARNING to reduce verbosity
+            'propagate': False,  # Changed to False to prevent duplicate logs
         },
         'accounts': {
             'handlers': ['console'],
-            'level': 'INFO',
-            'propagate': True,
+            'level': 'WARNING',  # Changed from INFO to WARNING to reduce verbosity
+            'propagate': False,  # Changed to False to prevent duplicate logs
+        },
+        # Add a root logger to capture everything else at WARNING level
+        '': {
+            'handlers': ['console'],
+            'level': 'WARNING',
         },
     },
 }
