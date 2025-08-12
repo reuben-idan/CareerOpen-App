@@ -35,7 +35,9 @@ class TestUserProfileView:
     
     def test_retrieve_profile_authenticated(self, authenticated_client, test_user):
         """Test retrieving profile with authenticated user."""
-        url = reverse('user-profile')
+        # Use the full URL path with the correct API prefix
+        url = '/api/v1/auth/me/'
+        print(f"\nTesting URL: {url}")
         response = authenticated_client.get(url)
         
         assert response.status_code == status.HTTP_200_OK
@@ -46,14 +48,14 @@ class TestUserProfileView:
     
     def test_retrieve_profile_unauthenticated(self, api_client):
         """Test retrieving profile without authentication."""
-        url = reverse('user-profile')
+        url = '/api/v1/auth/me/'
         response = api_client.get(url)
         
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
     
     def test_update_profile(self, authenticated_client, test_user):
         """Test updating user profile."""
-        url = reverse('user-profile')
+        url = '/api/v1/auth/me/'
         update_data = {
             'first_name': 'Updated',
             'last_name': 'Name',
@@ -80,7 +82,7 @@ class TestUserProfileView:
     
     def test_partial_update_profile(self, authenticated_client, test_user):
         """Test partially updating user profile."""
-        url = reverse('user-profile')
+        url = '/api/v1/auth/me/'
         update_data = {
             'first_name': 'Partial',
         }
@@ -103,8 +105,8 @@ class TestUserProfileView:
         ('last_name', 'a' * 101),   # Last name too long
     ])
     def test_update_profile_invalid_data(self, authenticated_client, field, value):
-        ""Test updating profile with invalid data."""
-        url = reverse('user-profile')
+        """Test updating profile with invalid data."""
+        url = '/api/v1/auth/me/'
         update_data = {field: value}
         
         response = authenticated_client.patch(url, data=update_data, format='json')
@@ -113,8 +115,8 @@ class TestUserProfileView:
         assert field in response.data
     
     def test_update_profile_read_only_fields(self, authenticated_client, test_user):
-        ""Test that read-only fields cannot be updated."""
-        url = reverse('user-profile')
+        """Test that read-only fields cannot be updated."""
+        url = '/api/v1/auth/me/'
         original_email = test_user.email
         
         # Try to update read-only fields
@@ -141,8 +143,8 @@ class TestUserProfileView:
         assert test_user.is_superuser is False
     
     def test_update_profile_unauthorized(self, api_client, test_user):
-        ""Test updating profile without authentication."""
-        url = reverse('user-profile')
+        """Test updating profile without authentication."""
+        url = '/api/v1/auth/me/'
         update_data = {
             'first_name': 'Unauthorized',
         }

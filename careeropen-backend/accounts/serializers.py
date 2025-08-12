@@ -433,6 +433,26 @@ class UserProfileSerializer(serializers.ModelSerializer):
     location = serializers.CharField(source='profile.location', required=False, allow_blank=True)
     skills = serializers.CharField(source='profile.skills', required=False, allow_blank=True)
     company_name = serializers.CharField(source='profile.company_name', required=False, allow_blank=True)
+    
+    # Add explicit fields with validation for first_name and last_name
+    first_name = serializers.CharField(
+        required=False,
+        allow_blank=False,
+        max_length=100,
+        error_messages={
+            'blank': 'First name cannot be empty.',
+            'max_length': 'First name cannot be longer than 100 characters.'
+        }
+    )
+    last_name = serializers.CharField(
+        required=False,
+        allow_blank=False,
+        max_length=100,
+        error_messages={
+            'blank': 'Last name cannot be empty.',
+            'max_length': 'Last name cannot be longer than 100 characters.'
+        }
+    )
 
     class Meta:
         model = User
