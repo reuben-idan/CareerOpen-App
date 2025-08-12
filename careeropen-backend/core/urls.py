@@ -10,9 +10,9 @@ from rest_framework import routers
 from drf_spectacular.views import (
     SpectacularRedocView,
     SpectacularSwaggerView,
+    SpectacularAPIView
 )
 from .schema import CustomSchemaGenerator, CustomAutoSchema
-from drf_spectacular.views import SpectacularAPIView as BaseSpectacularAPIView
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
