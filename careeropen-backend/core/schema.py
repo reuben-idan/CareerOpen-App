@@ -126,56 +126,47 @@ class CustomAutoSchema(AutoSchema):
             if not isinstance(operation, dict):
                 return {}
                 
-            # Clean up any problematic examples in the operation
-            if 'responses' in operation and isinstance(operation['responses'], dict):
-                for response_code, response in operation['responses'].items():
-                    if isinstance(response, dict) and 'content' in response and isinstance(response['content'], dict):
-                        for content_type, content in response['content'].items():
-                            if isinstance(content, dict) and 'examples' in content:
-                                del content['examples']
-                                
+            # Ensure responses exists and is a dict
+            if 'responses' not in operation or not isinstance(operation['responses'], dict):
+                operation['responses'] = {}
+                
+            # Ensure each response has the required structure
+            for status_code, response in operation['responses'].items():
+                if not isinstance(response, dict):
+                    operation['responses'][status_code] = {}
+                    continue
+                    
+                # Ensure content exists and is a dict
+                if 'content' not in response or not isinstance(response['content'], dict):
+                    response['content'] = {}
+                    
+                # Ensure each media type has a schema
+                for media_type, content in response['content'].items():
+                    if not isinstance(content, dict):
+                        response['content'][media_type] = {}
+                        continue
+                        
+                    # Ensure schema exists
+                    if 'schema' not in content or not isinstance(content['schema'], dict):
+                        content['schema'] = {}
+                        
             return operation
             
         except Exception as e:
-            logger.warning(f"Error in get_operation: {str(e)}")
-            return {}
-        
-    def _get_response_for_code(self, response_serializers, status_code, **kwargs):
-        """
-        Override to safely handle response generation and prevent example processing errors.
-        """
-        try:
-            # Call the parent method but with a safe _get_examples implementation
-            original_get_examples = self._get_examples
-            self._get_examples = lambda *args, **kwargs: {}
-            
-            response = super()._get_response_for_code(response_serializers, status_code, **kwargs)
-            
-            # Restore the original method
-            self._get_examples = original_get_examples
-            
-            return response
-            
-        except Exception as e:
-            logger.warning(f"Error in _get_response_for_code: {str(e)}")
+            logger.error(f"Error in get_operation: {str(e)}", exc_info=True)
+            # Return a minimal valid operation to prevent 500 errors
             return {
-                'description': 'Error generating response schema',
-                'content': {
-                    'application/json': {
-                        'schema': {}
+                'responses': {
+                    '200': {
+                        'description': 'Success',
+                        'content': {
+                            'application/json': {
+                                'schema': {}
+                            }
+                        }
                     }
                 }
             }
-        
-    def _get_serializer(self, path, method):
-        """
-        Safely get the serializer for the given path and method.
-        """
-        try:
-            return super()._get_serializer(path, method)
-        except Exception as e:
-            logger.warning(f"Error getting serializer for {method} {path}: {str(e)}")
-            return None
             
     def _get_response_bodies(self, *args, **kwargs):
         """
@@ -184,45 +175,8 @@ class CustomAutoSchema(AutoSchema):
         try:
             return super()._get_response_bodies(*args, **kwargs)
         except Exception as e:
-            logger.warning(f"Error getting response bodies: {str(e)}")
+            logger.error(f"Error in _get_response_bodies: {str(e)}", exc_info=True)
             return {}
-            
-    def _get_response_for_code(self, response_serializers, status_code, *args, **kwargs):
-        """
-        Safely get the response for a status code, with enhanced error handling.
-        """
-        try:
-            response = super()._get_response_for_code(response_serializers, status_code, *args, **kwargs)
-            
-            # Ensure the response has the required structure
-            if not isinstance(response, dict):
-                response = {}
-                
-            # Ensure content exists
-            if 'content' not in response:
-                response['content'] = {}
-                
-            # Ensure each content type has a schema
-            for content_type, content in response.get('content', {}).items():
-                if not isinstance(content, dict):
-                    content = {}
-                    response['content'][content_type] = content
-                    
-                if 'schema' not in content:
-                    content['schema'] = {}
-                    
-            return response
-            
-        except Exception as e:
-            logger.warning(f"Error getting response for status {status_code}: {str(e)}")
-            return {
-                'description': 'Error generating response schema',
-                'content': {
-                    'application/json': {
-                        'schema': {}
-                        }
-                    }
-                }
             
     def _get_response_for_code(self, response_serializers, status_code, direction='response'):
         """
