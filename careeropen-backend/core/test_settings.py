@@ -1,5 +1,8 @@
 from .settings import *
 
+# Use custom test runner
+TEST_RUNNER = 'core.test_runner.CustomTestRunner'
+
 # Use in-memory SQLite database for testing
 DATABASES = {
     'default': {

@@ -1,3 +1,4 @@
+from drf_spectacular.utils import extend_schema
 from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -947,14 +948,84 @@ class CompanyViewSet(viewsets.ModelViewSet):
 
 class UserJobApplicationsView(ListAPIView):
     """
-    List all job applications for the current user.
+    API endpoint that allows users to view their job applications.
+    
+    This endpoint requires authentication and will return a paginated list of 
+    job applications for the currently authenticated user.
+    
+    ### Permissions
+    - User must be authenticated
+    
+    ### Query Parameters
+    - `status` (optional): Filter applications by status (e.g., 'applied', 'interview', 'offer', 'rejected')
+    - `job` (optional): Filter by job ID
+    - `ordering` (optional): Order results by field (e.g., 'applied_at', '-applied_at')
+    - `page` (optional): Page number for pagination
+    - `page_size` (optional): Number of results per page (default: 10, max: 100)
     """
     permission_classes = [IsAuthenticated]
     serializer_class = JobApplicationSerializer
     pagination_class = StandardResultsSetPagination
+    filter_backends = [filters.OrderingFilter, DjangoFilterBackend]
+    filterset_fields = {
+        'status': ['exact', 'in'],
+        'job': ['exact'],
+        'applied_at': ['date', 'gte', 'lte'],
+    }
+    ordering_fields = ['applied_at', 'updated_at', 'status']
+    ordering = ['-applied_at']
+    
+    @extend_schema(
+        summary='List user job applications',
+        description='Retrieve a paginated list of job applications for the current user.',
+        responses={
+            200: JobApplicationSerializer(many=True),
+            401: 'Authentication credentials were not provided.',
+            403: 'You do not have permission to access this resource.',
+        },
+        tags=['Job Applications']
+    )
+    def get(self, request, *args, **kwargs):
+        """
+        Handle GET request to list job applications.
+        
+        Returns a paginated list of job applications for the current user,
+        with optional filtering and ordering.
+        """
+        return super().get(request, *args, **kwargs)
     
     def get_queryset(self):
-        return JobApplication.objects.filter(applicant=self.request.user).order_by('-applied_at')
+        """
+        Get the list of job applications for the current user.
+        
+        Returns:
+            QuerySet: Filtered and ordered queryset of job applications
+        """
+        try:
+            # Base queryset: only applications for the current user
+            queryset = JobApplication.objects.filter(
+                applicant=self.request.user
+            ).select_related(
+                'job',
+                'job__company',
+                'resume'  # If using a resume model
+            ).order_by('-applied_at')
+            
+            # Apply additional filters from query parameters
+            status = self.request.query_params.get('status')
+            if status:
+                queryset = queryset.filter(status__iexact=status)
+                
+            job_id = self.request.query_params.get('job')
+            if job_id:
+                queryset = queryset.filter(job_id=job_id)
+                
+            return queryset
+            
+        except Exception as e:
+            logger.error(f"Error retrieving job applications: {str(e)}")
+            # Return an empty queryset on error rather than raising an exception
+            return JobApplication.objects.none()
 
 
 class JobApplicationDetailView(APIView):

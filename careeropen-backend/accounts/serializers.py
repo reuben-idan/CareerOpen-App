@@ -5,11 +5,86 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework.exceptions import ValidationError
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.core.validators import EmailValidator, RegexValidator
+from django.utils.translation import gettext_lazy as _
 
 User = get_user_model()
 
 import logging
 logger = logging.getLogger(__name__)
+
+
+class SimpleRegistrationSerializer(serializers.Serializer):
+    """
+    Simplified serializer for user registration with minimal validation.
+    
+    This is intended for development and testing purposes only.
+    """
+    email = serializers.EmailField(
+        required=True,
+        validators=[EmailValidator(message=_("Enter a valid email address."))],
+        help_text=_("User's email address (must be unique)")
+    )
+    password = serializers.CharField(
+        write_only=True,
+        required=True,
+        min_length=8,
+        max_length=128,
+        style={'input_type': 'password'},
+        help_text=_("Password (min 8 characters)")
+    )
+    first_name = serializers.CharField(
+        required=False,
+        max_length=30,
+        default='Test',
+        help_text=_("User's first name")
+    )
+    last_name = serializers.CharField(
+        required=False,
+        max_length=30,
+        default='User',
+        help_text=_("User's last name")
+    )
+    is_employer = serializers.BooleanField(
+        required=False,
+        default=False,
+        help_text=_("Whether the user is an employer (default: False)")
+    )
+
+    def validate_email(self, value):
+        """Check that the email is not already in use."""
+        value = value.lower().strip()
+        if User.objects.filter(email=value).exists():
+            logger.warning(f"Registration attempt with existing email: {value}")
+            raise serializers.ValidationError(_("A user with this email already exists."))
+        return value
+
+    def create(self, validated_data):
+        """Create and return a new user instance."""
+        try:
+            # Remove password2 if it exists
+            validated_data.pop('password2', None)
+            
+            # Create user
+            user = User.objects.create_user(
+                email=validated_data['email'],
+                password=validated_data['password'],
+                first_name=validated_data.get('first_name', 'Test'),
+                last_name=validated_data.get('last_name', 'User'),
+                is_employer=validated_data.get('is_employer', False)
+            )
+            
+            # Log successful user creation
+            logger.info(f"User created successfully: {user.email} (ID: {user.id})")
+            
+            return user
+            
+        except Exception as e:
+            logger.error(f"Error creating user: {str(e)}")
+            raise serializers.ValidationError({
+                'detail': _("Error creating user account."),
+                'code': 'user_creation_failed'
+            })
 
 class UserLoginSerializer(serializers.Serializer):
     """

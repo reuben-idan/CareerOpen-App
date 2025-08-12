@@ -2,10 +2,11 @@ import logging
 import time
 from datetime import datetime, timedelta
 from django.conf import settings
+from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiExample
 from django.contrib.auth import get_user_model, authenticate, login, logout
 from django.db import transaction, IntegrityError
 from django.utils import timezone
-from rest_framework import generics, status, permissions, viewsets
+from rest_framework import generics, status, permissions, viewsets, serializers
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.exceptions import APIException, ValidationError, PermissionDenied
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser, BasePermission
@@ -39,130 +40,66 @@ def get_random_string(length):
 
 class SimpleRegistrationView(APIView):
     """
-    A simplified registration view that directly creates a user with minimal validation.
-    This is for debugging purposes only.
+    A simplified registration endpoint for development and testing purposes.
+    
+    This view allows quick user registration with minimal validation.
+    It should only be enabled in development environments.
     """
     permission_classes = [permissions.AllowAny]
+    serializer_class = UserRegistrationSerializer
     
     def post(self, request, *args, **kwargs):
+        """Handle POST request to create a new user account."""
         logger.info("=== SIMPLE REGISTRATION REQUEST ===")
-        logger.info(f"Request data: {request.data}")
         
         try:
-            # Extract required fields with defaults
-            logger.info("Extracting request data...")
-            email = request.data.get('email', f'test_{get_random_string(8)}@example.com')
-            password = request.data.get('password', 'TestPass123!')
-            first_name = request.data.get('first_name', 'Test')
-            last_name = request.data.get('last_name', 'User')
-            is_employer = request.data.get('is_employer', False)
+            # Use the serializer for validation and data handling
+            serializer = self.serializer_class(data=request.data, context={'request': request})
+            if not serializer.is_valid():
+                logger.warning(f"Validation failed: {serializer.errors}")
+                return Response(
+                    {'status': 'error', 'errors': serializer.errors},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             
-            logger.info(f"Creating user with email: {email}")
-            logger.info(f"User model fields: {[f.name for f in User._meta.get_fields()]}")
-            logger.info(f"User model attributes: {dir(User)}")
+            # Create the user using the serializer
+            user = serializer.save()
             
-            with transaction.atomic():
-                # Create the user
-                try:
-                    logger.info("Attempting to create user...")
-                    logger.info(f"Creating user with email: {email}, first_name: {first_name}, last_name: {last_name}, is_employer: {is_employer}")
-                    
-                    # Try to create the user with minimal required fields
-                    user_data = {
-                        'email': email,
-                        'password': password,
-                        'first_name': first_name,
-                        'last_name': last_name,
-                        'is_employer': is_employer,
-                    }
-                    
-                    logger.info(f"User data before creation: {user_data}")
-                    
-                    # Create user with create_user method
-                    user = User.objects.create_user(**user_data)
-                    logger.info(f"User created successfully with ID: {user.id}")
-                    logger.info(f"User object after creation: {user.__dict__}")
-                    
-                    # Create a profile for the user
-                    try:
-                        from .models import UserProfile
-                        logger.info("Attempting to create UserProfile...")
-                        logger.info(f"UserProfile model fields: {[f.name for f in UserProfile._meta.get_fields()]}")
-                        
-                        profile_data = {'user': user}
-                        logger.info(f"Creating UserProfile with data: {profile_data}")
-                        
-                        profile = UserProfile.objects.create(user=user)
-                        logger.info(f"UserProfile created successfully with ID: {profile.id}")
-                        logger.info(f"UserProfile object after creation: {profile.__dict__}")
-                    except Exception as profile_error:
-                        logger.error(f"Error creating UserProfile: {str(profile_error)}")
-                        logger.error(traceback.format_exc())
-                        # Re-raise to trigger transaction rollback
-                        raise profile_error
-                    
-                    # Generate tokens
-                    try:
-                        logger.info("Generating JWT tokens...")
-                        refresh = RefreshToken.for_user(user)
-                        logger.info("Tokens generated successfully")
-                    except Exception as token_error:
-                        logger.error(f"Error generating tokens: {str(token_error)}")
-                        logger.error(traceback.format_exc())
-                        # Re-raise to trigger transaction rollback
-                        raise token_error
-                    
-                    response_data = {
-                        'user': {
-                            'id': user.id,
-                            'email': user.email,
-                            'first_name': user.first_name,
-                            'last_name': user.last_name,
-                            'is_employer': user.is_employer,
-                        },
-                        'refresh': str(refresh),
-                        'access': str(refresh.access_token),
-                    }
-                    
-                    logger.info("Simple registration completed successfully")
-                    logger.info(f"Response data: {response_data}")
-                    return Response(response_data, status=status.HTTP_201_CREATED)
-                    
-                except Exception as e:
-                    error_msg = f"Error in simple registration: {str(e)}"
-                    error_trace = traceback.format_exc()
-                    logger.error(f"{error_msg}\n{error_trace}")
-                    
-                    # Log more details about the error
-                    if hasattr(e, '__dict__'):
-                        logger.error(f"Exception details: {e.__dict__}")
-                    
-                    return Response(
-                        {
-                            'error': 'Error in simple registration',
-                            'details': str(e),
-                            'type': type(e).__name__,
-                            'trace': [line for line in error_trace.split('\n') if line.strip()]
-                        },
-                        status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                    )
-                    
-        except Exception as e:
-            error_msg = f"Unexpected error in simple registration: {str(e)}"
-            error_trace = traceback.format_exc()
-            logger.critical(f"{error_msg}\n{error_trace}")
+            # Generate tokens
+            refresh = RefreshToken.for_user(user)
             
-            # Log more details about the error
-            if hasattr(e, '__dict__'):
-                logger.critical(f"Exception details: {e.__dict__}")
-            
-            return Response(
-                {
-                    'error': 'An unexpected error occurred during simple registration',
-                    'details': str(e),
-                    'type': type(e).__name__,
-                    'trace': [line for line in error_trace.split('\n') if line.strip()]
+            # Prepare response data
+            response_data = {
+                'status': 'success',
+                'message': 'User created successfully',
+                'user': {
+                    'id': user.id,
+                    'email': user.email,
+                    'first_name': user.first_name,
+                    'last_name': user.last_name,
+                    'is_employer': user.is_employer,
+                    'is_active': user.is_active,
                 },
+                'tokens': {
+                    'refresh': str(refresh),
+                    'access': str(refresh.access_token),
+                }
+            }
+            
+            logger.info(f"User {user.email} created successfully with ID {user.id}")
+            return Response(response_data, status=status.HTTP_201_CREATED)
+            
+        except serializers.ValidationError as e:
+            logger.warning(f"Validation error: {str(e)}")
+            return Response(
+                {'status': 'error', 'errors': e.detail},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        except Exception as e:
+            logger.error(f"Error in SimpleRegistrationView: {str(e)}", exc_info=True)
+            return Response(
+                {'status': 'error', 'message': 'An unexpected error occurred'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
@@ -257,27 +194,248 @@ class CustomTokenRefreshView(TokenRefreshView):
 
 class UserLoginView(APIView):
     """
-    Enhanced user login view with rate limiting and security features.
-    This view is explicitly synchronous to avoid any async/coroutine issues.
+    Enhanced user login view with rate limiting, security features, and comprehensive logging.
+    
+    This view handles user authentication and returns JWT tokens for API access.
+    It includes rate limiting, input validation, and detailed error responses.
+    
+    ## Request Body
+    - `email` (required): User's email address
+    - `password` (required): User's password
+    
+    ## Response
+    - 200: Login successful (returns user data and tokens)
+    - 400: Invalid input data
+    - 401: Invalid credentials
+    - 403: Account inactive
+    - 415: Unsupported media type
+    - 429: Too many requests (rate limited)
+    - 500: Server error
     """
     permission_classes = [AllowAny]
     throttle_scope = 'login'
+    serializer_class = UserLoginSerializer
     
+    @extend_schema(
+        summary='User Login',
+        description='''
+        ## Overview
+        Authenticate a user and return JWT tokens for API access.
+        
+        ## Request Body
+        - `email` (string, required): The user's email address
+        - `password` (string, required): The user's password
+        
+        ## Response
+        - `200`: Login successful - Returns user data and tokens
+        - `400`: Invalid input data - Missing or invalid fields
+        - `401`: Invalid credentials - Email or password is incorrect
+        - `403`: Account inactive - User account is not active
+        - `415`: Unsupported media type - Request must be JSON
+        - `429`: Too many requests - Rate limit exceeded
+        - `500`: Server error - An unexpected error occurred
+        
+        ## Security
+        - Rate limited to prevent brute force attacks
+        - Passwords are never logged
+        - Tokens have a limited lifetime
+        '''.strip(),
+        request=UserLoginSerializer,
+        examples=[
+            OpenApiExample(
+                'Login Request Example',
+                value={
+                    'email': 'user@example.com',
+                    'password': 'securepassword123'
+                },
+                request_only=True
+            ),
+            OpenApiExample(
+                'Login Success Response',
+                value={
+                    'status': 'success',
+                    'message': 'Login successful',
+                    'user': {
+                        'id': 1,
+                        'email': 'user@example.com',
+                        'first_name': 'John',
+                        'last_name': 'Doe',
+                        'is_employer': False,
+                        'is_active': True,
+                        'last_login': '2023-01-01T12:00:00Z',
+                        'date_joined': '2023-01-01T00:00:00Z',
+                        'permissions': []
+                    },
+                    'tokens': {
+                        'refresh': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+                        'access': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+                        'expires_in': 3600
+                    }
+                },
+                response_only=True,
+                status_codes=['200']
+            ),
+            OpenApiExample(
+                'Error Response',
+                value={
+                    'detail': 'Invalid credentials',
+                    'code': 'authentication_failed'
+                },
+                response_only=True,
+                status_codes=['401']
+            )
+        ],
+        responses={
+            200: OpenApiResponse(
+                description='Login successful',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'status': {
+                            'type': 'string',
+                            'description': 'Status of the operation',
+                            'example': 'success'
+                        },
+                        'message': {
+                            'type': 'string',
+                            'description': 'Human-readable message',
+                            'example': 'Login successful'
+                        },
+                        'user': {
+                            'type': 'object',
+                            'properties': {
+                                'id': {'type': 'integer', 'example': 1},
+                                'email': {'type': 'string', 'example': 'user@example.com'},
+                                'first_name': {'type': 'string', 'example': 'John'},
+                                'last_name': {'type': 'string', 'example': 'Doe'},
+                                'is_employer': {'type': 'boolean', 'example': False},
+                                'is_active': {'type': 'boolean', 'example': True},
+                                'last_login': {'type': 'string', 'format': 'date-time', 'example': '2023-01-01T12:00:00Z'},
+                                'date_joined': {'type': 'string', 'format': 'date-time', 'example': '2023-01-01T00:00:00Z'},
+                                'permissions': {
+                                    'type': 'array',
+                                    'items': {'type': 'string'},
+                                    'example': []
+                                }
+                            }
+                        },
+                        'tokens': {
+                            'type': 'object',
+                            'properties': {
+                                'refresh': {
+                                    'type': 'string',
+                                    'description': 'JWT refresh token for obtaining new access tokens',
+                                    'example': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+                                },
+                                'access': {
+                                    'type': 'string',
+                                    'description': 'JWT access token for authenticating API requests',
+                                    'example': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+                                },
+                                'expires_in': {
+                                    'type': 'integer',
+                                    'description': 'Time in seconds until the access token expires',
+                                    'example': 3600
+                                }
+                            }
+                        }
+                    }
+                }
+            ),
+            400: OpenApiResponse(
+                description='Bad Request',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'detail': {'type': 'string', 'example': 'Invalid input data'},
+                        'code': {'type': 'string', 'example': 'invalid_input'},
+                        'errors': {
+                            'type': 'object',
+                            'additionalProperties': {
+                                'type': 'array',
+                                'items': {'type': 'string'}
+                            },
+                            'example': {
+                                'email': ['This field is required.'],
+                                'password': ['This field is required.']
+                            }
+                        }
+                    }
+                }
+            ),
+            401: OpenApiResponse(
+                description='Unauthorized',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'detail': {'type': 'string', 'example': 'Invalid credentials'},
+                        'code': {'type': 'string', 'example': 'authentication_failed'}
+                    }
+                }
+            ),
+            403: OpenApiResponse(
+                description='Forbidden',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'detail': {'type': 'string', 'example': 'Account is not active'},
+                        'code': {'type': 'string', 'example': 'account_inactive'}
+                    }
+                }
+            ),
+            415: OpenApiResponse(
+                description='Unsupported Media Type',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'detail': {'type': 'string', 'example': 'Unsupported media type'},
+                        'code': {'type': 'string', 'example': 'unsupported_media_type'}
+                    }
+                }
+            ),
+            429: OpenApiResponse(
+                description='Too Many Requests',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'detail': {'type': 'string', 'example': 'Request was throttled'},
+                        'code': {'type': 'string', 'example': 'throttled'},
+                        'wait': {'type': 'integer', 'example': 60}
+                    }
+                }
+            ),
+            500: OpenApiResponse(
+                description='Internal Server Error',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'detail': {'type': 'string', 'example': 'An unexpected error occurred'},
+                        'code': {'type': 'string', 'example': 'server_error'},
+                        'request_id': {'type': 'string', 'example': '550e8400-e29b-41d4-a716-446655440000'}
+                    }
+                }
+            )
+        },
+        tags=['Authentication']
+    )
     def post(self, request, *args, **kwargs):
         """
         Handle POST request for user login.
-        This is a synchronous method to ensure we don't return coroutines.
+        
+        This method performs the following steps:
+        1. Validates the request data
+        2. Authenticates the user
+        3. Generates JWT tokens
+        4. Returns user data and tokens
         """
         # Track start time for performance monitoring
         start_time = timezone.now()
         
         # Initialize request ID for tracking
-        import uuid
         request_id = str(uuid.uuid4())[:8]
         
         # Configure a request-specific logger
         def log(level, message, *args, **kwargs):
-            # Ensure we're not passing coroutines to the logger
             if hasattr(message, '__await__'):
                 message = "[Coroutine detected in log message]"
             logger.log(level, f"[REQ-{request_id}] {message}", *args, **kwargs)
@@ -285,6 +443,7 @@ class UserLoginView(APIView):
         log(logging.INFO, "\n" + "="*80)
         log(logging.INFO, "=== LOGIN REQUEST START ===")
         log(logging.INFO, f"Timestamp: {start_time.isoformat()}")
+        log(logging.INFO, f"IP: {self._get_client_ip(request)}")
         
         try:
             # Log the incoming request data
@@ -293,242 +452,117 @@ class UserLoginView(APIView):
             log(logging.INFO, f"Path: {request.path}")
             log(logging.INFO, f"Content-Type: {request.content_type}")
             
-            # Safely log headers (excluding sensitive info)
-            try:
-                headers = {}
-                for key, value in request.headers.items():
-                    if key.upper() in ['AUTHORIZATION', 'COOKIE']:
-                        headers[key] = '***REDACTED***'
-                    else:
-                        headers[key] = str(value)
-                log(logging.DEBUG, f"Headers: {headers}")
-            except Exception as e:
-                log(logging.ERROR, f"Failed to process headers: {str(e)}")
+            # Validate request data using the serializer
+            serializer = self.serializer_class(
+                data=request.data,
+                context={'request': request}
+            )
             
-            # Log request data safely
-            try:
-                # Ensure we're not dealing with coroutines
-                if hasattr(request.data, 'items'):
-                    log(logging.DEBUG, f"Request data: {dict(request.data.items())}")
-                else:
-                    log(logging.DEBUG, f"Request data (raw): {request.data}")
-                
-                # Safely log request body
-                if hasattr(request, 'body'):
-                    try:
-                        body_str = request.body.decode('utf-8') if request.body else ''
-                        log(logging.DEBUG, f"Request body: {body_str}")
-                    except UnicodeDecodeError:
-                        log(logging.DEBUG, "Request body: [binary data]")
-            except Exception as e:
-                log(logging.ERROR, f"Failed to log request data: {str(e)}")
-            
-            # Validate request data
-            log(logging.INFO, "\n[VALIDATING REQUEST DATA]")
-            try:
-                if not request.data:
-                    error_msg = "No data provided"
-                    log(logging.ERROR, error_msg)
-                    return Response(
-                        {'detail': error_msg, 'code': 'missing_data'},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-                
-                required_fields = ['email', 'password']
-                missing_fields = [field for field in required_fields if field not in request.data]
-                
-                if missing_fields:
-                    error_msg = f"Missing required fields: {', '.join(missing_fields)}"
-                    log(logging.ERROR, error_msg)
-                    return Response(
-                        {
-                            'detail': error_msg,
-                            'code': 'missing_fields',
-                            'fields': missing_fields
-                        },
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-                
-                log(logging.INFO, "Request data validation successful")
-                
-            except Exception as e:
-                error_msg = f"Request validation error: {str(e)}"
-                log(logging.ERROR, error_msg, exc_info=True)
+            if not serializer.is_valid():
+                log(logging.WARNING, f"Validation failed: {serializer.errors}")
                 return Response(
-                    {'detail': 'Invalid request data', 'code': 'invalid_request'},
+                    {
+                        'detail': 'Invalid input',
+                        'code': 'validation_error',
+                        'errors': serializer.errors
+                    },
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
-            # Initialize serializer with request data
-            log(logging.INFO, "\n[INITIALIZING SERIALIZER]")
-            try:
-                # Ensure request.data is fully evaluated (not a coroutine)
-                request_data = dict(request.data.items()) if hasattr(request.data, 'items') else {}
-                
-                # Log the data being passed to the serializer
-                log(logging.DEBUG, f"Request data for serializer: {request_data}")
-                
-                # Create the serializer with the evaluated data
-                serializer = UserLoginSerializer(
-                    data=request_data, 
-                    context={'request': request}
-                )
-                log(logging.INFO, "Serializer initialized successfully")
-            except Exception as e:
-                error_msg = f"Failed to initialize serializer: {str(e)}"
-                log(logging.ERROR, error_msg, exc_info=True)
+            # Get validated data
+            email = serializer.validated_data['email']
+            password = serializer.validated_data['password']
+            
+            # Log the login attempt (without password)
+            log(logging.INFO, f"Login attempt for email: {email}")
+            
+            # Authenticate user
+            user = authenticate(request, email=email, password=password)
+            
+            if user is None:
+                log(logging.WARNING, f"Invalid login attempt for email: {email}")
+                # Add a small delay to prevent timing attacks
+                time.sleep(0.5)
                 return Response(
-                    {'detail': 'Internal server error', 'code': 'serializer_error'},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                    {'detail': 'Invalid email or password', 'code': 'invalid_credentials'},
+                    status=status.HTTP_401_UNAUTHORIZED
                 )
             
-            # Validate the serializer
-            log(logging.INFO, "\n[VALIDATING LOGIN DATA]")
-            try:
-                is_valid = serializer.is_valid()
-                log(logging.INFO, f"Validation result: {is_valid}")
-                
-                if not is_valid:
-                    error_details = {
-                        'detail': 'Invalid credentials',
-                        'code': 'authentication_failed',
-                        'errors': serializer.errors
-                    }
-                    log(logging.WARNING, f"Login validation failed: {serializer.errors}")
-                    return Response(error_details, status=status.HTTP_400_BAD_REQUEST)
-                    
-                log(logging.INFO, "Login data validation successful")
-                
-            except Exception as e:
-                error_msg = f"Login validation error: {str(e)}"
-                log(logging.ERROR, error_msg, exc_info=True)
+            if not user.is_active:
+                log(logging.WARNING, f"Login attempt for inactive user: {email}")
                 return Response(
-                    {'detail': 'Internal server error during validation', 'code': 'validation_error'},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                    {'detail': 'This account is inactive', 'code': 'account_inactive'},
+                    status=status.HTTP_403_FORBIDDEN
                 )
             
-            # Get the authenticated user
-            log(logging.INFO, "\n[AUTHENTICATING USER]")
-            try:
-                user = serializer.validated_data.get('user')
-                if not user:
-                    error_msg = "No user found in validated_data - authentication failed"
-                    log(logging.WARNING, error_msg)
-                    return Response(
-                        {
-                            'detail': 'Authentication failed. Invalid email or password.',
-                            'code': 'invalid_credentials'
-                        },
-                        status=status.HTTP_401_UNAUTHORIZED
-                    )
-                
-                # Log user details (excluding sensitive info)
-                log(logging.INFO, f"User authenticated: ID={user.id}, Email={user.email}")
-                log(logging.DEBUG, f"User is active: {user.is_active}")
-                log(logging.DEBUG, f"User is staff: {user.is_staff}")
-                log(logging.DEBUG, f"Last login: {user.last_login}")
-                log(logging.DEBUG, f"Date joined: {user.date_joined}")
-                
-            except Exception as e:
-                error_msg = f"User authentication error: {str(e)}"
-                log(logging.ERROR, error_msg, exc_info=True)
-                return Response(
-                    {'detail': 'Internal server error during authentication', 'code': 'auth_error'},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                )
+            # Log user details (excluding sensitive info)
+            log(logging.INFO, f"User authenticated: ID={user.id}, Email={user.email}")
+            log(logging.DEBUG, f"User is active: {user.is_active}")
+            log(logging.DEBUG, f"User is staff: {user.is_staff}")
+            log(logging.DEBUG, f"Last login: {user.last_login}")
+            log(logging.DEBUG, f"Date joined: {user.date_joined}")
             
             # Generate tokens
-            log(logging.INFO, "\n[GENERATING TOKENS]")
             try:
-                log(logging.INFO, "Generating refresh token...")
+                refresh = RefreshToken.for_user(user)
+                access_token = str(refresh.access_token)
+                refresh_token = str(refresh)
                 
-                # Generate refresh and access tokens
-                try:
-                    refresh = RefreshToken.for_user(user)
-                    access_token = str(refresh.access_token)
-                    log(logging.INFO, "Tokens generated successfully")
-                except Exception as e:
-                    error_msg = f"Token generation failed: {str(e)}"
-                    log(logging.ERROR, error_msg, exc_info=True)
-                    return Response(
-                        {'detail': 'Failed to generate authentication tokens', 'code': 'token_generation_error'},
-                        status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                    )
+                # Get the user's permissions
+                permissions = self._get_user_permissions(user)
                 
-                # Prepare user data for response (excluding sensitive info)
-                try:
-                    user_data = {
+                # Prepare response data
+                response_data = {
+                    'status': 'success',
+                    'message': 'Login successful',
+                    'user': {
                         'id': user.id,
                         'email': user.email,
-                        'first_name': user.first_name or '',
-                        'last_name': user.last_name or '',
-                        'is_employer': getattr(user, 'is_employer', False),
-                        'is_staff': user.is_staff,
+                        'first_name': user.first_name,
+                        'last_name': user.last_name,
+                        'is_employer': user.is_employer,
                         'is_active': user.is_active,
+                        'permissions': permissions,
                         'last_login': user.last_login.isoformat() if user.last_login else None,
-                        'date_joined': user.date_joined.isoformat() if user.date_joined else None
-                    }
-                    
-                    # Create response data
-                    response_data = {
-                        'refresh': str(refresh),
+                        'date_joined': user.date_joined.isoformat()
+                    },
+                    'tokens': {
+                        'refresh': refresh_token,
                         'access': access_token,
-                        'user': user_data
+                        'expires_in': int(settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'].total_seconds())
                     }
-                    
-                    log(logging.INFO, "Response data prepared successfully")
-                    log(logging.DEBUG, f"Response data: {response_data}")
-                    
-                except Exception as e:
-                    error_msg = f"Failed to prepare response data: {str(e)}"
-                    log(logging.ERROR, error_msg, exc_info=True)
-                    return Response(
-                        {'detail': 'Failed to prepare response', 'code': 'response_error'},
-                        status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                    )
+                }
                 
-                # Create and return the response
-                try:
-                    response = Response(response_data, status=status.HTTP_200_OK)
-                    
-                    # Set response headers
-                    response['X-Auth-Status'] = 'success'
-                    response['X-Request-ID'] = request_id
-                    
-                    # Update user's last login time
-                    try:
-                        user.last_login = timezone.now()
-                        user.save(update_fields=['last_login'])
-                        log(logging.DEBUG, f"Updated last login time for user {user.id}")
-                    except Exception as e:
-                        log(logging.ERROR, f"Failed to update last login time: {str(e)}", exc_info=True)
-                    
-                    # Log successful login
-                    log(logging.INFO, "\n[LOGIN SUCCESSFUL]")
-                    log(logging.INFO, f"User {user.email} logged in successfully")
-                    log(logging.INFO, f"User ID: {user.id}, Email: {user.email}")
-                    log(logging.INFO, f"Access token expires in: {settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME']}")
-                    log(logging.INFO, f"Refresh token expires in: {settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME']}")
-                    log(logging.INFO, "="*80 + "\n")
-                    
-                    return response
-                    
-                except Exception as e:
-                    error_msg = f"Failed to create response: {str(e)}"
-                    log(logging.ERROR, error_msg, exc_info=True)
-                    return Response(
-                        {'detail': 'Failed to create response', 'code': 'response_error'},
-                        status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                    )
+                # Log successful login
+                log(logging.INFO, f"Login successful for user: {user.email} (ID: {user.id})")
+                
+                # Update last login time
+                user.last_login = timezone.now()
+                user.save(update_fields=['last_login'])
+                
+                # Calculate request processing time
+                end_time = timezone.now()
+                processing_time = (end_time - start_time).total_seconds()
+                log(logging.INFO, f"Request processed in {processing_time:.3f} seconds")
+                
+                return Response(response_data, status=status.HTTP_200_OK)
                 
             except Exception as e:
-                error_msg = f"Unexpected error during token generation: {str(e)}"
-                log(logging.CRITICAL, error_msg, exc_info=True)
+                log(logging.ERROR, f"Error generating tokens: {str(e)}")
+                log(logging.DEBUG, traceback.format_exc())
                 return Response(
-                    {'detail': 'Internal server error during authentication', 'code': 'auth_error'},
+                    {'detail': 'Error generating authentication tokens', 'code': 'token_generation_error'},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
-        
+                
+        except Exception as e:
+            log(logging.ERROR, f"Unexpected error in login view: {str(e)}")
+            log(logging.DEBUG, traceback.format_exc())
+            return Response(
+                {'detail': 'An unexpected error occurred during login', 'code': 'server_error'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+            
         except ValidationError as e:
             # Handle validation errors
             error_detail = e.detail if hasattr(e, 'detail') else str(e)
@@ -772,11 +806,23 @@ class UserProfileError(APIException):
 class UserProfileView(generics.RetrieveUpdateAPIView):
     """
     View to retrieve or update the current user's profile.
+    
+    This view uses optimized database queries with select_related to fetch the user's
+    profile data in a single query, reducing database round-trips.
     """
     serializer_class = UserProfileSerializer
     permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        """
+        Optimize the queryset to fetch user profile data in a single query.
+        """
+        return User.objects.select_related('profile').all()
 
     def get_object(self):
+        """
+        Retrieve the current user's profile with optimized database queries.
+        """
         user = None
         try:
             user = self.request.user
@@ -784,62 +830,41 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
                 error_msg = "Invalid or missing user in request"
                 logger.error(f"[UserProfileView] {error_msg}")
                 raise UserProfileError(detail=error_msg)
-                
-            logger.info(f"[UserProfileView] Getting profile for user: {getattr(user, 'email', 'unknown')} (ID: {getattr(user, 'id', 'unknown')})")
             
-            # Debug: Log request headers and user details
-            logger.debug(f"[UserProfileView] Request method: {getattr(self.request, 'method', 'unknown')}")
-            logger.debug(f"[UserProfileView] Request path: {getattr(self.request, 'path', 'unknown')}")
-            logger.debug(f"[UserProfileView] Request headers: {dict(getattr(self.request, 'headers', {}))}")
-            logger.debug(f"[UserProfileView] User details - ID: {getattr(user, 'id', 'unknown')}, Email: {getattr(user, 'email', 'unknown')}, Is Active: {getattr(user, 'is_active', 'unknown')}")
+            # Log basic request info for debugging
+            logger.debug(
+                f"[UserProfileView] Getting profile for user: {getattr(user, 'email', 'unknown')} "
+                f"(ID: {getattr(user, 'id', 'unknown')})"
+            )
             
-            # Check if user has a profile, create one if not
-            try:
-                # First, try to get the profile directly
-                if not hasattr(user, 'profile'):
-                    logger.info(f"[UserProfileView] User model does not have 'profile' attribute, trying direct query...")
-                    from .models import UserProfile
-                    try:
-                        profile = UserProfile.objects.get(user=user)
-                        logger.info(f"[UserProfileView] Found profile via direct query: {profile.id}")
-                        return profile
-                    except UserProfile.DoesNotExist:
-                        logger.info(f"[UserProfileView] No profile found for user {user.id}, creating one...")
-                        profile = UserProfile.objects.create(user=user)
-                        logger.info(f"[UserProfileView] Created new profile for user {user.id} (Profile ID: {profile.id})")
-                        return profile
-                
-                # If we get here, user has a profile attribute
-                profile = user.profile
-                logger.debug(f"[UserProfileView] Retrieved profile via user.profile: {getattr(profile, 'id', 'no-id')}")
-                return profile
-                
-            except UserProfile.DoesNotExist:
-                logger.info(f"[UserProfileView] UserProfile.DoesNotExist for user {user.id}, creating profile...")
-                from .models import UserProfile
+            # Get the user with profile data using the optimized queryset
+            user_with_profile = self.get_queryset().filter(pk=user.id).first()
+            
+            if not user_with_profile:
+                error_msg = "User not found"
+                logger.error(f"[UserProfileView] {error_msg}")
+                raise UserProfileError(detail=error_msg)
+            
+            # Ensure the user has a profile (lazy creation if missing)
+            if not hasattr(user_with_profile, 'profile'):
+                logger.warning(f"[UserProfileView] Creating missing profile for user {user_with_profile.id}")
                 try:
-                    profile = UserProfile.objects.create(user=user)
-                    logger.info(f"[UserProfileView] Created new profile for user {user.id} (Profile ID: {profile.id})")
-                    return profile
+                    from .models import UserProfile
+                    UserProfile.objects.create(user=user_with_profile)
+                    # Refresh the user instance to get the new profile
+                    user_with_profile.refresh_from_db()
                 except Exception as e:
-                    error_msg = f"Error creating profile for user {user.id}: {str(e)}"
-                    logger.error(f"[UserProfileView] {error_msg}", exc_info=True)
-                    raise UserProfileError(detail=error_msg)
-                    
-            except Exception as e:
-                error_msg = f"Unexpected error accessing profile for user {user.id}: {str(e)}"
-                logger.error(f"[UserProfileView] {error_msg}", exc_info=True)
-                logger.error(f"[UserProfileView] User model fields: {[f for f in user._meta.get_fields() if hasattr(f, 'name')]}")
-                raise UserProfileError(detail=error_msg) 
+                    logger.error(f"[UserProfileView] Error creating user profile: {str(e)}")
+                    raise UserProfileError(detail="Failed to create user profile")
+            
+            return user_with_profile
                 
         except UserProfileError as upe:
-            logger.error(f"[UserProfileView] UserProfileError: {str(upe)}", exc_info=True)
-            if hasattr(self, 'request') and hasattr(self.request, 'user'):
-                logger.error(f"[UserProfileView] Current user in error handler: {getattr(self.request.user, 'id', 'unknown')}")
-            raise  # Re-raise our custom error
+            # Re-raise the UserProfileError with the original error message
+            raise upe
             
         except Exception as e:
-            error_msg = f"Unexpected error in UserProfileView.get_object: {str(e)}"
+            error_msg = f"Unexpected error in UserProfileView: {str(e)}"
             logger.error(f"[UserProfileView] {error_msg}", exc_info=True, stack_info=True)
             if user:
                 logger.error(f"[UserProfileView] User object type: {type(user)}")
