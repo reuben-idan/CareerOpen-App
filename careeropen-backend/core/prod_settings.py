@@ -137,6 +137,11 @@ TEMPLATES = [
     },
 ]
 
+# Extend INSTALLED_APPS to include core
+INSTALLED_APPS = [
+    'core.apps.CoreConfig',  # Add this line
+]
+
 # Connection pooling for production
 DATABASE_POOL_ARGS = {
     'max_overflow': 10,
