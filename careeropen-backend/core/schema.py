@@ -204,38 +204,30 @@ class CustomSchemaGenerator(SchemaGenerator):
 
 class CustomAutoSchema(AutoSchema):
     """
-    Custom AutoSchema that handles schema generation and example processing
-    in a way that's more resilient to errors in the DRF Spectacular library.
+    Custom schema generator that completely disables example processing to prevent errors.
     """
     def _get_examples(self, *args, **kwargs):
         """
-        Safely handle example processing to prevent 'request_only' attribute errors.
-        This version is more resilient to different input types and handles edge cases.
+        Completely disable example processing to prevent any potential errors.
+        This is a more aggressive approach that completely bypasses the problematic code.
         """
+        return {}
+        
+    def _get_serializer(self, path, method):
+        """Override to safely get serializer and handle any errors."""
         try:
-            # If we don't have the expected arguments, return empty dict
-            if not args and not kwargs:
-                return {}
-                
-            # If we have a serializer as first arg, check if it's a dict
-            if args and isinstance(args[0], dict):
-                return {}
-                
-            # If we have a 'direction' in kwargs and it's 'response', return empty dict
-            # to avoid processing response examples that might cause issues
-            if kwargs.get('direction') == 'response':
-                return {}
-                
-            # For any other case, try to call the parent method but be prepared to catch errors
-            try:
-                return super()._get_examples(*args, **kwargs)
-            except Exception as e:
-                logger.warning(f"Error in _get_examples: {str(e)}")
-                return {}
-                
+            return super()._get_serializer(path, method)
         except Exception as e:
-            logger.error(f"Unexpected error in _get_examples: {str(e)}", exc_info=True)
-            return {}
+            logger.warning(f"Error getting serializer for {method} {path}: {str(e)}")
+            return None
+            
+    def _get_serializer_ref_name(self, serializer, direction):
+        """Override to safely get serializer ref name."""
+        try:
+            return super()._get_serializer_ref_name(serializer, direction)
+        except Exception as e:
+            logger.warning(f"Error getting serializer ref name: {str(e)}")
+            return "Unknown"
         
     def _get_response_bodies(self, *args, **kwargs):
         """
