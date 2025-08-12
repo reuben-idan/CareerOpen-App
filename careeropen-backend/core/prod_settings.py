@@ -279,6 +279,36 @@ X_FRAME_OPTIONS = 'DENY'
 # Cache control
 CACHE_CONTROL_MAX_AGE = 60 * 60 * 24 * 7  # 1 week
 
+# DRF Spectacular Settings
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'CareerOpen API',
+    'DESCRIPTION': 'API documentation for CareerOpen',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'SCHEMA_PATH_PREFIX': r'/api/v[0-9]',
+    'COMPONENT_SPLIT_REQUEST': True,
+    # Disable example processing
+    'ENUM_NAME_OVERRIDES': {},
+    'POSTPROCESSING_HOOKS': [],
+    'PREPROCESSING_HOOKS': [],
+    'SERVE_PUBLIC': True,
+    # Disable authentication for schema endpoints
+    'SERVE_AUTHENTICATION': None,
+    'SERVE_PERMISSIONS': None,
+    # Disable schema validation
+    'ENFORCE_NON_BLANK_FIELDS': False,
+    'COMPONENT_NO_READ_ONLY_REQUIRED': True,
+    # Disable response examples
+    'ENUM_ADD_EXPLICIT_BLANK_NULL_CHOICE': False,
+    'GENERIC_ADDITIONAL_PROPERTIES': 'dict',
+    # Disable schema validation
+    'SCHEMA_COERCE_PATH_PK_SUFFIX': True,
+    # Disable response splitting
+    'COMPONENT_SPLIT_RESPONSE': False,
+    # Disable path prefix trimming
+    'SCHEMA_PATH_PREFIX_TRIM': False,
+}
+
 # Redis monitoring settings
 REDIS_MONITORING = {
     'ENABLED': True,
