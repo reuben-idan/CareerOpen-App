@@ -4,7 +4,7 @@ URL configuration for core project.
 import os
 from django.contrib import admin
 from django.urls import path, include, re_path
-from django.views.generic import RedirectView
+from django.views.generic import RedirectView, TemplateView
 from rest_framework import permissions
 from rest_framework import routers
 from rest_framework.response import Response
