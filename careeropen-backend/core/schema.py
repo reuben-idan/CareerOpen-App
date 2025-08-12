@@ -21,11 +21,18 @@ def preprocess_example_responses(result=None, **kwargs):
 
 class CustomSchemaGenerator(SchemaGenerator):
     """
-    Custom schema generator that completely bypasses problematic example handling.
-    This is a more aggressive approach to prevent the 'request_only' attribute error.
+    Custom schema generator that ensures consistent schema generation and example handling.
+    This version is more aggressive in handling schema generation to prevent 'request_only' attribute errors.
     """
     def get_schema(self, request=None, public=False):
-        # Get the base schema without any example processing
+        # Set default schema class for all views that don't have one specified
+        for view in self.endpoints.values():
+            if hasattr(view, 'schema') and view.schema is None:
+                view.schema = CustomAutoSchema()
+            elif not hasattr(view, 'schema'):
+                view.schema = CustomAutoSchema()
+        
+        # Get the base schema
         schema = super().get_schema(request, public)
         
         # If we don't have a valid schema, return early
@@ -41,54 +48,97 @@ class CustomSchemaGenerator(SchemaGenerator):
                 if not isinstance(operation, dict) or method.lower() not in ['get', 'post', 'put', 'patch', 'delete']:
                     continue
                     
-                # Remove examples completely to avoid processing issues
+                # Clean up responses
                 if 'responses' in operation and isinstance(operation['responses'], dict):
-                    for response in operation['responses'].values():
-                        if not isinstance(response, dict) or 'content' not in response:
+                    for response_code, response in operation['responses'].items():
+                        if not isinstance(response, dict):
                             continue
                             
-                        for content in response['content'].values():
-                            if isinstance(content, dict) and 'examples' in content:
-                                del content['examples']
+                        # Clean up content
+                        if 'content' in response and isinstance(response['content'], dict):
+                            for content_type, content in response['content'].items():
+                                if not isinstance(content, dict):
+                                    continue
+                                    
+                                # Remove examples to prevent processing issues
+                                if 'examples' in content:
+                                    del content['examples']
                                 
+                                # Ensure schema exists
+                                if 'schema' not in content:
+                                    content['schema'] = {}
+        
         return schema
 
 
 class CustomAutoSchema(AutoSchema):
     """
-    Custom AutoSchema that handles example processing more robustly to prevent
-    the 'request_only' attribute error in DRF Spectacular.
+    Custom AutoSchema that handles schema generation and example processing
+    in a way that's more resilient to errors in the DRF Spectacular library.
     """
-    def _get_examples(self, serializer, direction, media_type, status_code, examples):
+    def _get_examples(self, *args, **kwargs):
         """
-        Override to safely handle examples and prevent 'request_only' attribute errors.
-        This is a more robust implementation that safely processes examples.
+        Completely override to prevent any example processing that might cause errors.
+        We'll handle examples in the schema generator instead.
         """
-        if not examples:
-            return
-            
-        try:
-            # If examples is a dictionary, process it safely
-            if isinstance(examples, dict):
-                for name, example in examples.items():
-                    if not isinstance(example, dict):
-                        continue
-                    # Skip if this is a request example and we're processing a response
-                    if direction == 'response' and example.get('request_only', False):
-                        continue
-                    # Skip if this is a response example and we're processing a request
-                    if direction == 'request' and example.get('response_only', False):
-                        continue
-                    
-                    # Add the example if it's valid
-                    if 'value' in example:
-                        if 'examples' not in examples:
-                            examples['examples'] = {}
-                        examples['examples'][name] = example
+        return {}
         
+    def _get_serializer(self, path, method):
+        """
+        Safely get the serializer for the given path and method.
+        """
+        try:
+            return super()._get_serializer(path, method)
         except Exception as e:
-            logger.warning(f"Error processing examples in CustomAutoSchema: {str(e)}")
-            # Don't re-raise, just continue without examples
+            logger.warning(f"Error getting serializer for {method} {path}: {str(e)}")
+            return None
+            
+    def _get_response_bodies(self, *args, **kwargs):
+        """
+        Safely get response bodies, handling any errors that might occur.
+        """
+        try:
+            return super()._get_response_bodies(*args, **kwargs)
+        except Exception as e:
+            logger.warning(f"Error getting response bodies: {str(e)}")
+            return {}
+            
+    def _get_response_for_code(self, response_serializers, status_code, *args, **kwargs):
+        """
+        Safely get the response for a status code, with enhanced error handling.
+        """
+        try:
+            response = super()._get_response_for_code(response_serializers, status_code, *args, **kwargs)
+            
+            # Ensure the response has the required structure
+            if not isinstance(response, dict):
+                response = {}
+                
+            # Ensure content exists
+            if 'content' not in response:
+                response['content'] = {}
+                
+            # Ensure each content type has a schema
+            for content_type, content in response.get('content', {}).items():
+                if not isinstance(content, dict):
+                    content = {}
+                    response['content'][content_type] = content
+                    
+                if 'schema' not in content:
+                    content['schema'] = {}
+                    
+            return response
+            
+        except Exception as e:
+            logger.warning(f"Error getting response for status {status_code}: {str(e)}")
+            return {
+                'description': 'Error generating response schema',
+                'content': {
+                    'application/json': {
+                        'schema': {}
+                        }
+                    }
+                }
             
     def _get_response_for_code(self, response_serializers, status_code, direction='response'):
         """
