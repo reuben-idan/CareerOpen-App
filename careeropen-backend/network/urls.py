@@ -1,7 +1,6 @@
 from django.urls import path, include, re_path
 from rest_framework.routers import DefaultRouter
 from rest_framework import permissions
-from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 from . import views
 
 # API Info
@@ -18,11 +17,6 @@ router.register(r'notifications', views.NotificationViewSet, basename='notificat
 
 # Custom URL patterns
 urlpatterns = [
-    # API Documentation
-    path('schema/', SpectacularAPIView.as_view(), name='schema'),
-    path('docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
-    path('redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
-    
     # Default router URLs
     path('', include(router.urls)),
     
