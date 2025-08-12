@@ -1,24 +1,51 @@
-from drf_spectacular.utils import extend_schema
+import logging
+from typing import Any, Dict, List, Optional, Type, Union, TypeVar
+from datetime import datetime
+
+from django.core.cache import cache
+from django.db.models import QuerySet
+from django.http import HttpRequest, HttpResponse
+from django.utils import timezone
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+from django.views.decorators.vary import vary_on_headers, vary_on_cookie
+
+from drf_spectacular.utils import (
+    extend_schema, extend_schema_view, OpenApiParameter, OpenApiExample,
+    OpenApiResponse, OpenApiTypes, extend_schema_serializer
+)
 from rest_framework import viewsets, status, filters
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView
+from rest_framework.filters import BaseFilterBackend
 from django_filters.rest_framework import DjangoFilterBackend
-from django.core.cache import cache
-from django.utils.decorators import method_decorator
-from django.views.decorators.cache import cache_page
-from django.views.decorators.vary import vary_on_headers
+from rest_framework.decorators import action
+from rest_framework.permissions import (
+    IsAuthenticated, IsAdminUser, BasePermission, IsAuthenticatedOrReadOnly
+)
+from rest_framework.request import Request
+from rest_framework.response import Response
+from rest_framework.serializers import BaseSerializer
+from rest_framework.pagination import PageNumberPagination
 
-# Import custom permissions
-from .permissions import IsJobOwnerOrReadOnly, IsApplicationOwnerOrReadOnly, IsAdminOrReadOnly, IsCompanyOwnerOrReadOnly
+# Local imports
+from .models import Job, JobApplication, Category, Company
+from .serializers import (
+    JobSerializer, JobApplicationSerializer, JobSearchSerializer,
+    CategorySerializer, CompanySerializer
+)
+from .permissions import (
+    IsJobOwnerOrReadOnly, IsApplicationOwnerOrReadOnly,
+    IsAdminOrReadOnly, IsCompanyOwnerOrReadOnly
+)
 from accounts.views import IsEmployer
-from django.core.cache import cache
-from django.utils.decorators import method_decorator
-from django.views.decorators.cache import cache_page
-from django.views.decorators.vary import vary_on_cookie, vary_on_headers
+
+# Configure logger
+logger = logging.getLogger(__name__)
+
+# Type variables for generic type hints
+_MT = TypeVar('_MT')  # Model type
+_ST = TypeVar('_ST')  # Serializer type
 
 from .models import Job, JobApplication, Category, Company
 from .serializers import (
@@ -28,20 +55,134 @@ from .serializers import (
 from .permissions import IsJobOwnerOrReadOnly, IsApplicationOwnerOrReadOnly, IsAdminOrReadOnly, IsCompanyOwnerOrReadOnly
 
 class StandardResultsSetPagination(PageNumberPagination):
-    page_size = 10
-    page_size_query_param = 'page_size'
-    max_page_size = 100
+    """
+    Custom pagination class with configurable page size.
+    
+    Attributes:
+        page_size: Default number of items per page
+        page_size_query_param: Query parameter to control page size
+        max_page_size: Maximum allowed page size
+    """
+    page_size: int = 10
+    page_size_query_param: str = 'page_size'
+    max_page_size: int = 100
 
+@extend_schema_view(
+    list=extend_schema(
+        summary="List all jobs",
+        description="""
+        Returns a paginated list of jobs with filtering, searching, and ordering capabilities.
+        Public endpoint, but some jobs may be restricted based on status and authentication.
+        """,
+        parameters=[
+            OpenApiParameter(
+                name='company',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                description='Filter by company ID',
+            ),
+            OpenApiParameter(
+                name='deadline_filter',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description='Filter by application deadline (values: expired, upcoming)',
+            ),
+        ],
+        examples=[
+            OpenApiExample(
+                'List all jobs',
+                value={
+                    'count': 42,
+                    'next': 'https://api.example.com/jobs/?page=2',
+                    'previous': None,
+                    'results': [
+                        {
+                            'id': 1,
+                            'title': 'Senior Software Engineer',
+                            'company': {'id': 1, 'name': 'TechCorp'},
+                            'location': 'Remote',
+                            'job_type': 'full_time',
+                            'salary_min': 100000,
+                            'salary_max': 150000,
+                            'is_remote': True,
+                            'created_at': '2023-01-01T00:00:00Z',
+                        }
+                    ]
+                }
+            )
+        ]
+    ),
+    retrieve=extend_schema(
+        summary="Retrieve a job",
+        description="Retrieve detailed information about a specific job.",
+        responses={
+            200: JobSerializer,
+            404: OpenApiResponse(description="Job not found"),
+        }
+    ),
+    create=extend_schema(
+        summary="Create a job",
+        description="Create a new job listing. Requires employer authentication.",
+        responses={
+            201: JobSerializer,
+            400: OpenApiResponse(description="Invalid input"),
+            401: OpenApiResponse(description="Unauthorized"),
+            403: OpenApiResponse(description="Forbidden - not an employer"),
+        }
+    ),
+    update=extend_schema(
+        summary="Update a job",
+        description="Update an existing job. Only the job owner or admin can update.",
+        responses={
+            200: JobSerializer,
+            400: OpenApiResponse(description="Invalid input"),
+            401: OpenApiResponse(description="Unauthorized"),
+            403: OpenApiResponse(description="Forbidden - not the owner"),
+            404: OpenApiResponse(description="Job not found"),
+        }
+    ),
+    partial_update=extend_schema(
+        summary="Partially update a job",
+        description="Partially update an existing job.",
+        responses={
+            200: JobSerializer,
+            400: OpenApiResponse(description="Invalid input"),
+            401: OpenApiResponse(description="Unauthorized"),
+            403: OpenApiResponse(description="Forbidden - not the owner"),
+            404: OpenApiResponse(description="Job not found"),
+        }
+    ),
+    destroy=extend_schema(
+        summary="Delete a job",
+        description="Delete a job. Only the job owner or admin can delete.",
+        responses={
+            204: OpenApiResponse(description="No content"),
+            401: OpenApiResponse(description="Unauthorized"),
+            403: OpenApiResponse(description="Forbidden - not the owner"),
+            404: OpenApiResponse(description="Job not found"),
+        }
+    )
+)
 class JobViewSet(viewsets.ModelViewSet):
     """
     Enhanced API endpoint for job management with comprehensive CRUD operations.
-    Includes advanced filtering, search, ordering, and caching capabilities.
+    
+    This viewset provides the following actions:
+    - list: List all jobs with filtering and pagination
+    - retrieve: Get a single job by ID
+    - create: Create a new job (employer only)
+    - update: Update an existing job (owner or admin only)
+    - partial_update: Partially update a job (owner or admin only)
+    - destroy: Delete a job (owner or admin only)
+    - apply: Apply for a job (job seeker only)
+    - my_jobs: List jobs posted by the current user (employer only)
+    - drafts: List draft jobs (employer only)
     """
-    queryset = Job.objects.all().order_by('-created_at')
-    serializer_class = JobSerializer
-    pagination_class = StandardResultsSetPagination
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = {
+    queryset: QuerySet[Job] = Job.objects.all().order_by('-created_at')
+    serializer_class: Type[JobSerializer] = JobSerializer
+    pagination_class: Type[StandardResultsSetPagination] = StandardResultsSetPagination
+    filter_backends: List[Any] = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields: Dict[str, List[str]] = {
         'job_type': ['exact', 'in'],
         'location': ['exact', 'icontains'],
         'is_active': ['exact'],
@@ -54,23 +195,33 @@ class JobViewSet(viewsets.ModelViewSet):
         'created_at': ['date', 'gte', 'lte'],
         'application_deadline': ['date', 'gte', 'lte', 'isnull'],
     }
-    search_fields = [
+    search_fields: List[str] = [
         'title', 'description', 'requirements', 'responsibilities',
         'company__name', 'location', 'categories__name'
     ]
-    ordering_fields = [
+    ordering_fields: List[str] = [
         'created_at', 'updated_at', 'published_at', 'salary_min',
         'salary_max', 'title', 'company__name', 'application_deadline'
     ]
-    ordering = ['-created_at']
-    cache_timeout = 60 * 15  # 15 minutes
+    ordering: List[str] = ['-created_at']
+    cache_timeout: int = 60 * 15  # 15 minutes
 
-    def get_permissions(self):
+    def get_permissions(self) -> List[BasePermission]:
         """
-        Instantiates and returns the list of permissions that this view requires.
+        Determine the list of permission classes required for the current action.
+        
+        Returns:
+            List[BasePermission]: List of permission instances based on the action
+            
+        Permission Rules:
+        - Create: Must be authenticated and an employer
+        - Update/Delete: Must be the job owner or admin
+        - Apply/My Applications: Must be authenticated and not an employer
+        - My Jobs/Drafts: Must be authenticated and an employer
+        - List/Retrieve: No authentication required (public access)
         """
         if self.action in ['create']:
-            permission_classes = [IsAuthenticated, IsEmployer]
+            permission_classes: List[Type[BasePermission]] = [IsAuthenticated, IsEmployer]
         elif self.action in ['update', 'partial_update', 'destroy']:
             permission_classes = [IsAuthenticated, IsJobOwnerOrReadOnly | IsAdminUser]
         elif self.action in ['apply', 'my_applications']:
@@ -81,11 +232,26 @@ class JobViewSet(viewsets.ModelViewSet):
             permission_classes = []
         return [permission() for permission in permission_classes]
     
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[Job]:
         """
-        Custom queryset to filter jobs based on user role and request parameters.
+        Get the queryset of jobs based on user role and request parameters.
+        
+        The queryset is filtered based on:
+        - For non-authenticated users or non-employers: Only published and active jobs
+        - For employers: Their own jobs (when viewing 'my_jobs' or 'drafts')
+        - Additional filters from query parameters (company, deadline_filter)
+        
+        Returns:
+            QuerySet[Job]: Filtered queryset of jobs
+            
+        Query Parameters:
+            company (int): Filter by company ID
+            deadline_filter (str): 'expired' or 'upcoming' to filter by application deadline
+            
+        Example:
+            GET /jobs/?company=1&deadline_filter=upcoming
         """
-        queryset = super().get_queryset()
+        queryset: QuerySet[Job] = super().get_queryset()
         user = self.request.user
         
         # For non-authenticated users or non-employers, only show published and active jobs
@@ -96,12 +262,12 @@ class JobViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(poster=user)
         
         # Apply additional filters from query parameters
-        company = self.request.query_params.get('company')
-        if company:
-            queryset = queryset.filter(company_id=company)
+        company: Optional[str] = self.request.query_params.get('company')
+        if company and company.isdigit():
+            queryset = queryset.filter(company_id=int(company))
             
         # Filter by application deadline
-        deadline_filter = self.request.query_params.get('deadline_filter')
+        deadline_filter: Optional[str] = self.request.query_params.get('deadline_filter')
         if deadline_filter == 'expired':
             queryset = queryset.filter(application_deadline__lt=timezone.now())
         elif deadline_filter == 'upcoming':
@@ -120,94 +286,310 @@ class JobViewSet(viewsets.ModelViewSet):
         context['request'] = self.request
         return context
         
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name='page',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                description='A page number within the paginated result set.'
+            ),
+            OpenApiParameter(
+                name='page_size',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                description='Number of results to return per page.'
+            ),
+        ],
+        responses={
+            200: JobSerializer(many=True),
+            400: OpenApiResponse(description="Invalid input"),
+        }
+    )
     @method_decorator(cache_page(cache_timeout))
     @method_decorator(vary_on_headers('Authorization'))
-    def list(self, request, *args, **kwargs):
+    def list(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         """
-        List all jobs with caching and advanced filtering.
+        List all jobs with caching, filtering, and pagination.
+        
+        This endpoint returns a paginated list of jobs with support for:
+        - Filtering by various fields (job_type, location, etc.)
+        - Full-text search across multiple fields
+        - Custom sorting
+        - Caching for improved performance
+        
+        Args:
+            request: The HTTP request object
+            *args: Additional positional arguments
+            **kwargs: Additional keyword arguments
+            
+        Returns:
+            Response: Paginated list of job objects
+            
+        Example Response:
+            {
+                "count": 42,
+                "next": "https://api.example.com/jobs/?page=2",
+                "previous": null,
+                "results": [
+                    {
+                        "id": 1,
+                        "title": "Senior Software Engineer",
+                        "company": {"id": 1, "name": "TechCorp"},
+                        "location": "Remote",
+                        "job_type": "full_time",
+                        "salary_min": 100000,
+                        "salary_max": 150000,
+                        "is_remote": true,
+                        "created_at": "2023-01-01T00:00:00Z"
+                    }
+                ]
+            }
         """
         # Generate a cache key based on the request
-        cache_key = f'jobs_list_{request.get_full_path()}'
+        cache_key: str = f'jobs_list_{request.get_full_path()}'
         
         # Try to get the response from cache
-        cached_response = cache.get(cache_key)
+        cached_response: Optional[Dict[str, Any]] = cache.get(cache_key)
         if cached_response is not None:
             return Response(cached_response)
             
         # If not in cache, get the response from the parent class
-        response = super().list(request, *args, **kwargs)
+        response: Response = super().list(request, *args, **kwargs)
         
         # Cache the response
         cache.set(cache_key, response.data, self.cache_timeout)
         return response
         
+    @extend_schema(
+        responses={
+            200: JobSerializer,
+            404: OpenApiResponse(description="Job not found"),
+        }
+    )
     @method_decorator(cache_page(cache_timeout))
-    def retrieve(self, request, *args, **kwargs):
+    def retrieve(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         """
-        Retrieve a job with caching and permission checks.
+        Retrieve detailed information about a specific job.
+        
+        This endpoint returns detailed information about a single job, including:
+        - Job title, description, and requirements
+        - Company information
+        - Salary range and job type
+        - Application deadline
+        - Creation and update timestamps
+        
+        The response is cached for improved performance.
+        
+        Args:
+            request: The HTTP request object
+            *args: Additional positional arguments
+            **kwargs: Additional keyword arguments, including the job 'pk' or 'slug'
+            
+        Returns:
+            Response: Detailed job information
+            
+        Example Response:
+            {
+                "id": 1,
+                "title": "Senior Software Engineer",
+                "description": "We are looking for an experienced engineer...",
+                "requirements": "5+ years of experience...",
+                "job_type": "full_time",
+                "location": "Remote",
+                "salary_min": 100000,
+                "salary_max": 150000,
+                "is_remote": true,
+                "is_active": true,
+                "status": "published",
+                "application_deadline": "2023-12-31T23:59:59Z",
+                "company": {
+                    "id": 1,
+                    "name": "TechCorp",
+                    "logo": "https://example.com/media/company_logos/techcorp.png"
+                },
+                "categories": [
+                    {"id": 1, "name": "Software Development"},
+                    {"id": 2, "name": "Engineering"}
+                ],
+                "created_at": "2023-01-01T00:00:00Z",
+                "updated_at": "2023-01-01T00:00:00Z"
+            }
         """
-        # Generate a cache key based on the request
-        cache_key = f'job_detail_{kwargs["pk"]}'
+        # Generate a cache key based on the job ID
+        cache_key: str = f'job_detail_{kwargs["pk"]}'
         
         # Try to get the response from cache
-        cached_response = cache.get(cache_key)
+        cached_response: Optional[Dict[str, Any]] = cache.get(cache_key)
         if cached_response is not None:
             return Response(cached_response)
-        response = super().retrieve(request, *args, **kwargs)
+            
+        # If not in cache, get the response from the parent class
+        response: Response = super().retrieve(request, *args, **kwargs)
         
         # Cache the response
         cache.set(cache_key, response.data, self.cache_timeout)
         return response
 
-    def perform_create(self, serializer):
-        # Set the job poster to the current user
-        serializer.save(poster=self.request.user)
-
-    @action(detail=True, methods=['post'])
-    def apply(self, request, pk=None):
+    def perform_create(self, serializer: JobSerializer) -> None:
         """
-        Custom action to apply for a job.
-        Only job seekers can apply for jobs.
+        Create a new job instance and set the poster to the current user.
+        
+        This method is called when creating a new job and automatically sets:
+        - The job poster to the currently authenticated user
+        - The creation timestamp
+        
+        Args:
+            serializer: The job serializer instance with validated data
+            
+        Raises:
+            ValidationError: If the serializer data is invalid
+            PermissionDenied: If the user doesn't have permission to create jobs
+            
+        Note:
+            This method is called automatically by DRF's CreateModelMixin.
+            The user must be authenticated and have employer privileges.
+        """
+        serializer.save(poster=self.request.user)
+        logger.info(f"New job created by user {self.request.user.id}")
+
+    @extend_schema(
+        request={
+            'multipart/form-data': {
+                'type': 'object',
+                'properties': {
+                    'cover_letter': {
+                        'type': 'string',
+                        'description': 'Cover letter for the job application',
+                        'nullable': True
+                    },
+                    'resume': {
+                        'type': 'string',
+                        'format': 'binary',
+                        'description': 'Resume file (PDF, DOC, DOCX, TXT)',
+                        'nullable': True
+                    }
+                }
+            }
+        },
+        responses={
+            201: JobApplicationSerializer,
+            400: OpenApiResponse(description="Invalid input or already applied"),
+            403: OpenApiResponse(description="Permission denied"),
+            404: OpenApiResponse(description="Job not found"),
+        }
+    )
+    @action(detail=True, methods=['post'])
+    def apply(self, request: Request, pk: Optional[str] = None) -> Response:
+        """
+        Apply for a job posting.
+        
+        This endpoint allows job seekers to apply for a job by submitting:
+        - An optional cover letter
+        - An optional resume file
+        
+        Only authenticated job seekers can apply for jobs. Each user can only apply once per job.
+        
+        Args:
+            request: The HTTP request object containing application data
+            pk: The primary key of the job to apply for
+            
+        Returns:
+            Response: The created job application on success, or an error message
+            
+        Raises:
+            PermissionDenied: If the user is an employer
+            ValidationError: If the job is not active or the user has already applied
+            
+        Example Request:
+            POST /api/jobs/1/apply/
+            Content-Type: multipart/form-data
+            
+            {
+                "cover_letter": "I'm excited to apply for this position...",
+                "resume": [binary file data]
+            }
+            
+        Example Response (201 Created):
+            {
+                "id": 1,
+                "job": 1,
+                "applicant": 42,
+                "status": "applied",
+                "cover_letter": "I'm excited to apply for this position...",
+                "resume": "/media/resumes/john_doe_resume.pdf",
+                "applied_at": "2023-01-01T12:00:00Z",
+                "updated_at": "2023-01-01T12:00:00Z"
+            }
         """
         # Ensure the user is a job seeker
-        if request.user.is_employer:
+        if not hasattr(request.user, 'is_employer') or request.user.is_employer:
+            logger.warning(f"Employer {request.user.id} attempted to apply for job {pk}")
             return Response(
                 {"detail": "Employers cannot apply for jobs. Please use a job seeker account."},
                 status=status.HTTP_403_FORBIDDEN
             )
             
-        job = self.get_object()
+        job: Job = self.get_object()
+        
+        # Check if job is accepting applications
         if not job.is_active:
+            logger.warning(f"Inactive job application attempt for job {job.id} by user {request.user.id}")
             return Response(
                 {"detail": "This job is no longer accepting applications."},
                 status=status.HTTP_400_BAD_REQUEST
             )
+            
+        # Check application deadline if set
+        if job.application_deadline and job.application_deadline < timezone.now():
+            logger.warning(f"Application after deadline for job {job.id} by user {request.user.id}")
+            return Response(
+                {"detail": "The application deadline for this job has passed."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
-        # Check if user already applied
-        if JobApplication.objects.filter(
-            job=job, 
-            applicant=request.user
-        ).exists():
+        # Check for existing application
+        if JobApplication.objects.filter(job=job, applicant=request.user).exists():
+            logger.warning(f"Duplicate application attempt for job {job.id} by user {request.user.id}")
             return Response(
                 {"detail": "You have already applied to this job."},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Create the application with safe data access
-        application_data = {
-            'job': job,
-            'applicant': request.user,
-            'status': 'applied',
-            'cover_letter': request.data.get('cover_letter', ''),
-            'resume': request.data.get('resume')  # Safely get resume if provided
-        }
-        
-        # Remove None values to prevent overriding model defaults
-        application_data = {k: v for k, v in application_data.items() if v is not None}
-        
-        application = JobApplication.objects.create(**application_data)
-        
-        serializer = JobApplicationSerializer(application)
+        try:
+            # Create the application with safe data access
+            application_data: Dict[str, Any] = {
+                'job': job,
+                'applicant': request.user,
+                'status': 'applied',
+                'cover_letter': request.data.get('cover_letter', ''),
+                'resume': request.FILES.get('resume')  # Get uploaded file if provided
+            }
+            
+            # Validate and create the application
+            serializer: JobApplicationSerializer = JobApplicationSerializer(
+                data=application_data,
+                context={'request': request}
+            )
+            
+            if serializer.is_valid():
+                application: JobApplication = serializer.save()
+                logger.info(f"New application {application.id} created for job {job.id} by user {request.user.id}")
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+                
+            # Handle validation errors
+            logger.warning(f"Invalid application data from user {request.user.id}: {serializer.errors}")
+            return Response(
+                {"detail": "Invalid application data", "errors": serializer.errors},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        except Exception as e:
+            logger.error(f"Error creating application: {str(e)}", exc_info=True)
+            return Response(
+                {"detail": "An error occurred while processing your application."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
@@ -215,24 +597,60 @@ class JobSearchView(APIView):
     """
     Advanced job search endpoint with filtering, sorting, and pagination.
     
+    This view provides a comprehensive search interface for job listings with support for:
+    - Full-text search across multiple fields
+    - Filtering by various job attributes
+    - Custom sorting and pagination
+    - Skills-based filtering
+    - Date range filtering
+    
+    Authentication: Public endpoint (no authentication required)
+    
     Query Parameters:
-    - search: Search term to filter jobs by title, description, company, or location
-    - job_type: Filter by job type (e.g., 'full_time', 'part_time', 'contract', 'internship', 'temporary')
-    - location: Filter by job location
-    - salary_min: Minimum salary
-    - salary_max: Maximum salary
-    - is_remote: Filter remote jobs (true/false)
-    - posted_after: Filter jobs posted after a specific date (YYYY-MM-DD)
-    - company: Filter by company name
-    - skills: Comma-separated list of skills to search for
-    - ordering: Field to order by (prefix with '-' for descending order)
-    - page: Page number for pagination
-    - page_size: Number of items per page
+        search (str): Search term to filter jobs by title, description, company, or location
+        job_type (str): Filter by job type (e.g., 'full_time', 'part_time', 'contract')
+        location (str): Filter by job location (case-insensitive contains)
+        salary_min (float): Filter by minimum salary
+        salary_max (float): Filter by maximum salary
+        is_remote (bool): Filter remote jobs (true/false)
+        posted_after (date): Filter jobs posted after this date (YYYY-MM-DD)
+        company (str): Filter by company name (case-insensitive contains)
+        skills (str): Comma-separated list of skills to search for in job requirements
+        ordering (str): Field to order by (prefix with '-' for descending order)
+        page (int): Page number for pagination
+        page_size (int): Number of items per page (default: 10, max: 100)
+        
+    Example Request:
+        GET /api/jobs/search/?search=python&location=remote&salary_min=80000&is_remote=true
+        
+    Response Format:
+    {
+        "count": 42,
+        "next": "https://api.example.com/jobs/search/?page=2",
+        "previous": null,
+        "results": [
+            {
+                "id": 1,
+                "title": "Senior Python Developer",
+                "company": "TechCorp",
+                "location": "Remote",
+                "job_type": "full_time",
+                "salary_min": 100000,
+                "salary_max": 150000,
+                "is_remote": true,
+                "created_at": "2023-01-01T00:00:00Z"
+            }
+        ]
+    }
     """
-    serializer_class = JobSearchSerializer
-    pagination_class = StandardResultsSetPagination
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = {
+    serializer_class: Type[JobSearchSerializer] = JobSearchSerializer
+    pagination_class: Type[PageNumberPagination] = StandardResultsSetPagination
+    filter_backends: List[Type[BaseFilterBackend]] = [
+        DjangoFilterBackend, 
+        filters.SearchFilter, 
+        filters.OrderingFilter
+    ]
+    filterset_fields: Dict[str, List[str]] = {
         'job_type': ['exact', 'in'],
         'location': ['exact', 'icontains'],
         'is_active': ['exact'],
@@ -242,16 +660,25 @@ class JobSearchView(APIView):
         'created_at': ['gte', 'lte', 'date'],
         'company': ['exact', 'icontains'],
     }
-    search_fields = ['title', 'description', 'company', 'location', 'requirements']
-    ordering_fields = [
-        'created_at', 'updated_at', 'salary_min', 'salary_max', 'title', 'company'
+    search_fields: List[str] = [
+        'title', 'description', 'company', 'location', 'requirements',
+        'responsibilities', 'categories__name', 'required_skills'
     ]
-    ordering = ['-created_at']
+    ordering_fields: List[str] = [
+        'created_at', 'updated_at', 'salary_min', 'salary_max', 
+        'title', 'company', 'application_deadline'
+    ]
+    ordering: List[str] = ['-created_at']
 
     @property
-    def paginator(self):
+    def paginator(self) -> Optional[PageNumberPagination]:
         """
-        The paginator instance associated with the view, or None.
+        Lazy-load and return the paginator instance associated with the view.
+        
+        The paginator is created on first access and cached for subsequent calls.
+        
+        Returns:
+            Optional[PageNumberPagination]: Configured paginator instance or None if pagination is disabled
         """
         if not hasattr(self, '_paginator'):
             if self.pagination_class is None:
@@ -260,170 +687,523 @@ class JobSearchView(APIView):
                 self._paginator = self.pagination_class()
         return self._paginator
 
-    def paginate_queryset(self, queryset):
+    def paginate_queryset(self, queryset: QuerySet) -> Optional[List[Any]]:
         """
-        Return a single page of results, or `None` if pagination is disabled.
+        Return a single page of results from the given queryset.
+        
+        Args:
+            queryset: The base queryset to paginate
+            
+        Returns:
+            Optional[List[Any]]: A list of model instances for the current page, 
+                               or None if pagination is disabled
+            
+        Example:
+            >>> page = self.paginate_queryset(queryset)
+            >>> if page is not None:
+            ...     serializer = self.get_serializer(page, many=True)
+            ...     return self.get_paginated_response(serializer.data)
         """
         if self.paginator is None:
             return None
         return self.paginator.paginate_queryset(queryset, self.request, view=self)
 
-    def get_paginated_response(self, data):
+    def get_paginated_response(self, data: List[Dict[str, Any]]) -> Response:
         """
         Return a paginated style `Response` object for the given output data.
+        
+        This wraps the paginator's get_paginated_response method with additional type safety.
+        
+        Args:
+            data: The serialized data for the current page
+            
+        Returns:
+            Response: Paginated response with metadata including count, next/previous links, and results
+            
+        Raises:
+            AssertionError: If the paginator is not properly initialized
+            
+        Example Response:
+            {
+                "count": 42,
+                "next": "https://api.example.com/jobs/?page=2",
+                "previous": null,
+                "results": [...]
+            }
         """
-        assert self.paginator is not None
+        assert self.paginator is not None, "Paginator not initialized"
         return self.paginator.get_paginated_response(data)
 
-    def filter_queryset(self, queryset):
+    def filter_queryset(self, queryset: QuerySet) -> QuerySet:
         """
-        Given a queryset, filter it with whichever filter backend is in use.
+        Apply all registered filter backends to the given queryset.
+        
+        This method chains together the filtering logic from all filter backends
+        defined in `self.filter_backends`. Each backend's `filter_queryset` method
+        is called in sequence with the filtered queryset from the previous backend.
+        
+        Args:
+            queryset: The base queryset to be filtered
+            
+        Returns:
+            QuerySet: The filtered queryset after applying all filter backends
+            
+        Note:
+            The order of filter backends in `self.filter_backends` matters, as each
+            backend receives the queryset as modified by previous backends.
+            
+        Example:
+            # With filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+            # 1. DjangoFilterBackend applies model field filters
+            # 2. SearchFilter applies full-text search
+            # 3. OrderingFilter applies sorting
+            filtered_queryset = self.filter_queryset(queryset)
         """
-        for backend in list(self.filter_backends):
-            queryset = backend().filter_queryset(self.request, queryset, self)
+        for backend_class in self.filter_backends:
+            backend = backend_class()
+            queryset = backend.filter_queryset(self.request, queryset, self)
         return queryset
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[Job]:
         """
-        Get the list of items for this view with filtering and search capabilities.
-        """
-        # Start with all jobs
-        queryset = Job.objects.all()
+        Get the filtered and ordered queryset of jobs based on request parameters.
         
-        # Handle custom filtering
-        params = self.request.query_params
+        This method applies all the custom filtering logic that isn't handled by
+        the filter backends, including:
+        - Active status filtering
+        - Job type filtering
+        - Company and location filtering
+        - Salary range filtering
+        - Skills-based filtering
+        - Date-based filtering
+        - Custom ordering
+        
+        Returns:
+            QuerySet[Job]: The filtered and ordered queryset of jobs
+            
+        Notes:
+            - All string comparisons are case-insensitive
+            - Multiple job types can be provided as comma-separated values
+            - Skills are matched using partial string matching on required_skills
+            - Invalid values for numeric fields are silently ignored
+        """
+        # Start with all jobs and apply base filters
+        queryset: QuerySet[Job] = Job.objects.select_related('company').prefetch_related('categories')
+        params: QueryDict = self.request.query_params
         
         # Filter by active status (default to showing only active jobs if not specified)
-        is_active = params.get('is_active')
+        is_active: Optional[str] = params.get('is_active')
         if is_active is not None:
-            is_active = is_active.lower() in ('true', '1', 't')
-            queryset = queryset.filter(is_active=is_active)
+            is_active_bool: bool = is_active.lower() in ('true', '1', 't')
+            queryset = queryset.filter(is_active=is_active_bool)
         else:
             # Default to showing only active jobs if not specified
             queryset = queryset.filter(is_active=True)
         
-        # Filter by job type
-        job_type = params.get('job_type')
+        # Filter by job type (support for multiple types)
+        job_type: Optional[str] = params.get('job_type')
         if job_type:
-            job_types = [jt.strip() for jt in job_type.split(',')]
-            queryset = queryset.filter(job_type__in=job_types)
+            job_types: List[str] = [jt.strip() for jt in job_type.split(',') if jt.strip()]
+            if job_types:  # Only apply filter if we have valid job types
+                queryset = queryset.filter(job_type__in=job_types)
         
-        # Filter by company
-        company = params.get('company')
+        # Filter by company name (case-insensitive contains)
+        company: Optional[str] = params.get('company')
         if company:
-            queryset = queryset.filter(company__icontains=company)
+            queryset = queryset.filter(company__name__icontains=company)
         
-        # Filter by location
-        location = params.get('location')
+        # Filter by location (case-insensitive contains)
+        location: Optional[str] = params.get('location')
         if location:
             queryset = queryset.filter(location__icontains=location)
         
-        # Filter by remote jobs
-        is_remote = params.get('is_remote')
+        # Filter by remote status
+        is_remote: Optional[str] = params.get('is_remote')
         if is_remote is not None:
-            is_remote = is_remote.lower() in ('true', '1', 't')
-            queryset = queryset.filter(is_remote=is_remote)
+            is_remote_bool: bool = is_remote.lower() in ('true', '1', 't')
+            queryset = queryset.filter(is_remote=is_remote_bool)
         
         # Filter by salary range
-        min_salary = params.get('min_salary')
+        min_salary: Optional[str] = params.get('min_salary')
         if min_salary:
             try:
-                min_salary = float(min_salary)
-                queryset = queryset.filter(salary_min__gte=min_salary)
-            except (ValueError, TypeError):
-                pass
+                min_salary_float: float = float(min_salary)
+                queryset = queryset.filter(salary_min__gte=min_salary_float)
+            except (ValueError, TypeError) as e:
+                logger.warning(f"Invalid min_salary value: {min_salary}", exc_info=True)
         
-        max_salary = params.get('max_salary')
+        max_salary: Optional[str] = params.get('max_salary')
         if max_salary:
             try:
-                max_salary = float(max_salary)
-                queryset = queryset.filter(salary_max__lte=max_salary)
-            except (ValueError, TypeError):
-                pass
+                max_salary_float: float = float(max_salary)
+                queryset = queryset.filter(salary_max__lte=max_salary_float)
+            except (ValueError, TypeError) as e:
+                logger.warning(f"Invalid max_salary value: {max_salary}", exc_info=True)
         
-        # Filter by skills if provided
-        skills = params.get('skills')
+        # Filter by skills (comma-separated list)
+        skills: Optional[str] = params.get('skills')
         if skills:
-            skills_list = [skill.strip().lower() for skill in skills.split(',')]
+            skills_list: List[str] = [skill.strip().lower() for skill in skills.split(',') if skill.strip()]
             for skill in skills_list:
                 queryset = queryset.filter(required_skills__icontains=skill)
         
         # Filter by posted date
-        posted_after = params.get('posted_after')
+        posted_after: Optional[str] = params.get('posted_after')
         if posted_after:
-            from django.utils.dateparse import parse_date
             try:
-                date = parse_date(posted_after)
+                from django.utils.dateparse import parse_date
+                date: Optional[date] = parse_date(posted_after)
                 if date:
                     queryset = queryset.filter(created_at__date__gte=date)
-            except (ValueError, TypeError):
-                pass
+            except (ValueError, TypeError) as e:
+                logger.warning(f"Invalid posted_after date: {posted_after}", exc_info=True)
         
-        # Ordering
-        ordering = params.get('ordering')
+        # Apply ordering
+        ordering: Optional[str] = params.get('ordering')
         if ordering:
             # Validate ordering fields to prevent SQL injection
-            valid_ordering_fields = [
+            valid_ordering_fields: List[str] = [
                 'created_at', '-created_at', 'updated_at', '-updated_at',
                 'salary_min', '-salary_min', 'salary_max', '-salary_max',
-                'title', '-title', 'company', '-company'
+                'title', '-title', 'company__name', '-company__name',
+                'application_deadline', '-application_deadline'
             ]
             
             if ordering in valid_ordering_fields:
                 queryset = queryset.order_by(ordering)
         else:
-            # Default ordering
+            # Default ordering by most recent first
             queryset = queryset.order_by('-created_at')
                 
         return queryset
 
-    def get(self, request, *args, **kwargs):
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name='search',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description='Search term for full-text search across job titles, descriptions, etc.'
+            ),
+            OpenApiParameter(
+                name='job_type',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description="Filter by job type (comma-separated for multiple, e.g., 'full_time,part_time')"
+            ),
+            OpenApiParameter(
+                name='location',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description='Filter by job location (case-insensitive contains)'
+            ),
+            OpenApiParameter(
+                name='is_remote',
+                type=OpenApiTypes.BOOL,
+                location=OpenApiParameter.QUERY,
+                description='Filter for remote jobs (true/false)'
+            ),
+            OpenApiParameter(
+                name='company',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description='Filter by company name (case-insensitive contains)'
+            ),
+            OpenApiParameter(
+                name='skills',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description='Comma-separated list of skills to filter by'
+            ),
+            OpenApiParameter(
+                name='min_salary',
+                type=OpenApiTypes.NUMBER,
+                location=OpenApiParameter.QUERY,
+                description='Filter by minimum salary'
+            ),
+            OpenApiParameter(
+                name='max_salary',
+                type=OpenApiTypes.NUMBER,
+                location=OpenApiParameter.QUERY,
+                description='Filter by maximum salary'
+            ),
+            OpenApiParameter(
+                name='posted_after',
+                type=OpenApiTypes.DATE,
+                location=OpenApiParameter.QUERY,
+                description='Filter jobs posted after this date (YYYY-MM-DD)'
+            ),
+            OpenApiParameter(
+                name='ordering',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description='Field to order by (prefix with - for descending)'
+            ),
+            OpenApiParameter(
+                name='page',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                description='A page number within the paginated result set.'
+            ),
+            OpenApiParameter(
+                name='page_size',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                description='Number of results to return per page.'
+            ),
+        ],
+        responses={
+            200: OpenApiResponse(
+                response=JobSerializer(many=True),
+                description='Paginated list of jobs matching the search criteria',
+                examples={
+                    'application/json': {
+                        'count': 42,
+                        'next': 'https://api.example.com/jobs/search/?page=2',
+                        'previous': None,
+                        'results': [
+                            {
+                                'id': 1,
+                                'title': 'Senior Python Developer',
+                                'company': 'TechCorp',
+                                'location': 'Remote',
+                                'job_type': 'full_time',
+                                'salary_min': 100000,
+                                'salary_max': 150000,
+                                'is_remote': True,
+                                'created_at': '2023-01-01T00:00:00Z'
+                            }
+                        ]
+                    }
+                }
+            ),
+            400: OpenApiResponse(description='Invalid input parameters'),
+            500: OpenApiResponse(description='Internal server error')
+        }
+    )
+    def get(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         """
-        Handle GET requests, with optional filtering, searching, and pagination.
-        """
-        queryset = self.filter_queryset(self.get_queryset())
+        Handle GET requests to search and filter jobs.
         
-        # Apply pagination
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = JobSerializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
+        This endpoint allows searching and filtering jobs based on various criteria.
+        It supports pagination, filtering by multiple fields, and custom ordering.
+        
+        Args:
+            request: The HTTP request object containing query parameters
+            *args: Additional positional arguments
+            **kwargs: Additional keyword arguments
             
-        # If no pagination, return all results
-        serializer = JobSerializer(queryset, many=True)
-        return Response({
-            'count': queryset.count(),
-            'next': None,
-            'previous': None,
-            'results': serializer.data
-        })
+        Returns:
+            Response: Paginated list of jobs matching the search criteria
+            
+        Example:
+            GET /api/jobs/search/?search=python&location=remote&salary_min=80000
+            
+        Notes:
+            - All string searches are case-insensitive
+            - Multiple values for filters like job_type should be comma-separated
+            - Invalid filter values are silently ignored
+        """
+        try:
+            # Apply all filters to the base queryset
+            queryset: QuerySet[Job] = self.filter_queryset(self.get_queryset())
+            
+            # Apply pagination if configured
+            page: Optional[List[Job]] = self.paginate_queryset(queryset)
+            if page is not None:
+                # Use the appropriate serializer based on the context
+                serializer: JobSerializer = JobSerializer(
+                    page, 
+                    many=True,
+                    context={'request': request}
+                )
+                return self.get_paginated_response(serializer.data)
+            
+            # If no pagination, return all results (not recommended for large datasets)
+            serializer = JobSerializer(
+                queryset, 
+                many=True,
+                context={'request': request}
+            )
+            return Response({
+                'count': queryset.count(),
+                'next': None,
+                'previous': None,
+                'results': serializer.data
+            })
+            
+        except Exception as e:
+            logger.error(
+                f"Error in JobSearchView: {str(e)}", 
+                exc_info=True,
+                extra={
+                    'request': {
+                        'method': request.method,
+                        'path': request.path,
+                        'query_params': dict(request.query_params)
+                    }
+                }
+            )
+            return Response(
+                {'detail': 'An error occurred while processing your request.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class JobApplicationCreateView(APIView):
     """
-    Create a job application.
-    Only job seekers can apply for jobs.
+    API endpoint for job seekers to apply for jobs.
+    
+    This endpoint allows authenticated job seekers to submit applications for job postings.
+    Each application includes a cover letter and an optional resume upload.
+    
+    ### Authentication
+    - User must be authenticated
+    - User must be a job seeker (not an employer)
+    
+    ### Request Format
+    ```
+    POST /api/jobs/{job_id}/apply/
+    Content-Type: multipart/form-data
+    
+    {
+        "cover_letter": "My qualifications and interest in this position...",
+        "resume": <binary_file_data>
+    }
+    ```
+    
+    ### Response Format (Success)
+    ```
+    HTTP 201 Created
+    {
+        "id": 123,
+        "job": 456,
+        "applicant": 789,
+        "status": "applied",
+        "cover_letter": "My qualifications and interest in this position...",
+        "resume": "/media/resumes/2023/01/01/resume_123.pdf",
+        "applied_at": "2023-01-01T12:00:00Z",
+        "updated_at": "2023-01-01T12:00:00Z"
+    }
+    ```
+    
+    ### Error Responses
+    - 400 Bad Request: Invalid input data or already applied
+    - 401 Unauthorized: Authentication credentials not provided
+    - 403 Forbidden: User is an employer (not allowed to apply)
+    - 404 Not Found: Job not found or not active
+    - 500 Internal Server Error: Server error during processing
     """
-    permission_classes = [IsAuthenticated, ~IsEmployer]  # Only non-employers (job seekers) can apply
-    serializer_class = JobApplicationSerializer
-
-    def post(self, request, job_id):
-        import logging
-        logger = logging.getLogger(__name__)
+    
+    # Only allow authenticated job seekers (non-employers) to apply for jobs
+    permission_classes: List[Type[BasePermission]] = [IsAuthenticated, ~IsEmployer]
+    serializer_class: Type[JobApplicationSerializer] = JobApplicationSerializer
+    
+    @extend_schema(
+        operation_id="job_application_create",
+        summary="Apply for a job",
+        description="Submit an application for the specified job posting.",
+        request={
+            'multipart/form-data': {
+                'type': 'object',
+                'properties': {
+                    'cover_letter': {
+                        'type': 'string',
+                        'description': 'The cover letter content',
+                        'example': 'I am excited to apply for this position because...'
+                    },
+                    'resume': {
+                        'type': 'string',
+                        'format': 'binary',
+                        'description': 'Resume file (PDF, DOC, or DOCX)'
+                    }
+                },
+                'required': ['cover_letter']
+            }
+        },
+        responses={
+            201: OpenApiResponse(
+                response=JobApplicationSerializer,
+                description="Application submitted successfully"
+            ),
+            400: OpenApiResponse(
+                description="Invalid input or already applied",
+                examples={
+                    'application/json': {
+                        'detail': 'You have already applied to this job.'
+                    }
+                }
+            ),
+            401: OpenApiResponse(description="Authentication credentials were not provided"),
+            403: OpenApiResponse(
+                description="User is an employer",
+                examples={
+                    'application/json': {
+                        'detail': 'Employers cannot apply for jobs.'
+                    }
+                }
+            ),
+            404: OpenApiResponse(
+                description="Job not found or not active",
+                examples={
+                    'application/json': {
+                        'detail': 'Job not found or not accepting applications.'
+                    }
+                }
+            ),
+            500: OpenApiResponse(description="Internal server error")
+        },
+        tags=["Job Applications"]
+    )
+    def post(self, request: Request, job_id: int, *args: Any, **kwargs: Any) -> Response:
+        """
+        Handle POST request to create a new job application.
         
-        logger.info(f"Job application request received. Job ID: {job_id}")
-        logger.info(f"Request data: {request.data}")
-        logger.info(f"Request FILES: {request.FILES}")
+        Args:
+            request: The HTTP request object containing application data
+            job_id: The ID of the job to apply for
+            *args: Additional positional arguments
+            **kwargs: Additional keyword arguments
+            
+        Returns:
+            Response: The created job application or error details
+            
+        Raises:
+            Http404: If the job doesn't exist or is not active
+            PermissionDenied: If the user is not allowed to apply
+            ValidationError: If the application data is invalid
+            Exception: For unexpected errors during processing
+        """
+        # Log the incoming request
+        logger.info(
+            "Job application request received",
+            extra={
+                'job_id': job_id,
+                'user_id': request.user.id,
+                'has_resume': 'resume' in request.FILES
+            }
+        )
         
+        # Get the job or return 404 if not found/inactive
         try:
-            job = Job.objects.get(id=job_id, is_active=True)
-            logger.info(f"Found job: {job.id} - {job.title}")
+            job: Job = Job.objects.select_related('company').get(id=job_id, is_active=True)
+            logger.info("Found active job", {'job_id': job.id, 'title': job.title})
         except Job.DoesNotExist:
             error_msg = f"Job not found or not active. Job ID: {job_id}"
-            logger.error(error_msg)
+            logger.warning(error_msg)
             return Response(
                 {"detail": "Job not found or not accepting applications."},
                 status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Check application deadline
+        current_time = timezone.now()
+        if job.application_deadline and current_time > job.application_deadline:
+            error_msg = f"Application deadline has passed for job {job.id}"
+            logger.warning(error_msg)
+            return Response(
+                {"detail": "The application deadline for this job has passed."},
+                status=status.HTTP_400_BAD_REQUEST
             )
         
         # Check if user already applied
@@ -435,68 +1215,201 @@ class JobApplicationCreateView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Log incoming data (safely)
-        logger.info("Creating serializer with data: %s", str(request.data)[:500])  # Limit log size
-        logger.info("Files in request: %s", list(request.FILES.keys()) if hasattr(request, 'FILES') else 'No files')
-        
-        # Create a mutable copy of the request data with only the fields we expect
-        data = {
+        # Prepare application data
+        application_data: Dict[str, Any] = {
             'job': job.id,
             'applicant': request.user.id,
             'status': 'applied',
-            'cover_letter': request.data.get('cover_letter', ''),
-            'resume': request.FILES.get('resume')  # Get file from FILES, not data
+            'cover_letter': request.data.get('cover_letter', '').strip(),
+            'resume': request.FILES.get('resume')
         }
         
-        # Log the final data being passed to serializer (excluding file content)
-        log_data = data.copy()
-        if 'resume' in log_data and log_data['resume']:
-            log_data['resume'] = f'<File: {log_data["resume"].name} ({log_data["resume"].size} bytes)>'
-        logger.info("Final data being passed to serializer: %s", log_data)
+        # Log the application data (safely)
+        log_data = {
+            'job_id': job.id,
+            'applicant_id': request.user.id,
+            'has_resume': bool(application_data['resume']),
+            'cover_letter_length': len(application_data['cover_letter'])
+        }
+        logger.info("Processing job application", log_data)
         
-        # Initialize serializer with the cleaned data
-        serializer = self.serializer_class(data=data, context={'request': request, 'job': job})
+        # Validate and save the application
+        serializer: JobApplicationSerializer = self.serializer_class(
+            data=application_data,
+            context={
+                'request': request,
+                'job': job,
+                'user': request.user
+            }
+        )
         
-        if serializer.is_valid():
-            logger.info("Serializer is valid. Saving application...")
-            try:
-                application = serializer.save(job=job, applicant=request.user, status='applied')
-                logger.info(f"Application created successfully. ID: {application.id}")
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
-            except Exception as e:
-                logger.error(f"Error saving application: {str(e)}", exc_info=True)
-                return Response(
-                    {"detail": "An error occurred while processing your application."},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                )
-        else:
-            logger.warning(f"Serializer validation errors: {serializer.errors}")
+        if not serializer.is_valid():
+            logger.warning(
+                "Validation failed for job application",
+                {'errors': serializer.errors, 'user_id': request.user.id, 'job_id': job.id}
+            )
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            # Save the application
+            application: JobApplication = serializer.save(
+                job=job,
+                applicant=request.user,
+                status='applied'
+            )
+            
+            # Log successful application
+            logger.info(
+                "Job application created successfully",
+                {'application_id': application.id, 'job_id': job.id, 'user_id': request.user.id}
+            )
+            
+            # Send notification to employer (in background task)
+            self._notify_employer(application)
+            
+            # Return the created application
+            headers = self.get_success_headers(serializer.data)
+            return Response(
+                serializer.data,
+                status=status.HTTP_201_CREATED,
+                headers=headers
+            )
+            
+        except Exception as e:
+            # Log the error with full context
+            logger.error(
+                f"Error creating job application: {str(e)}",
+                exc_info=True,
+                extra={
+                    'job_id': job.id,
+                    'user_id': request.user.id,
+                    'error_type': type(e).__name__
+                }
+            )
+            
+            # Return a generic error message (don't expose internal details)
+            return Response(
+                {"detail": "An unexpected error occurred while processing your application."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    def _notify_employer(self, application: JobApplication) -> None:
+        """
+        Send notification to employer about the new application.
+        
+        This method is called asynchronously after a successful application.
+        
+        Args:
+            application: The created JobApplication instance
+        """
+        try:
+            # In a production environment, this would trigger an email or notification
+            # For now, just log the notification
+            logger.info(
+                "Sending notification to employer about new application",
+                {
+                    'application_id': application.id,
+                    'job_id': application.job.id,
+                    'job_title': application.job.title,
+                    'applicant_name': str(application.applicant.get_full_name() or application.applicant.email),
+                    'employer_id': application.job.company.owner.id
+                }
+            )
+            
+            # Example of sending an email (commented out for reference)
+            # from django.core.mail import send_mail
+            # send_mail(
+            #     subject=f"New Application for {application.job.title}",
+            #     message=f"{application.applicant.get_full_name()} has applied to your job.",
+            #     from_email="noreply@careeropen.com",
+            #     recipient_list=[application.job.company.owner.email],
+            #     fail_silently=True
+            # )
+            
+        except Exception as e:
+            # Don't fail the application if notification fails
+            logger.error(
+                "Failed to send employer notification",
+                exc_info=True,
+                extra={'application_id': application.id if application else None}
+            )
+    
+    def get_success_headers(self, data: Dict[str, Any]) -> Dict[str, str]:
+        """
+        Return the Location header for the newly created resource.
+        
+        Args:
+            data: The serialized data of the created resource
+            
+        Returns:
+            Dict containing the Location header
+        """
+        try:
+            return {'Location': str(data.get('url', ''))}
+        except (TypeError, KeyError):
+            return {}
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
     """
-    Enhanced API endpoint for category management with comprehensive CRUD operations.
-    Includes advanced filtering, search, ordering, and caching capabilities.
+    API endpoint for managing job categories with comprehensive CRUD operations.
+    
+    This viewset provides a complete interface for managing job categories with features including:
+    - Full CRUD operations (admin only)
+    - Advanced filtering, search, and ordering
+    - Caching for improved performance
+    - Featured categories functionality
+    - Job listings by category
+    
+    ### Authentication
+    - Read operations: Public (no authentication required)
+    - Write operations: Admin users only
+    
+    ### Filtering
+    - `is_active` (bool): Filter by active status
+    - `is_featured` (bool): Filter featured categories
+    - `created_at` (date): Filter by creation date
+    - `updated_at` (date): Filter by last update date
+    - `include_job_count` (bool): Include job count in response
+    
+    ### Searching
+    Search is available on these fields:
+    - `name`: Category name
+    - `description`: Category description
+    - `keywords`: Associated keywords
+    
+    ### Ordering
+    Results can be ordered by:
+    - `name`: Alphabetical order
+    - `created_at`: Creation date
+    - `updated_at`: Last update date
+    - `display_order`: Custom display order
+    - `job_count`: Number of active jobs (if included)
     """
-    queryset = Category.objects.all().order_by('name')
-    serializer_class = CategorySerializer
-    pagination_class = StandardResultsSetPagination
-    filter_backends = [filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend]
-    search_fields = ['name', 'description', 'keywords']
-    filterset_fields = {
+    
+    # Class attributes with type hints
+    queryset: QuerySet[Category] = Category.objects.all().order_by('name')
+    serializer_class: Type[CategorySerializer] = CategorySerializer
+    pagination_class: Type[PageNumberPagination] = StandardResultsSetPagination
+    filter_backends: List[Type[BaseFilterBackend]] = [
+        filters.SearchFilter, 
+        filters.OrderingFilter, 
+        DjangoFilterBackend
+    ]
+    search_fields: List[str] = ['name', 'description', 'keywords']
+    filterset_fields: Dict[str, List[str]] = {
         'is_active': ['exact'],
         'created_at': ['date', 'gte', 'lte'],
         'updated_at': ['date', 'gte', 'lte'],
     }
-    ordering_fields = [
-        'name', 'created_at', 'updated_at'
+    ordering_fields: List[str] = [
+        'name', 'created_at', 'updated_at', 'display_order', 'job_count'
     ]
-    ordering = ['name']
-    permission_classes = [IsAdminOrReadOnly]
-    lookup_field = 'slug'
-    lookup_url_kwarg = 'slug'
-    cache_timeout = 60 * 60 * 24  # 24 hours (categories don't change often)
+    ordering: List[str] = ['display_order', 'name']
+    permission_classes: List[Type[BasePermission]] = [IsAdminOrReadOnly]
+    lookup_field: str = 'slug'
+    lookup_url_kwarg: str = 'slug'
+    cache_timeout: int = 60 * 60 * 24  # 24 hours (categories don't change often)
     
     def get_queryset(self):
         """
@@ -671,18 +1584,78 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
 class CompanyViewSet(viewsets.ModelViewSet):
     """
-    Enhanced API endpoint for company management with comprehensive CRUD operations.
-    Includes advanced filtering, search, ordering, and caching capabilities.
+    API endpoint for managing companies with comprehensive CRUD operations.
+    
+    This viewset provides a complete interface for managing company profiles with features including:
+    - Full CRUD operations with proper permission checks
+    - Advanced filtering, search, and ordering
+    - Caching for improved performance
+    - Company verification system
+    - Featured companies functionality
+    
+    ### Authentication
+    - Read operations: Public for verified companies
+    - Create: Authenticated employers only
+    - Update/Delete: Company owners or admin only
+    - Verification: Admin only
+    
+    ### Filtering
+    - `industry` (str): Filter by industry (exact match or contains)
+    - `company_size` (str): Filter by company size (exact match or in list)
+    - `is_verified` (bool): Filter by verification status
+    - `is_featured` (bool): Filter featured companies
+    - `founded_year` (int): Filter by year founded (exact, gte, lte)
+    - `headquarters` (str): Filter by headquarters location (exact or contains)
+    - `created_at` (date): Filter by creation date (date, gte, lte)
+    
+    ### Searching
+    Search is available on these fields:
+    - `name`: Company name
+    - `description`: Company description
+    - `industry`: Industry sector
+    - `headquarters`: Location of headquarters
+    - `website`: Company website
+    - `tagline`: Company tagline
+    - `specialties`: Company specialties
+    
+    ### Ordering
+    Results can be ordered by:
+    - `name`: Company name (default)
+    - `created_at`: Creation date
+    - `updated_at`: Last update date
+    - `founded_year`: Year company was founded
+    - `company_size`: Size of the company
+    
+    ### Example Requests
+    ```
+    # List all verified companies
+    GET /api/companies/?is_verified=true
+    
+    # Search for companies in the tech industry
+    GET /api/companies/?search=technology&industry=Technology
+    
+    # Get featured companies
+    GET /api/companies/featured/
+    
+    # Get companies created by the current user
+    GET /api/companies/my_companies/
+    ```
     """
-    queryset = Company.objects.all().order_by('name')
-    serializer_class = CompanySerializer
-    pagination_class = StandardResultsSetPagination
-    filter_backends = [filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend]
-    search_fields = [
+    
+    # Class attributes with type hints
+    queryset: QuerySet[Company] = Company.objects.all().order_by('name')
+    serializer_class: Type[CompanySerializer] = CompanySerializer
+    pagination_class: Type[PageNumberPagination] = StandardResultsSetPagination
+    filter_backends: List[Type[BaseFilterBackend]] = [
+        filters.SearchFilter, 
+        filters.OrderingFilter, 
+        DjangoFilterBackend
+    ]
+    search_fields: List[str] = [
         'name', 'description', 'industry', 'headquarters', 'website',
         'tagline', 'specialties'
     ]
-    filterset_fields = {
+    filterset_fields: Dict[str, List[str]] = {
         'industry': ['exact', 'icontains'],
         'company_size': ['exact', 'in'],
         'is_verified': ['exact'],
@@ -690,18 +1663,28 @@ class CompanyViewSet(viewsets.ModelViewSet):
         'created_at': ['date', 'gte', 'lte'],
         'headquarters': ['exact', 'icontains']
     }
-    ordering_fields = [
+    ordering_fields: List[str] = [
         'name', 'created_at', 'updated_at', 'founded_year', 'company_size'
     ]
-    ordering = ['name']
-    permission_classes = [IsAuthenticated, IsCompanyOwnerOrReadOnly]
-    lookup_field = 'slug'
-    lookup_url_kwarg = 'slug'
-    cache_timeout = 60 * 30  # 30 minutes
+    ordering: List[str] = ['name']
+    permission_classes: List[Type[BasePermission]] = [IsAuthenticated, IsCompanyOwnerOrReadOnly]
+    lookup_field: str = 'slug'
+    lookup_url_kwarg: str = 'slug'
+    cache_timeout: int = 60 * 30  # 30 minutes
 
-    def get_permissions(self):
+    def get_permissions(self) -> List[BasePermission]:
         """
-        Instantiates and returns the list of permissions that this view requires.
+        Get the list of permissions required for different actions.
+        
+        Returns:
+            List[BasePermission]: List of permission instances based on the action
+            
+        Permission Rules:
+        - Create: Authenticated employers only
+        - Update/Delete: Company owners or admin only
+        - My Companies/Verify/Unverify: Authenticated employers or admin
+        - Featured: Public endpoint (no authentication required)
+        - All other actions: Authenticated users only
         """
         if self.action in ['create']:
             permission_classes = [IsAuthenticated, IsEmployer]
@@ -715,9 +1698,22 @@ class CompanyViewSet(viewsets.ModelViewSet):
             permission_classes = [IsAuthenticated]
         return [permission() for permission in permission_classes]
     
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[Company]:
         """
-        Custom queryset to filter companies based on user role and request parameters.
+        Get the queryset of companies with filtering based on user role and request parameters.
+        
+        Returns:
+            QuerySet[Company]: Filtered queryset of companies
+            
+        Filtering Rules:
+        - Non-authenticated users: Only see verified and active companies
+        - Admin users: See all companies
+        - Employers: See their own companies and all verified companies
+        - Regular users: See only verified and active companies
+        
+        Query Parameters:
+        - is_featured (bool): Filter by featured status
+        - Other filters defined in filterset_fields
         """
         queryset = super().get_queryset()
         user = self.request.user
@@ -744,206 +1740,703 @@ class CompanyViewSet(viewsets.ModelViewSet):
         # For regular users, only return verified and active companies
         return queryset.filter(is_verified=True, is_active=True)
     
-    def get_serializer_context(self):
+    def get_serializer_context(self) -> Dict[str, Any]:
         """
-        Extra context provided to the serializer class.
+        Get the serializer context with additional data.
+        
+        Returns:
+            Dict containing the serializer context with the current request
         """
         context = super().get_serializer_context()
         context['request'] = self.request
         return context
 
+    @extend_schema(
+        operation_id="company_list",
+        summary="List all companies",
+        description="Returns a paginated list of companies with optional filtering and search.",
+        parameters=[
+            OpenApiParameter(
+                name='is_featured',
+                type=OpenApiTypes.BOOL,
+                location=OpenApiParameter.QUERY,
+                description='Filter by featured status',
+                required=False
+            ),
+            OpenApiParameter(
+                name='is_verified',
+                type=OpenApiTypes.BOOL,
+                location=OpenApiParameter.QUERY,
+                description='Filter by verification status',
+                required=False
+            ),
+            OpenApiParameter(
+                name='industry',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description='Filter by industry (exact match or contains)',
+                required=False
+            ),
+            OpenApiParameter(
+                name='search',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description='Search term for name, description, industry, etc.',
+                required=False
+            ),
+            OpenApiParameter(
+                name='ordering',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description='Which field to use when ordering the results',
+                required=False
+            ),
+        ],
+        responses={
+            200: OpenApiResponse(
+                response=CompanySerializer(many=True),
+                description="List of companies"
+            ),
+            400: OpenApiResponse(description="Invalid filter parameters"),
+            401: OpenApiResponse(description="Authentication credentials were not provided"),
+        },
+        tags=["Companies"]
+    )
     @method_decorator(cache_page(cache_timeout))
     @method_decorator(vary_on_headers('Authorization'))
-    def list(self, request, *args, **kwargs):
+    def list(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         """
         List all companies with caching and advanced filtering.
-        """
-        # Generate a cache key based on the request
-        cache_key = f'companies_list_{request.get_full_path()}'
         
-        # Try to get the response from cache
-        cached_response = cache.get(cache_key)
-        if cached_response is not None:
-            return Response(cached_response)
+        This endpoint returns a paginated list of companies with support for:
+        - Full-text search across multiple fields
+        - Filtering by various company attributes
+        - Custom ordering
+        - Caching for improved performance
+        
+        Args:
+            request: The HTTP request object
+            *args: Additional positional arguments
+            **kwargs: Additional keyword arguments
             
-        # If not in cache, get the response from the parent class
-        response = super().list(request, *args, **kwargs)
-        
-        # Cache the response
-        cache.set(cache_key, response.data, self.cache_timeout)
-        return response
-        
+        Returns:
+            Response: Paginated list of companies
+            
+        Example:
+            GET /api/companies/?is_verified=true&ordering=-created_at
+        """
+        try:
+            # Generate a cache key based on the request
+            cache_key = f'companies_list_{request.get_full_path()}'
+            
+            # Try to get the response from cache
+            cached_response = cache.get(cache_key)
+            if cached_response is not None:
+                return Response(cached_response)
+                
+            # If not in cache, get the response from the parent class
+            response = super().list(request, *args, **kwargs)
+            
+            # Cache the response
+            cache.set(cache_key, response.data, self.cache_timeout)
+            return response
+            
+        except Exception as e:
+            logger.error(
+                f"Error listing companies: {str(e)}",
+                exc_info=True,
+                extra={'user_id': request.user.id if request.user.is_authenticated else None}
+            )
+            return Response(
+                {'detail': 'An error occurred while fetching companies.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @extend_schema(
+        operation_id="company_retrieve",
+        summary="Retrieve a company",
+        description="Returns the details of a specific company by its slug.",
+        responses={
+            200: CompanySerializer,
+            401: OpenApiResponse(description="Authentication credentials were not provided"),
+            403: OpenApiResponse(description="Not authorized to view this company"),
+            404: OpenApiResponse(description="Company not found"),
+        },
+        tags=["Companies"]
+    )
     @method_decorator(cache_page(cache_timeout))
-    def retrieve(self, request, *args, **kwargs):
+    def retrieve(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         """
         Retrieve a company with caching and permission checks.
+        
+        Args:
+            request: The HTTP request object
+            *args: Additional positional arguments
+            **kwargs: Additional keyword arguments including the company slug
+            
+        Returns:
+            Response: The requested company details
+            
+        Raises:
+            Http404: If the company is not found or not accessible
         """
-        # Generate a cache key based on the request
-        cache_key = f'company_detail_{kwargs["slug"]}'
-        
-        # Try to get the response from cache
-        cached_response = cache.get(cache_key)
-        if cached_response is not None:
-            return Response(cached_response)
+        try:
+            # Generate a cache key based on the request
+            cache_key = f'company_detail_{kwargs["slug"]}'
             
-        # If not in cache, get the response from the parent class
-        response = super().retrieve(request, *args, **kwargs)
-        
-        # Cache the response
-        cache.set(cache_key, response.data, self.cache_timeout)
-        return response
+            # Try to get the response from cache
+            cached_response = cache.get(cache_key)
+            if cached_response is not None:
+                return Response(cached_response)
+                
+            # If not in cache, get the response from the parent class
+            response = super().retrieve(request, *args, **kwargs)
+            
+            # Cache the response
+            cache.set(cache_key, response.data, self.cache_timeout)
+            return response
+            
+        except Company.DoesNotExist:
+            logger.warning(
+                f"Company not found: {kwargs.get('slug')}",
+                extra={'user_id': request.user.id if request.user.is_authenticated else None}
+            )
+            raise Http404("Company not found")
+        except PermissionDenied as e:
+            logger.warning(
+                f"Permission denied accessing company {kwargs.get('slug')}: {str(e)}",
+                extra={'user_id': request.user.id if request.user.is_authenticated else None}
+            )
+            raise
+        except Exception as e:
+            logger.error(
+                f"Error retrieving company {kwargs.get('slug')}: {str(e)}",
+                exc_info=True,
+                extra={'user_id': request.user.id if request.user.is_authenticated else None}
+            )
+            return Response(
+                {'detail': 'An error occurred while fetching the company details.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
     
+    @extend_schema(
+        operation_id="company_my_companies",
+        summary="List companies created by the current user",
+        description="Returns a list of companies created by the currently authenticated employer.",
+        responses={
+            200: CompanySerializer(many=True),
+            401: OpenApiResponse(description="Authentication credentials were not provided"),
+            403: OpenApiResponse(description="User is not an employer"),
+        },
+        tags=["Companies"]
+    )
     @action(detail=False, methods=['get'])
-    def my_companies(self, request):
-        """List all companies created by the current user (employer)."""
-        queryset = self.filter_queryset(self.get_queryset())
-        page = self.paginate_queryset(queryset)
+    def my_companies(self, request: Request) -> Response:
+        """
+        List all companies created by the current authenticated employer.
         
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
+        This endpoint is only accessible to employers and returns a paginated list 
+        of companies they have created.
+        
+        Args:
+            request: The HTTP request object
             
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
+        Returns:
+            Response: Paginated list of companies created by the current user
+            
+        Raises:
+            PermissionDenied: If the user is not an employer
+        """
+        try:
+            if not hasattr(request.user, 'is_employer') or not request.user.is_employer:
+                raise PermissionDenied("Only employers can view their companies.")
+                
+            queryset = self.filter_queryset(self.get_queryset())
+            page = self.paginate_queryset(queryset)
+            
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+                
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data)
+            
+        except Exception as e:
+            logger.error(
+                f"Error fetching user's companies: {str(e)}",
+                exc_info=True,
+                extra={'user_id': request.user.id if request.user.is_authenticated else None}
+            )
+            return Response(
+                {'detail': 'An error occurred while fetching your companies.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
     
+    @extend_schema(
+        operation_id="company_verify",
+        summary="Verify a company",
+        description="Mark a company as verified (admin only).",
+        responses={
+            200: CompanySerializer,
+            400: OpenApiResponse(description="Company is already verified"),
+            401: OpenApiResponse(description="Authentication credentials were not provided"),
+            403: OpenApiResponse(description="User is not authorized to verify companies"),
+            404: OpenApiResponse(description="Company not found"),
+        },
+        tags=["Companies"]
+    )
     @action(detail=True, methods=['post'])
-    def verify(self, request, slug=None):
-        """Mark a company as verified (admin only)."""
-        company = self.get_object()
+    def verify(self, request: Request, slug: Optional[str] = None) -> Response:
+        """
+        Mark a company as verified.
         
-        if company.is_verified:
-            return Response(
-                {'detail': 'This company is already verified.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        This action can only be performed by admin users. It updates the company's
+        verification status and records who verified it and when.
+        
+        Args:
+            request: The HTTP request object
+            slug: The slug of the company to verify
             
-        company.is_verified = True
-        company.verified_at = timezone.now()
-        company.verified_by = request.user
-        company.save()
-        
-        # Clear cache for this company
-        cache.delete(f'company_detail_{company.slug}')
-        
-        serializer = self.get_serializer(company)
-        return Response(serializer.data)
-    
-    @action(detail=True, methods=['post'])
-    def unverify(self, request, slug=None):
-        """Mark a company as unverified (admin only)."""
-        company = self.get_object()
-        
-        if not company.is_verified:
-            return Response(
-                {'detail': 'This company is not verified.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        Returns:
+            Response: The updated company data
             
-        company.is_verified = False
-        company.verified_at = None
-        company.verified_by = None
-        company.save()
-        
-        # Clear cache for this company
-        cache.delete(f'company_detail_{company.slug}')
-        
-        serializer = self.get_serializer(company)
-        return Response(serializer.data)
-    
-    @action(detail=True, methods=['post'])
-    def feature(self, request, slug=None):
-        """Feature a company (admin only)."""
-        if not request.user.is_staff:
-            return Response(
-                {'detail': 'Only administrators can perform this action.'},
-                status=status.HTTP_403_FORBIDDEN
-            )
+        Raises:
+            Http404: If the company is not found
+            PermissionDenied: If the user is not authorized to verify companies
+        """
+        try:
+            company = self.get_object()
             
-        company = self.get_object()
-        
-        if company.is_featured:
-            return Response(
-                {'detail': 'This company is already featured.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-            
-        company.is_featured = True
-        company.featured_at = timezone.now()
-        company.save()
-        
-        # Clear cache for this company
-        cache.delete(f'company_detail_{company.slug}')
-        
-        serializer = self.get_serializer(company)
-        return Response(serializer.data)
-    
-    @action(detail=True, methods=['post'])
-    def unfeature(self, request, slug=None):
-        """Remove company from featured list (admin only)."""
-        if not request.user.is_staff:
-            return Response(
-                {'detail': 'Only administrators can perform this action.'},
-                status=status.HTTP_403_FORBIDDEN
-            )
-            
-        company = self.get_object()
-        
-        if not company.is_featured:
-            return Response(
-                {'detail': 'This company is not featured.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-            
-        company.is_featured = False
-        company.featured_at = None
-        company.save()
-        
-        # Clear cache for this company
-        cache.delete(f'company_detail_{company.slug}')
-        
-        serializer = self.get_serializer(company)
-        return Response(serializer.data)
-    
-    @action(detail=False, methods=['get'])
-    def featured(self, request):
-        """List all featured companies (public endpoint)."""
-        queryset = self.filter_queryset(
-            self.get_queryset().filter(is_featured=True, is_verified=True, is_active=True)
-        )
-        
-        # Apply pagination
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-            
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
-    
-    def perform_create(self, serializer):
-        """Create a new company with the current user as the creator."""
-        company = serializer.save(created_by=self.request.user)
-        
-        # If the user is an admin, auto-verify the company
-        if self.request.user.is_staff:
+            if company.is_verified:
+                return Response(
+                    {'detail': 'This company is already verified.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+                
             company.is_verified = True
             company.verified_at = timezone.now()
-            company.verified_by = self.request.user
+            company.verified_by = request.user
             company.save()
+            
+            # Clear cache for this company
+            cache.delete(f'company_detail_{company.slug}')
+            
+            logger.info(
+                f"Company '{company.name}' verified by {request.user.email}",
+                extra={'company_id': company.id, 'user_id': request.user.id}
+            )
+            
+            serializer = self.get_serializer(company)
+            return Response(serializer.data)
+            
+        except Exception as e:
+            logger.error(
+                f"Error verifying company {slug}: {str(e)}",
+                exc_info=True,
+                extra={'user_id': request.user.id if request.user.is_authenticated else None}
+            )
+            return Response(
+                {'detail': 'An error occurred while verifying the company.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
     
-    def perform_update(self, serializer):
-        """Update a company with proper tracking."""
-        instance = serializer.save()
+    @extend_schema(
+        operation_id="company_unverify",
+        summary="Unverify a company",
+        description="Mark a company as unverified (admin only).",
+        responses={
+            200: CompanySerializer,
+            400: OpenApiResponse(description="Company is not verified"),
+            401: OpenApiResponse(description="Authentication credentials were not provided"),
+            403: OpenApiResponse(description="User is not authorized to unverify companies"),
+            404: OpenApiResponse(description="Company not found"),
+        },
+        tags=["Companies"]
+    )
+    @action(detail=True, methods=['post'])
+    def unverify(self, request: Request, slug: Optional[str] = None) -> Response:
+        """
+        Mark a company as unverified.
         
-        # Clear cache for this company
-        cache.delete(f'company_detail_{instance.slug}')
+        This action can only be performed by admin users. It revokes the company's
+        verified status and clears the verification metadata.
+        
+        Args:
+            request: The HTTP request object
+            slug: The slug of the company to unverify
+            
+        Returns:
+            Response: The updated company data
+            
+        Raises:
+            Http404: If the company is not found
+            PermissionDenied: If the user is not authorized to unverify companies
+        """
+        try:
+            company = self.get_object()
+            
+            if not company.is_verified:
+                return Response(
+                    {'detail': 'This company is not verified.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+                
+            company.is_verified = False
+            company.verified_at = None
+            company.verified_by = None
+            company.save()
+            
+            # Clear cache for this company
+            cache.delete(f'company_detail_{company.slug}')
+            
+            logger.info(
+                f"Company '{company.name}' unverified by {request.user.email}",
+                extra={'company_id': company.id, 'user_id': request.user.id}
+            )
+            
+            serializer = self.get_serializer(company)
+            return Response(serializer.data)
+            
+        except Exception as e:
+            logger.error(
+                f"Error unverifying company {slug}: {str(e)}",
+                exc_info=True,
+                extra={'user_id': request.user.id if request.user.is_authenticated else None}
+            )
+            return Response(
+                {'detail': 'An error occurred while unverifying the company.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
     
-    def perform_destroy(self, instance):
-        """Delete a company and clear its cache."""
-        company_slug = instance.slug
-        instance.delete()
-        # Clear cache for this company
-        cache.delete(f'company_detail_{company_slug}')
+    @extend_schema(
+        operation_id="company_feature",
+        summary="Feature a company",
+        description="Mark a company as featured (admin only).",
+        responses={
+            200: CompanySerializer,
+            400: OpenApiResponse(description="Company is already featured"),
+            401: OpenApiResponse(description="Authentication credentials were not provided"),
+            403: OpenApiResponse(description="User is not authorized to feature companies"),
+            404: OpenApiResponse(description="Company not found"),
+        },
+        tags=["Companies"]
+    )
+    @action(detail=True, methods=['post'])
+    def feature(self, request: Request, slug: Optional[str] = None) -> Response:
+        """
+        Mark a company as featured.
+        
+        This action can only be performed by admin users. It marks the company as
+        featured and records who featured it and when.
+        
+        Args:
+            request: The HTTP request object
+            slug: The slug of the company to feature
+            
+        Returns:
+            Response: The updated company data
+            
+        Raises:
+            Http404: If the company is not found
+            PermissionDenied: If the user is not authorized to feature companies
+        """
+        try:
+            company = self.get_object()
+            
+            if company.is_featured:
+                return Response(
+                    {'detail': 'This company is already featured.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+                
+            company.is_featured = True
+            company.featured_at = timezone.now()
+            company.featured_by = request.user
+            company.save()
+            
+            # Clear cache for this company and featured list
+            cache.delete(f'company_detail_{company.slug}')
+            cache.delete('featured_companies')
+            
+            logger.info(
+                f"Company '{company.name}' featured by {request.user.email}",
+                extra={'company_id': company.id, 'user_id': request.user.id}
+            )
+            
+            serializer = self.get_serializer(company)
+            return Response(serializer.data)
+            
+        except Exception as e:
+            logger.error(
+                f"Error featuring company {slug}: {str(e)}",
+                exc_info=True,
+                extra={'user_id': request.user.id if request.user.is_authenticated else None}
+            )
+            return Response(
+                {'detail': 'An error occurred while featuring the company.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @extend_schema(
+        operation_id="company_unfeature",
+        summary="Unfeature a company",
+        description="Remove a company from the featured list (admin only).",
+        responses={
+            200: CompanySerializer,
+            400: OpenApiResponse(description="Company is not featured"),
+            401: OpenApiResponse(description="Authentication credentials were not provided"),
+            403: OpenApiResponse(description="User is not authorized to unfeature companies"),
+            404: OpenApiResponse(description="Company not found"),
+        },
+        tags=["Companies"]
+    )
+    @action(detail=True, methods=['post'])
+    def unfeature(self, request: Request, slug: Optional[str] = None) -> Response:
+        """
+        Remove a company from the featured list.
+        
+        This action can only be performed by admin users. It removes the company's
+        featured status and clears the featured metadata.
+        
+        Args:
+            request: The HTTP request object
+            slug: The slug of the company to unfeature
+            
+        Returns:
+            Response: The updated company data
+            
+        Raises:
+            Http404: If the company is not found
+            PermissionDenied: If the user is not authorized to unfeature companies
+        """
+        try:
+            if not request.user.is_staff:
+                raise PermissionDenied("Only administrators can perform this action.")
+                
+            company = self.get_object()
+            
+            if not company.is_featured:
+                return Response(
+                    {'detail': 'This company is not featured.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+                
+            company.is_featured = False
+            company.featured_at = None
+            company.featured_by = None
+            company.save()
+            
+            # Clear cache for this company and featured list
+            cache.delete(f'company_detail_{company.slug}')
+            cache.delete('featured_companies')
+            
+            logger.info(
+                f"Company '{company.name}' unfeatured by {request.user.email}",
+                extra={'company_id': company.id, 'user_id': request.user.id}
+            )
+            
+            serializer = self.get_serializer(company)
+            return Response(serializer.data)
+            
+        except Exception as e:
+            logger.error(
+                f"Error unfeaturing company {slug}: {str(e)}",
+                exc_info=True,
+                extra={'user_id': request.user.id if request.user.is_authenticated else None}
+            )
+            return Response(
+                {'detail': 'An error occurred while unfeaturing the company.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @extend_schema(
+        operation_id="company_featured_list",
+        summary="List featured companies",
+        description="Returns a list of featured and verified companies (public endpoint).",
+        parameters=[
+            OpenApiParameter(
+                name='page',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                description='Page number',
+                required=False
+            ),
+            OpenApiParameter(
+                name='page_size',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                description='Number of results per page',
+                required=False
+            ),
+        ],
+        responses={
+            200: CompanySerializer(many=True),
+        },
+        tags=["Companies"]
+    )
+    @method_decorator(cache_page(60 * 60 * 2))  # Cache for 2 hours
+    @action(detail=False, methods=['get'])
+    def featured(self, request: Request) -> Response:
+        """
+        List all featured and verified companies.
+        
+        This is a public endpoint that returns a paginated list of companies
+        that are both featured and verified. The results are cached for 2 hours.
+        
+        Args:
+            request: The HTTP request object
+            
+        Returns:
+            Response: Paginated list of featured companies
+        """
+        try:
+            # Try to get from cache first
+            cache_key = 'featured_companies_list'
+            cached_response = cache.get(cache_key)
+            
+            if cached_response is not None:
+                return Response(cached_response)
+            
+            queryset = self.filter_queryset(
+                self.get_queryset().filter(
+                    is_featured=True, 
+                    is_verified=True, 
+                    is_active=True
+                )
+            )
+            
+            # Apply pagination
+            page = self.paginate_queryset(queryset)
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                response_data = self.get_paginated_response(serializer.data).data
+                # Cache the paginated response
+                cache.set(cache_key, response_data, 60 * 60 * 2)  # 2 hours
+                return Response(response_data)
+                
+            serializer = self.get_serializer(queryset, many=True)
+            response_data = serializer.data
+            # Cache the response
+            cache.set(cache_key, response_data, 60 * 60 * 2)  # 2 hours
+            return Response(response_data)
+            
+        except Exception as e:
+            logger.error(
+                f"Error listing featured companies: {str(e)}",
+                exc_info=True,
+                extra={'user_id': request.user.id if request.user.is_authenticated else None}
+            )
+            return Response(
+                {'detail': 'An error occurred while fetching featured companies.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    def perform_create(self, serializer: CompanySerializer) -> None:
+        """
+        Create a new company with the current user as the creator.
+        
+        This method is called when a new company is created through the API.
+        It sets the created_by field to the current user and optionally
+        auto-verifies the company if the user is an admin.
+        
+        Args:
+            serializer: The company serializer instance
+            
+        Returns:
+            None
+        """
+        try:
+            company = serializer.save(created_by=self.request.user)
+            
+            # If the user is an admin, auto-verify the company
+            if self.request.user.is_staff:
+                company.is_verified = True
+                company.verified_at = timezone.now()
+                company.verified_by = self.request.user
+                company.save()
+                
+                logger.info(
+                    f"Admin-created company '{company.name}' auto-verified by {self.request.user.email}",
+                    extra={'company_id': company.id, 'user_id': self.request.user.id}
+                )
+                
+        except Exception as e:
+            logger.error(
+                f"Error creating company: {str(e)}",
+                exc_info=True,
+                extra={'user_id': self.request.user.id if self.request.user.is_authenticated else None}
+            )
+            raise
+    
+    def perform_update(self, serializer: CompanySerializer) -> None:
+        """
+        Update a company with proper cache invalidation.
+        
+        This method is called when a company is updated through the API.
+        It clears the company's cache to ensure fresh data is served.
+        
+        Args:
+            serializer: The company serializer instance
+            
+        Returns:
+            None
+        """
+        try:
+            instance = serializer.save()
+            
+            # Clear cache for this company and featured list
+            cache.delete(f'company_detail_{instance.slug}')
+            cache.delete('featured_companies')
+            
+            logger.info(
+                f"Company '{instance.name}' updated by {self.request.user.email}",
+                extra={'company_id': instance.id, 'user_id': self.request.user.id}
+            )
+            
+        except Exception as e:
+            logger.error(
+                f"Error updating company: {str(e)}",
+                exc_info=True,
+                extra={'user_id': self.request.user.id if self.request.user.is_authenticated else None}
+            )
+            raise
+    
+    def perform_destroy(self, instance: Company) -> None:
+        """
+        Delete a company and clear its cache.
+        
+        This method is called when a company is deleted through the API.
+        It clears the company's cache and logs the deletion.
+        
+        Args:
+            instance: The company instance being deleted
+            
+        Returns:
+            None
+        """
+        try:
+            company_slug = instance.slug
+            company_name = instance.name
+            user_email = self.request.user.email if self.request.user.is_authenticated else 'anonymous'
+            
+            # Clear cache for this company and featured list
+            cache.delete(f'company_detail_{company_slug}')
+            cache.delete('featured_companies')
+            
+            instance.delete()
+            
+            logger.info(
+                f"Company '{company_name}' deleted by {user_email}",
+                extra={'company_slug': company_slug}
+            )
+            
+        except Exception as e:
+            logger.error(
+                f"Error deleting company: {str(e)}",
+                exc_info=True,
+                extra={'user_id': self.request.user.id if self.request.user.is_authenticated else None}
+            )
+            raise
 
 
 class UserJobApplicationsView(ListAPIView):

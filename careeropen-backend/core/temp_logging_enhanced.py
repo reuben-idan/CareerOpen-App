@@ -7,9 +7,19 @@ import os
 import logging
 from pathlib import Path
 
-# Ensure the logs directory exists
-log_dir = Path('C:/Users/reube/CareerOpen-App/logs')
-log_dir.mkdir(parents=True, exist_ok=True)
+# Ensure the logs directory exists in the project root
+BASE_DIR = Path(__file__).resolve().parent.parent.parent  # Points to careeropen-backend's parent
+log_dir = BASE_DIR / 'logs'
+try:
+    log_dir.mkdir(parents=True, exist_ok=True)
+    print(f"Log directory created at: {log_dir}")
+except Exception as e:
+    print(f"Error creating log directory at {log_dir}: {e}")
+    # Fall back to a directory in the system temp folder if needed
+    import tempfile
+    log_dir = Path(tempfile.gettempdir()) / 'careeropen_logs'
+    log_dir.mkdir(exist_ok=True)
+    print(f"Using fallback log directory at: {log_dir}")
 
 # Clear existing log files
 for filename in ['django_debug.log', 'django_error.log', 'accounts_debug.log', 

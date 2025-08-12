@@ -1,24 +1,115 @@
 from datetime import datetime
-from rest_framework import serializers
+from typing import Any, Dict, List, Optional, Union
+
+from django.core.files.base import File
+from django.core.files.uploadedfile import UploadedFile
 from django.utils import timezone
-from .models import Job, JobApplication, Category, Company
+from drf_spectacular.utils import extend_schema_field, extend_schema_serializer
+from rest_framework import serializers
+
 from accounts.serializers import UserProfileSerializer
+from .models import Job, JobApplication, Category, Company
 
 
+@extend_schema_serializer(
+    examples=[
+        {
+            'name': 'Software Development',
+            'description': 'Jobs in software development and engineering',
+            'icon': 'code',
+            'is_active': True
+        },
+        {
+            'name': 'Design',
+            'description': 'Design and creative roles',
+            'icon': 'palette',
+            'is_active': True
+        }
+    ]
+)
 class CategorySerializer(serializers.ModelSerializer):
     """
     Serializer for the Category model.
+    
+    This serializer handles the serialization and deserialization of Category instances,
+    including validation of input data and conversion to/from Python data types.
+    
+    Fields:
+        id: Auto-generated unique identifier (read-only)
+        name: Name of the category (required, unique)
+        slug: URL-friendly version of the name (auto-generated, read-only)
+        description: Detailed description of the category (optional)
+        icon: Icon identifier for the category (optional)
+        is_active: Boolean indicating if the category is active
+        created_at: Timestamp of when the category was created (auto-generated, read-only)
+        updated_at: Timestamp of when the category was last updated (auto-generated, read-only)
     """
+    
     class Meta:
         model = Category
         fields = ['id', 'name', 'slug', 'description', 'icon', 'is_active', 'created_at', 'updated_at']
         read_only_fields = ['id', 'slug', 'created_at', 'updated_at']
+        extra_kwargs = {
+            'name': {
+                'help_text': 'Name of the category (must be unique)',
+                'max_length': 100,
+                'required': True
+            },
+            'description': {
+                'help_text': 'Detailed description of the category',
+                'allow_blank': True,
+                'required': False
+            },
+            'icon': {
+                'help_text': 'Icon identifier (e.g., from a frontend icon library)',
+                'allow_blank': True,
+                'required': False,
+                'max_length': 50
+            },
+            'is_active': {
+                'help_text': 'Whether the category is active and visible',
+                'default': True
+            }
+        }
 
 
+@extend_schema_serializer(
+    examples=[
+        {
+            'name': 'TechCorp',
+            'description': 'A leading technology company',
+            'website': 'https://techcorp.example.com',
+            'industry': 'Information Technology',
+            'founded_year': 2010,
+            'company_size': '51-200',
+            'headquarters': 'San Francisco, CA',
+            'is_verified': True
+        }
+    ]
+)
 class CompanySerializer(serializers.ModelSerializer):
     """
     Serializer for the Company model.
+    
+    This serializer handles the serialization and deserialization of Company instances,
+    including validation of input data and conversion to/from Python data types.
+    
+    Fields:
+        id: Auto-generated unique identifier (read-only)
+        name: Name of the company (required)
+        slug: URL-friendly version of the name (auto-generated, read-only)
+        description: Detailed description of the company (optional)
+        website: Company website URL (optional)
+        logo: Company logo image file (optional, max 2MB)
+        industry: Industry the company operates in (optional)
+        founded_year: Year the company was founded (optional)
+        company_size: Size category of the company (optional)
+        headquarters: Location of company headquarters (optional)
+        is_verified: Whether the company has been verified (read-only)
+        created_at: Timestamp of when the company was created (auto-generated, read-only)
+        updated_at: Timestamp of when the company was last updated (auto-generated, read-only)
     """
+    
     class Meta:
         model = Company
         fields = [
@@ -27,23 +118,106 @@ class CompanySerializer(serializers.ModelSerializer):
             'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'slug', 'is_verified', 'created_at', 'updated_at']
+        extra_kwargs = {
+            'name': {
+                'help_text': 'Name of the company',
+                'max_length': 200,
+                'required': True
+            },
+            'description': {
+                'help_text': 'Detailed description of the company',
+                'allow_blank': True,
+                'required': False
+            },
+            'website': {
+                'help_text': 'Company website URL',
+                'allow_blank': True,
+                'required': False
+            },
+            'industry': {
+                'help_text': 'Industry the company operates in',
+                'allow_blank': True,
+                'required': False,
+                'max_length': 100
+            },
+            'founded_year': {
+                'help_text': 'Year the company was founded',
+                'min_value': 1800,
+                'max_value': 2100,
+                'required': False
+            },
+            'company_size': {
+                'help_text': 'Size category of the company (e.g., 1-10, 11-50, 51-200, 201-500, 501-1000, 1001-5000, 5001+)',
+                'allow_blank': True,
+                'required': False,
+                'max_length': 20
+            },
+            'headquarters': {
+                'help_text': 'Location of company headquarters',
+                'allow_blank': True,
+                'required': False,
+                'max_length': 200
+            }
+        }
     
-    def validate_logo(self, value):
+    @extend_schema_field(serializers.ImageField(required=False, allow_null=True))
+    def validate_logo(self, value: Optional[UploadedFile]) -> Optional[UploadedFile]:
         """
         Validate the uploaded logo file.
+        
+        Args:
+            value: The uploaded file to validate
+            
+        Returns:
+            Optional[UploadedFile]: The validated file if it passes all checks
+            
+        Raises:
+            serializers.ValidationError: If the file is too large or has an invalid format
         """
-        if value and value.size > 2 * 1024 * 1024:  # 2MB max
-            raise serializers.ValidationError("Logo file too large (max 2MB).")
+        if value and isinstance(value, UploadedFile):
+            # Check file size (2MB max)
+            max_size = 2 * 1024 * 1024  # 2MB in bytes
+            if value.size > max_size:
+                raise serializers.ValidationError("Logo file too large (max 2MB).")
+            
+            # Check file type
+            valid_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.svg']
+            import os
+            ext = os.path.splitext(value.name)[1].lower()
+            if ext not in valid_extensions:
+                raise serializers.ValidationError(
+                    "Unsupported file type. Please upload an image file (JPG, PNG, GIF, or SVG)."
+                )
+        
         return value
     
-    def create(self, validated_data):
+    def create(self, validated_data: Dict[str, Any]) -> Company:
         """
-        Set the company creator to the current user.
+        Create a new company with the current user as the creator.
+        
+        Args:
+            validated_data: The validated data for creating the company
+            
+        Returns:
+            Company: The newly created company instance
         """
         request = self.context.get('request')
         if request and hasattr(request, 'user'):
             validated_data['created_by'] = request.user
         return super().create(validated_data)
+    
+    def update(self, instance: Company, validated_data: Dict[str, Any]) -> Company:
+        """
+        Update a company instance with the provided data.
+        
+        Args:
+            instance: The company instance to update
+            validated_data: The validated data for updating the company
+            
+        Returns:
+            Company: The updated company instance
+        """
+        return super().update(instance, validated_data)
 
 class JobSerializer(serializers.ModelSerializer):
     """
@@ -80,15 +254,33 @@ class JobSerializer(serializers.ModelSerializer):
             }
         }
 
-    def get_has_applied(self, obj):
-        """Check if the current user has applied to this job."""
+    @extend_schema_field(serializers.BooleanField)
+    def get_has_applied(self, obj: Job) -> bool:
+        """
+        Check if the current user has applied to this job.
+        
+        Args:
+            obj: The Job instance being serialized
+            
+        Returns:
+            bool: True if the current user has applied to this job, False otherwise
+        """
         request = self.context.get('request')
         if request and request.user.is_authenticated:
             return obj.applications.filter(applicant=request.user).exists()
         return False
 
-    def get_company_logo(self, obj):
-        """Get the absolute URL of the company logo if it exists."""
+    @extend_schema_field(serializers.URLField(required=False, allow_null=True))
+    def get_company_logo(self, obj: Job) -> Optional[str]:
+        """
+        Get the absolute URL of the company logo if it exists.
+        
+        Args:
+            obj: The Job instance being serialized
+            
+        Returns:
+            Optional[str]: The absolute URL of the company logo or None if not available
+        """
         if obj.company and obj.company.logo:
             request = self.context.get('request')
             if request is not None:
@@ -96,8 +288,17 @@ class JobSerializer(serializers.ModelSerializer):
             return obj.company.logo.url
         return None
 
-    def get_is_owner(self, obj):
-        """Check if the current user is the owner of the job."""
+    @extend_schema_field(serializers.BooleanField)
+    def get_is_owner(self, obj: Job) -> bool:
+        """
+        Check if the current user is the owner of the job.
+        
+        Args:
+            obj: The Job instance being serialized
+            
+        Returns:
+            bool: True if the current user is the owner of the job, False otherwise
+        """
         request = self.context.get('request')
         return request and request.user == obj.poster
 
@@ -160,14 +361,25 @@ class JobApplicationSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'applicant', 'applied_at', 'updated_at', 'job_title', 'company_name']
     
-    def validate_resume(self, value):
+    @extend_schema_field(serializers.FileField(required=False, allow_null=True))
+    def validate_resume(self, value: Optional[File]) -> Optional[File]:
         """
         Validate the uploaded resume file.
+
+        Args:
+            value: The uploaded file to validate
+
+        Returns:
+            Optional[File]: The validated file if it passes all checks
+
+        Raises:
+            serializers.ValidationError: If the file is too large or has an invalid extension
         """
         import os
         from django.core.exceptions import ValidationError
+        from django.core.files.uploadedfile import UploadedFile
         
-        if value:
+        if value and isinstance(value, UploadedFile):
             # Check file size (5MB max)
             max_size = 5 * 1024 * 1024  # 5MB in bytes
             if value.size > max_size:
@@ -181,11 +393,35 @@ class JobApplicationSerializer(serializers.ModelSerializer):
         
         return value
 
-    def create(self, validated_data):
+    def create(self, validated_data: Dict[str, Any]) -> JobApplication:
         """
         Create and return a new JobApplication instance, given the validated data.
-        The 'applicant' should be provided in the validated_data by the view.
+        The 'applicant' is automatically set to the current user if not provided.
+
+        Args:
+            validated_data: The validated data for creating the JobApplication
+
+        Returns:
+            JobApplication: The newly created JobApplication instance
+
+        Raises:
+            serializers.ValidationError: If the user has already applied to this job
         """
+        # Ensure the applicant is set to the current user if not already set
+        if 'applicant' not in validated_data and 'request' in self.context:
+            validated_data['applicant'] = self.context['request'].user
+        
+        # Check if the user has already applied to this job
+        job = validated_data.get('job')
+        applicant = validated_data.get('applicant')
+        
+        if job and applicant and JobApplication.objects.filter(
+            job=job, applicant=applicant
+        ).exists():
+            raise serializers.ValidationError(
+                "You have already applied to this job."
+            )
+        
         import logging
         logger = logging.getLogger(__name__)
         
@@ -213,9 +449,27 @@ class JobApplicationSerializer(serializers.ModelSerializer):
             raise
 
 
+@extend_schema_serializer(
+    examples=[
+        {
+            'search': 'python developer',
+            'location': 'New York',
+            'job_type': ['full_time', 'part_time'],
+            'salary_min': 50000,
+            'salary_max': 120000,
+            'is_remote': True,
+            'page': 1,
+            'page_size': 10,
+            'ordering': '-created_at'
+        }
+    ]
+)
 class JobSearchSerializer(serializers.Serializer):
     """
     Serializer for job search queries with advanced filtering options.
+    
+    This serializer handles validation and processing of job search parameters,
+    including text search, filtering by various criteria, and result ordering.
     """
     # Search and filter fields
     search = serializers.CharField(
@@ -295,21 +549,63 @@ class JobSearchSerializer(serializers.Serializer):
         help_text="Number of results per page (max 100)"
     )
 
-    def validate_job_type(self, value):
-        """Convert comma-separated string to list if needed."""
+    def validate_job_type(self, value: Union[str, List[str], None]) -> List[str]:
+        """
+        Convert comma-separated string to list if needed.
+        
+        Args:
+            value: Either a comma-separated string or a list of job types
+            
+        Returns:
+            List[str]: A list of job type strings
+            
+        Example:
+            Input: 'full_time,part_time' or ['full_time', 'part_time']
+            Output: ['full_time', 'part_time']
+        """
         if isinstance(value, str):
             return [v.strip() for v in value.split(',') if v.strip()]
-        return value
+        return value or []
 
-    def validate_skills(self, value):
-        """Convert comma-separated skills to list."""
+    def validate_skills(self, value: Union[str, List[str], None]) -> List[str]:
+        """
+        Convert comma-separated skills to a normalized list of skills.
+        
+        Args:
+            value: Either a comma-separated string or a list of skills
+            
+        Returns:
+            List[str]: A list of normalized (lowercase, trimmed) skill strings
+            
+        Example:
+            Input: 'Python, JavaScript, Django'
+            Output: ['python', 'javascript', 'django']
+        """
         if isinstance(value, str):
             return [v.strip().lower() for v in value.split(',') if v.strip()]
-        return value
+        return value or []
 
-    def validate(self, data):
+    def validate(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Validate the search parameters.
+        Validate the search parameters and their relationships.
+        
+        Args:
+            data: Dictionary of input data to validate
+            
+        Returns:
+            Dict[str, Any]: The validated data
+            
+        Raises:
+            serializers.ValidationError: If validation fails for any field
+            
+        Example:
+            >>> data = {'salary_min': 60000, 'salary_max': 50000}
+            >>> serializer = JobSearchSerializer(data=data)
+            >>> serializer.is_valid()  # Raises ValidationError
+            
+            >>> data = {'posted_after': '2050-01-01'}
+            >>> serializer = JobSearchSerializer(data=data)
+            >>> serializer.is_valid()  # Raises ValidationError for future date
         """
         validated_data = super().validate(data)
         
@@ -325,11 +621,9 @@ class JobSearchSerializer(serializers.Serializer):
         # Validate posted_after date
         posted_after = validated_data.get('posted_after')
         if posted_after and hasattr(posted_after, 'strftime'):
-            from django.utils import timezone
             if posted_after > timezone.now().date():
                 raise serializers.ValidationError({
                     'posted_after': 'Cannot filter by future dates.'
                 })
         
         return validated_data
-        return data
