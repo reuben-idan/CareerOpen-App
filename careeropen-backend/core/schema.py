@@ -84,12 +84,32 @@ class CustomAutoSchema(AutoSchema):
     Custom AutoSchema that handles schema generation and example processing
     in a way that's more resilient to errors in the DRF Spectacular library.
     """
-    def _get_examples(self, *args, **kwargs):
+    def _get_examples(self, serializer, direction, media_type, status_code, examples):
         """
-        Completely override to prevent any example processing that might cause errors.
-        We'll handle examples in the schema generator instead.
+        Safely handle example processing to prevent 'request_only' attribute errors.
         """
-        return {}
+        if not examples or not isinstance(examples, dict):
+            return {}
+            
+        result = {}
+        for name, example in examples.items():
+            try:
+                # Skip if this is a response example and we're processing a request
+                if direction == 'request' and isinstance(example, dict) and example.get('response_only'):
+                    continue
+                    
+                # Skip if this is a request example and we're processing a response
+                if direction == 'response' and isinstance(example, dict) and example.get('request_only'):
+                    continue
+                    
+                # Add the example if it has a value
+                if isinstance(example, dict) and 'value' in example:
+                    result[name] = example
+            except Exception as e:
+                logger.warning(f"Error processing example {name}: {str(e)}")
+                continue
+                
+        return result
         
     def _get_serializer(self, path, method):
         """
