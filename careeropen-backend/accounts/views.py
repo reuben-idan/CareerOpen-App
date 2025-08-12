@@ -82,6 +82,60 @@ class CSRFExemptMixin:
         return super().dispatch(request, *args, **kwargs)
 
 
+@extend_schema(
+    request={
+        'application/json': {
+            'type': 'object',
+            'properties': {
+                'username': {'type': 'string', 'description': 'User\'s username or email'},
+                'password': {'type': 'string', 'format': 'password', 'description': 'User\'s password'}
+            },
+            'required': ['username', 'password']
+        }
+    },
+    responses={
+        200: {
+            'type': 'object',
+            'properties': {
+                'access': {'type': 'string', 'description': 'JWT access token'},
+                'refresh': {'type': 'string', 'description': 'JWT refresh token'},
+                'user': {
+                    'type': 'object',
+                    'properties': {
+                        'id': {'type': 'integer'},
+                        'username': {'type': 'string'},
+                        'email': {'type': 'string', 'format': 'email'},
+                        'is_employer': {'type': 'boolean'},
+                        'is_applicant': {'type': 'boolean'},
+                        'full_name': {'type': 'string', 'nullable': True},
+                        'company_name': {'type': 'string', 'nullable': True}
+                    }
+                }
+            }
+        },
+        400: {
+            'type': 'object',
+            'properties': {
+                'error': {'type': 'string'}
+            }
+        },
+        401: {
+            'type': 'object',
+            'properties': {
+                'error': {'type': 'string'}
+            }
+        },
+        500: {
+            'type': 'object',
+            'properties': {
+                'error': {'type': 'string'}
+            }
+        }
+    },
+    description='Obtain JWT tokens for API authentication',
+    summary='Obtain JWT Tokens',
+    tags=['Authentication']
+)
 @api_view(['POST'])
 @permission_classes([AllowAny])
 @csrf_exempt
@@ -92,39 +146,6 @@ def api_token_obtain_pair(request: Request) -> Response:
     This endpoint allows clients to obtain JWT tokens by providing valid
     credentials. It's specifically designed to work with API clients
     where CSRF protection is not applicable.
-    
-    ---
-    # Request Body Schema
-    {
-        "username": "string",  # User's username or email
-        "password": "string"   # User's password
-    }
-    
-    # Response Schema (200 OK)
-    {
-        "access": "string",    # JWT access token
-        "refresh": "string",   # JWT refresh token
-        "user": {              # User information
-            "id": 0,
-            "username": "string",
-            "email": "string",
-            "is_employer": false,
-            "is_applicant": true,
-            "full_name": "string",
-            "company_name": "string"
-        }
-    }
-    
-    # Error Responses
-    - 400: Bad Request - Missing or invalid input data
-    - 401: Unauthorized - Invalid credentials
-    - 500: Internal Server Error - Server error
-    
-    Args:
-        request: The HTTP request containing login credentials
-        
-    Returns:
-        Response: JSON response with JWT tokens and user data
     """
     try:
         # Parse JSON data from request body
