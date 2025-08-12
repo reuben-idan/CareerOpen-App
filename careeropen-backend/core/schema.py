@@ -86,10 +86,37 @@ class CustomAutoSchema(AutoSchema):
     """
     def _get_examples(self, *args, **kwargs):
         """
-        Completely override to prevent any example processing that might cause errors.
-        We'll handle examples in the schema generator instead.
+        Safely handle example processing to prevent 'request_only' attribute errors.
         """
-        return {}
+        if not args or not kwargs:
+            return {}
+            
+        # Get the serializer and direction from the arguments
+        serializer = args[0] if len(args) > 0 else None
+        direction = kwargs.get('direction', None)
+        
+        # If we don't have the required arguments, return empty
+        if not serializer or not direction:
+            return {}
+            
+        try:
+            # Get the default examples from the parent class
+            examples = super()._get_examples(*args, **kwargs)
+            
+            # If we have examples, ensure they're in the correct format
+            if isinstance(examples, dict):
+                safe_examples = {}
+                for key, value in examples.items():
+                    # Skip any example that might cause issues
+                    if hasattr(value, 'request_only') and direction == 'response' and value.request_only:
+                        continue
+                    safe_examples[key] = value
+                return safe_examples
+                
+            return examples if examples else {}
+        except Exception as e:
+            logger.warning(f"Error processing examples: {str(e)}")
+            return {}
         
     def _get_response_for_code(self, response_serializers, status_code, **kwargs):
         """
