@@ -4,8 +4,11 @@ This file provides comprehensive logging for all components of the application.
 """
 
 import os
+import json
 import logging
+import traceback
 from pathlib import Path
+from datetime import datetime
 
 # Ensure the logs directory exists in the project root
 BASE_DIR = Path(__file__).resolve().parent.parent.parent  # Points to careeropen-backend's parent
@@ -21,16 +24,40 @@ except Exception as e:
     log_dir.mkdir(exist_ok=True)
     print(f"Using fallback log directory at: {log_dir}")
 
-# Clear existing log files
-for filename in ['django_debug.log', 'django_error.log', 'accounts_debug.log', 
-                'accounts_error.log', 'login_errors.log', 'request_errors.log']:
-    try:
-        log_file = log_dir / filename
-        if log_file.exists():
-            log_file.unlink()
-        log_file.touch()
-    except Exception as e:
-        print(f"Warning: Could not reset log file {filename}: {e}")
+# Clear existing log files only in development
+if os.environ.get('DJANGO_DEVELOPMENT', 'False').lower() == 'true':
+    for filename in ['django_debug.log', 'django_error.log', 'api_requests.log', 
+                    'accounts.log', 'jobs.log', 'errors.log']:
+        try:
+            log_file = log_dir / filename
+            if log_file.exists():
+                log_file.unlink()
+            log_file.touch()
+        except Exception as e:
+            print(f"Warning: Could not reset log file {filename}: {e}")
+
+class JSONFormatter(logging.Formatter):
+    """Custom formatter that outputs logs in JSON format."""
+    def format(self, record):
+        log_record = {
+            'timestamp': datetime.utcnow().isoformat(),
+            'level': record.levelname,
+            'logger': record.name,
+            'message': record.getMessage(),
+            'module': record.module,
+            'function': record.funcName,
+            'line': record.lineno,
+        }
+        
+        # Add exception info if present
+        if record.exc_info:
+            log_record['exception'] = self.formatException(record.exc_info)
+        
+        # Add any extra fields
+        if hasattr(record, 'data'):
+            log_record.update(record.data)
+            
+        return json.dumps(log_record, default=str)
 
 LOGGING = {
     'version': 1,
@@ -48,6 +75,9 @@ LOGGING = {
             'format': '%(asctime)s [%(levelname)s] %(name)s.%(funcName)s:%(lineno)d - %(message)s',
             'datefmt': '%Y-%m-%d %H:%M:%S',
         },
+        'json': {
+            '()': 'core.temp_logging_enhanced.JSONFormatter',
+        },
         'request': {
             'format': '%(asctime)s [%(levelname)s] %(message)s\nRequest: %(request_method)s %(request_path)s\nUser: %(user)s\nIP: %(ip)s\n',
             'datefmt': '%Y-%m-%d %H:%M:%S',
@@ -63,108 +93,121 @@ LOGGING = {
     },
     'handlers': {
         'console': {
-            'level': 'DEBUG',
+            'level': 'INFO',
             'class': 'logging.StreamHandler',
-            'formatter': 'detailed',
+            'formatter': 'simple' if os.environ.get('DJANGO_DEVELOPMENT', 'False').lower() == 'true' else 'json',
         },
-        'debug_file': {
+        'file': {
             'level': 'DEBUG',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': str(log_dir / 'django_debug.log'),
-            'maxBytes': 1024 * 1024 * 5,  # 5 MB
-            'backupCount': 5,
-            'formatter': 'detailed',
+            'filename': log_dir / 'django_debug.log',
+            'maxBytes': 1024 * 1024 * 10,  # 10 MB
+            'backupCount': 10,
+            'formatter': 'json',
+            'encoding': 'utf-8',
         },
         'error_file': {
             'level': 'ERROR',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': str(log_dir / 'django_error.log'),
-            'maxBytes': 1024 * 1024 * 5,  # 5 MB
-            'backupCount': 5,
-            'formatter': 'verbose',
+            'filename': log_dir / 'errors.log',
+            'maxBytes': 1024 * 1024 * 10,  # 10 MB
+            'backupCount': 10,
+            'formatter': 'json',
+            'encoding': 'utf-8',
         },
-        'accounts_debug': {
-            'level': 'DEBUG',
+        'api_requests': {
+            'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': str(log_dir / 'accounts_debug.log'),
+            'filename': log_dir / 'api_requests.log',
+            'maxBytes': 1024 * 1024 * 10,  # 10 MB
+            'backupCount': 10,
+            'formatter': 'json',
+            'encoding': 'utf-8',
+        },
+        'accounts': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': log_dir / 'accounts.log',
             'maxBytes': 1024 * 1024 * 5,  # 5 MB
             'backupCount': 5,
+            'formatter': 'json',
+            'encoding': 'utf-8',
+        },
+        'jobs': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': log_dir / 'jobs.log',
+            'maxBytes': 1024 * 1024 * 5,  # 5 MB
+            'backupCount': 5,
+            'formatter': 'json',
+            'encoding': 'utf-8',
+        },
+        'mail_admins': {
+            'level': 'ERROR',
+            'class': 'django.utils.log.AdminEmailHandler',
+            'include_html': True,
             'formatter': 'detailed',
-        },
-        'accounts_error': {
-            'level': 'ERROR',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': str(log_dir / 'accounts_error.log'),
-            'maxBytes': 1024 * 1024 * 5,  # 5 MB
-            'backupCount': 5,
-            'formatter': 'verbose',
-        },
-        'login_errors': {
-            'level': 'ERROR',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': str(log_dir / 'login_errors.log'),
-            'maxBytes': 1024 * 1024 * 5,  # 5 MB
-            'backupCount': 5,
-            'formatter': 'verbose',
-        },
-        'request_errors': {
-            'level': 'ERROR',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': str(log_dir / 'request_errors.log'),
-            'maxBytes': 1024 * 1024 * 5,  # 5 MB
-            'backupCount': 5,
-            'formatter': 'request',
         },
     },
     'loggers': {
         'django': {
-            'handlers': ['console', 'debug_file', 'error_file'],
+            'handlers': ['console', 'file', 'error_file'],
             'level': 'INFO',
-            'propagate': True,
+            'propagate': False,
         },
         'django.request': {
-            'handlers': ['console', 'error_file', 'request_errors'],
-            'level': 'ERROR',
+            'handlers': ['console', 'error_file', 'api_requests'],
+            'level': 'WARNING',
             'propagate': False,
         },
         'django.server': {
-            'handlers': ['console', 'debug_file', 'error_file'],
+            'handlers': ['console', 'file', 'error_file'],
             'level': 'INFO',
             'propagate': False,
         },
         'django.db.backends': {
-            'handlers': ['console', 'debug_file'],
-            'level': 'INFO',
+            'handlers': ['console'],
+            'level': 'WARNING',  # Set to DEBUG to log all SQL queries
+            'propagate': False,
+        },
+        'django.security': {
+            'handlers': ['console', 'error_file', 'mail_admins'],
+            'level': 'WARNING',
             'propagate': False,
         },
         'accounts': {
-            'handlers': ['console', 'accounts_debug', 'accounts_error'],
-            'level': 'DEBUG',
+            'handlers': ['console', 'accounts'],
+            'level': 'INFO',
             'propagate': False,
         },
         'jobs': {
-            'handlers': ['console', 'debug_file', 'error_file'],
+            'handlers': ['console', 'jobs', 'error_file'],
             'level': 'INFO',
             'propagate': False,
         },
         'network': {
-            'handlers': ['console', 'debug_file', 'error_file'],
+            'handlers': ['console', 'file', 'error_file'],
             'level': 'INFO',
             'propagate': False,
         },
         'core': {
-            'handlers': ['console', 'debug_file', 'error_file'],
+            'handlers': ['console', 'file', 'error_file'],
             'level': 'INFO',
             'propagate': False,
         },
-        'login': {
-            'handlers': ['console', 'login_errors'],
-            'level': 'ERROR',
+        'api': {
+            'handlers': ['console', 'api_requests', 'error_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'security': {
+            'handlers': ['console', 'error_file', 'mail_admins'],
+            'level': 'WARNING',
             'propagate': False,
         },
     },
     'root': {
-        'handlers': ['console', 'debug_file', 'error_file'],
+        'handlers': ['console', 'error_file'],
         'level': 'WARNING',
     },
 }

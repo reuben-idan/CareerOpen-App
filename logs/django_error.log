@@ -1,0 +1,306 @@
+ERROR 2025-08-12 10:11:53,441 views 9028 14416 Error retrieving job applications: Field 'id' expected a number but got <django.contrib.auth.models.AnonymousUser object at 0x0000021FC4D206E0>.
+ERROR 2025-08-12 10:11:53,442 views 9028 14416 Error retrieving job applications: Field 'id' expected a number but got <django.contrib.auth.models.AnonymousUser object at 0x0000021FC4D206E0>.
+ERROR 2025-08-12 10:11:57,817 log 9028 14416 Internal Server Error: /api/v1/schema/
+Traceback (most recent call last):
+  File "C:\Python312\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\django\views\generic\base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\rest_framework\views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\rest_framework\views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Python312\Lib\site-packages\rest_framework\views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "C:\Python312\Lib\site-packages\rest_framework\views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\IDAN\AppData\Roaming\Python\Python312\site-packages\drf_spectacular\views.py", line 84, in get
+    return self._get_schema_response(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\IDAN\AppData\Roaming\Python\Python312\site-packages\drf_spectacular\views.py", line 92, in _get_schema_response
+    data=generator.get_schema(request=request, public=self.serve_public),
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\IDAN\AppData\Roaming\Python\Python312\site-packages\drf_spectacular\generators.py", line 285, in get_schema
+    paths=self.parse(request, public),
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\IDAN\AppData\Roaming\Python\Python312\site-packages\drf_spectacular\generators.py", line 256, in parse
+    operation = view.schema.get_operation(
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\IDAN\AppData\Roaming\Python\Python312\site-packages\drf_spectacular\openapi.py", line 112, in get_operation
+    operation['responses'] = self._get_response_bodies()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\IDAN\AppData\Roaming\Python\Python312\site-packages\drf_spectacular\openapi.py", line 1397, in _get_response_bodies
+    return {'200': self._get_response_for_code(response_serializers, '200', direction=direction)}
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\IDAN\AppData\Roaming\Python\Python312\site-packages\drf_spectacular\openapi.py", line 1520, in _get_response_for_code
+    self._get_examples(serializer, direction, media_type, status_code, examples)
+  File "C:\Users\IDAN\AppData\Roaming\Python\Python312\site-packages\drf_spectacular\openapi.py", line 1256, in _get_examples
+    if direction == 'response' and example.request_only:
+                                   ^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'dict' object has no attribute 'request_only'
+ERROR 2025-08-12 10:11:59,321 basehttp 9028 14416 "GET /api/v1/schema/ HTTP/1.1" 500 164290
+ERROR 2025-08-12 10:12:00,098 views 9028 14416 Error retrieving job applications: Field 'id' expected a number but got <django.contrib.auth.models.AnonymousUser object at 0x0000021FC510E840>.
+ERROR 2025-08-12 10:12:00,104 views 9028 14416 Error retrieving job applications: Field 'id' expected a number but got <django.contrib.auth.models.AnonymousUser object at 0x0000021FC510E840>.
+ERROR 2025-08-12 10:12:01,100 log 9028 14416 Internal Server Error: /api/v1/schema/
+Traceback (most recent call last):
+  File "C:\Python312\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\django\views\generic\base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\rest_framework\views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\rest_framework\views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Python312\Lib\site-packages\rest_framework\views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "C:\Python312\Lib\site-packages\rest_framework\views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\IDAN\AppData\Roaming\Python\Python312\site-packages\drf_spectacular\views.py", line 84, in get
+    return self._get_schema_response(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\IDAN\AppData\Roaming\Python\Python312\site-packages\drf_spectacular\views.py", line 92, in _get_schema_response
+    data=generator.get_schema(request=request, public=self.serve_public),
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\IDAN\AppData\Roaming\Python\Python312\site-packages\drf_spectacular\generators.py", line 285, in get_schema
+    paths=self.parse(request, public),
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\IDAN\AppData\Roaming\Python\Python312\site-packages\drf_spectacular\generators.py", line 256, in parse
+    operation = view.schema.get_operation(
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\IDAN\AppData\Roaming\Python\Python312\site-packages\drf_spectacular\openapi.py", line 112, in get_operation
+    operation['responses'] = self._get_response_bodies()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\IDAN\AppData\Roaming\Python\Python312\site-packages\drf_spectacular\openapi.py", line 1397, in _get_response_bodies
+    return {'200': self._get_response_for_code(response_serializers, '200', direction=direction)}
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\IDAN\AppData\Roaming\Python\Python312\site-packages\drf_spectacular\openapi.py", line 1520, in _get_response_for_code
+    self._get_examples(serializer, direction, media_type, status_code, examples)
+  File "C:\Users\IDAN\AppData\Roaming\Python\Python312\site-packages\drf_spectacular\openapi.py", line 1256, in _get_examples
+    if direction == 'response' and example.request_only:
+                                   ^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'dict' object has no attribute 'request_only'
+ERROR 2025-08-12 10:12:01,184 basehttp 9028 14416 "GET /api/v1/schema/ HTTP/1.1" 500 164290
+ERROR 2025-08-12 10:14:36,761 views 9028 13472 Error retrieving job applications: Field 'id' expected a number but got <django.contrib.auth.models.AnonymousUser object at 0x0000021FC4C92630>.
+ERROR 2025-08-12 10:14:36,764 views 9028 13472 Error retrieving job applications: Field 'id' expected a number but got <django.contrib.auth.models.AnonymousUser object at 0x0000021FC4C92630>.
+ERROR 2025-08-12 10:14:37,656 log 9028 13472 Internal Server Error: /api/v1/schema/
+Traceback (most recent call last):
+  File "C:\Python312\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\django\views\generic\base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\rest_framework\views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\rest_framework\views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Python312\Lib\site-packages\rest_framework\views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "C:\Python312\Lib\site-packages\rest_framework\views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\IDAN\AppData\Roaming\Python\Python312\site-packages\drf_spectacular\views.py", line 84, in get
+    return self._get_schema_response(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\IDAN\AppData\Roaming\Python\Python312\site-packages\drf_spectacular\views.py", line 92, in _get_schema_response
+    data=generator.get_schema(request=request, public=self.serve_public),
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\IDAN\AppData\Roaming\Python\Python312\site-packages\drf_spectacular\generators.py", line 285, in get_schema
+    paths=self.parse(request, public),
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\IDAN\AppData\Roaming\Python\Python312\site-packages\drf_spectacular\generators.py", line 256, in parse
+    operation = view.schema.get_operation(
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\IDAN\AppData\Roaming\Python\Python312\site-packages\drf_spectacular\openapi.py", line 112, in get_operation
+    operation['responses'] = self._get_response_bodies()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\IDAN\AppData\Roaming\Python\Python312\site-packages\drf_spectacular\openapi.py", line 1397, in _get_response_bodies
+    return {'200': self._get_response_for_code(response_serializers, '200', direction=direction)}
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\IDAN\AppData\Roaming\Python\Python312\site-packages\drf_spectacular\openapi.py", line 1520, in _get_response_for_code
+    self._get_examples(serializer, direction, media_type, status_code, examples)
+  File "C:\Users\IDAN\AppData\Roaming\Python\Python312\site-packages\drf_spectacular\openapi.py", line 1256, in _get_examples
+    if direction == 'response' and example.request_only:
+                                   ^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'dict' object has no attribute 'request_only'
+ERROR 2025-08-12 10:14:37,818 basehttp 9028 13472 "GET /api/v1/schema/ HTTP/1.1" 500 164290
+ERROR 2025-08-12 10:14:37,920 views 9028 13472 Error retrieving job applications: Field 'id' expected a number but got <django.contrib.auth.models.AnonymousUser object at 0x0000021FC51388C0>.
+ERROR 2025-08-12 10:14:37,922 views 9028 13472 Error retrieving job applications: Field 'id' expected a number but got <django.contrib.auth.models.AnonymousUser object at 0x0000021FC51388C0>.
+ERROR 2025-08-12 10:14:38,917 log 9028 13472 Internal Server Error: /api/v1/schema/
+Traceback (most recent call last):
+  File "C:\Python312\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\django\views\generic\base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\rest_framework\views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\rest_framework\views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Python312\Lib\site-packages\rest_framework\views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "C:\Python312\Lib\site-packages\rest_framework\views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\IDAN\AppData\Roaming\Python\Python312\site-packages\drf_spectacular\views.py", line 84, in get
+    return self._get_schema_response(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\IDAN\AppData\Roaming\Python\Python312\site-packages\drf_spectacular\views.py", line 92, in _get_schema_response
+    data=generator.get_schema(request=request, public=self.serve_public),
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\IDAN\AppData\Roaming\Python\Python312\site-packages\drf_spectacular\generators.py", line 285, in get_schema
+    paths=self.parse(request, public),
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\IDAN\AppData\Roaming\Python\Python312\site-packages\drf_spectacular\generators.py", line 256, in parse
+    operation = view.schema.get_operation(
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\IDAN\AppData\Roaming\Python\Python312\site-packages\drf_spectacular\openapi.py", line 112, in get_operation
+    operation['responses'] = self._get_response_bodies()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\IDAN\AppData\Roaming\Python\Python312\site-packages\drf_spectacular\openapi.py", line 1397, in _get_response_bodies
+    return {'200': self._get_response_for_code(response_serializers, '200', direction=direction)}
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\IDAN\AppData\Roaming\Python\Python312\site-packages\drf_spectacular\openapi.py", line 1520, in _get_response_for_code
+    self._get_examples(serializer, direction, media_type, status_code, examples)
+  File "C:\Users\IDAN\AppData\Roaming\Python\Python312\site-packages\drf_spectacular\openapi.py", line 1256, in _get_examples
+    if direction == 'response' and example.request_only:
+                                   ^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'dict' object has no attribute 'request_only'
+ERROR 2025-08-12 10:14:38,942 basehttp 9028 13472 "GET /api/v1/schema/ HTTP/1.1" 500 164290
+ERROR 2025-08-12 10:36:41,969 views 9028 16908 Error retrieving job applications: Field 'id' expected a number but got <django.contrib.auth.models.AnonymousUser object at 0x0000021FC5314BC0>.
+ERROR 2025-08-12 10:36:41,976 views 9028 16908 Error retrieving job applications: Field 'id' expected a number but got <django.contrib.auth.models.AnonymousUser object at 0x0000021FC5314BC0>.
+ERROR 2025-08-12 10:36:45,091 log 9028 16908 Internal Server Error: /api/v1/schema/
+Traceback (most recent call last):
+  File "C:\Python312\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\django\views\generic\base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\rest_framework\views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\rest_framework\views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Python312\Lib\site-packages\rest_framework\views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "C:\Python312\Lib\site-packages\rest_framework\views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\IDAN\AppData\Roaming\Python\Python312\site-packages\drf_spectacular\views.py", line 84, in get
+    return self._get_schema_response(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\IDAN\AppData\Roaming\Python\Python312\site-packages\drf_spectacular\views.py", line 92, in _get_schema_response
+    data=generator.get_schema(request=request, public=self.serve_public),
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\IDAN\AppData\Roaming\Python\Python312\site-packages\drf_spectacular\generators.py", line 285, in get_schema
+    paths=self.parse(request, public),
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\IDAN\AppData\Roaming\Python\Python312\site-packages\drf_spectacular\generators.py", line 256, in parse
+    operation = view.schema.get_operation(
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\IDAN\AppData\Roaming\Python\Python312\site-packages\drf_spectacular\openapi.py", line 112, in get_operation
+    operation['responses'] = self._get_response_bodies()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\IDAN\AppData\Roaming\Python\Python312\site-packages\drf_spectacular\openapi.py", line 1397, in _get_response_bodies
+    return {'200': self._get_response_for_code(response_serializers, '200', direction=direction)}
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\IDAN\AppData\Roaming\Python\Python312\site-packages\drf_spectacular\openapi.py", line 1520, in _get_response_for_code
+    self._get_examples(serializer, direction, media_type, status_code, examples)
+  File "C:\Users\IDAN\AppData\Roaming\Python\Python312\site-packages\drf_spectacular\openapi.py", line 1256, in _get_examples
+    if direction == 'response' and example.request_only:
+                                   ^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'dict' object has no attribute 'request_only'
+ERROR 2025-08-12 10:36:45,576 basehttp 9028 16908 "GET /api/v1/schema/ HTTP/1.1" 500 164290
+ERROR 2025-08-12 10:36:46,139 views 9028 16908 Error retrieving job applications: Field 'id' expected a number but got <django.contrib.auth.models.AnonymousUser object at 0x0000021FC4C6FE60>.
+ERROR 2025-08-12 10:36:46,139 views 9028 16908 Error retrieving job applications: Field 'id' expected a number but got <django.contrib.auth.models.AnonymousUser object at 0x0000021FC4C6FE60>.
+ERROR 2025-08-12 10:36:47,054 log 9028 16908 Internal Server Error: /api/v1/schema/
+Traceback (most recent call last):
+  File "C:\Python312\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\django\views\generic\base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\rest_framework\views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\rest_framework\views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Python312\Lib\site-packages\rest_framework\views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "C:\Python312\Lib\site-packages\rest_framework\views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\IDAN\AppData\Roaming\Python\Python312\site-packages\drf_spectacular\views.py", line 84, in get
+    return self._get_schema_response(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\IDAN\AppData\Roaming\Python\Python312\site-packages\drf_spectacular\views.py", line 92, in _get_schema_response
+    data=generator.get_schema(request=request, public=self.serve_public),
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\IDAN\AppData\Roaming\Python\Python312\site-packages\drf_spectacular\generators.py", line 285, in get_schema
+    paths=self.parse(request, public),
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\IDAN\AppData\Roaming\Python\Python312\site-packages\drf_spectacular\generators.py", line 256, in parse
+    operation = view.schema.get_operation(
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\IDAN\AppData\Roaming\Python\Python312\site-packages\drf_spectacular\openapi.py", line 112, in get_operation
+    operation['responses'] = self._get_response_bodies()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\IDAN\AppData\Roaming\Python\Python312\site-packages\drf_spectacular\openapi.py", line 1397, in _get_response_bodies
+    return {'200': self._get_response_for_code(response_serializers, '200', direction=direction)}
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\IDAN\AppData\Roaming\Python\Python312\site-packages\drf_spectacular\openapi.py", line 1520, in _get_response_for_code
+    self._get_examples(serializer, direction, media_type, status_code, examples)
+  File "C:\Users\IDAN\AppData\Roaming\Python\Python312\site-packages\drf_spectacular\openapi.py", line 1256, in _get_examples
+    if direction == 'response' and example.request_only:
+                                   ^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'dict' object has no attribute 'request_only'
+ERROR 2025-08-12 10:36:47,157 basehttp 9028 16908 "GET /api/v1/schema/ HTTP/1.1" 500 164290

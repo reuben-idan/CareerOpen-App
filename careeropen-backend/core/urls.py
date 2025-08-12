@@ -72,6 +72,6 @@ urlpatterns = [
         path('schema/', RedirectView.as_view(url='/api/v1/schema/')),
     ])),
     
-    # Redirect all other paths to the welcome page
-    path('<path:path>/', WelcomeView.as_view()),
+    # Redirect all other paths to the welcome page, but exclude paths that should be handled by API
+    re_path(r'^(?!api/|admin/|auth/).*$', WelcomeView.as_view()),
 ]

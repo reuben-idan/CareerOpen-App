@@ -8,6 +8,7 @@ and request/response processing.
 __all__ = [
     'authentication',
     'rate_limiter',
+    'csrf_exempt',
     'request_logger',
     'error_handler'
 ]

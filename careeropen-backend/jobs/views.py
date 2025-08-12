@@ -14,10 +14,11 @@ from drf_spectacular.utils import (
     extend_schema, extend_schema_view, OpenApiParameter, OpenApiExample,
     OpenApiResponse, OpenApiTypes, extend_schema_serializer
 )
-from rest_framework import viewsets, status, filters
+from rest_framework import viewsets, status, filters, generics
 from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView
 from rest_framework.filters import BaseFilterBackend
+from rest_framework.exceptions import NotAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import action
 from rest_framework.permissions import (
@@ -2439,7 +2440,7 @@ class CompanyViewSet(viewsets.ModelViewSet):
             raise
 
 
-class UserJobApplicationsView(ListAPIView):
+class UserJobApplicationsView(generics.ListAPIView):
     """
     API endpoint that allows users to view their job applications.
     
@@ -2450,33 +2451,69 @@ class UserJobApplicationsView(ListAPIView):
     - User must be authenticated
     
     ### Query Parameters
-    - `status` (optional): Filter applications by status (e.g., 'applied', 'interview', 'offer', 'rejected')
-    - `job` (optional): Filter by job ID
-    - `ordering` (optional): Order results by field (e.g., 'applied_at', '-applied_at')
-    - `page` (optional): Page number for pagination
-    - `page_size` (optional): Number of results per page (default: 10, max: 100)
+    - `status` (str, optional): Filter applications by status (e.g., 'applied', 'interview', 'offer', 'rejected')
+    - `job` (int, optional): Filter by job ID
+    - `applied_at` (date, optional): Filter by application date (supports exact date, gte, lte)
+    - `ordering` (str, optional): Order results by field (e.g., 'applied_at', '-applied_at')
+    - `page` (int, optional): Page number for pagination
+    - `page_size` (int, optional): Number of results per page (default: 10, max: 100)
     """
     permission_classes = [IsAuthenticated]
     serializer_class = JobApplicationSerializer
     pagination_class = StandardResultsSetPagination
     filter_backends = [filters.OrderingFilter, DjangoFilterBackend]
     filterset_fields = {
-        'status': ['exact', 'in'],
-        'job': ['exact'],
-        'applied_at': ['date', 'gte', 'lte'],
-    }
+            'status': ['exact', 'in'],
+            'job': ['exact'],
+            'applied_at': ['date', 'gte', 'lte'],
+        }
     ordering_fields = ['applied_at', 'updated_at', 'status']
     ordering = ['-applied_at']
-    
+
     @extend_schema(
-        summary='List user job applications',
-        description='Retrieve a paginated list of job applications for the current user.',
+        operation_id='list_user_job_applications',
+        description='List all job applications for the current user',
+        parameters=[
+            OpenApiParameter(
+                name='status', 
+                type=OpenApiTypes.STR, 
+                location=OpenApiParameter.QUERY,
+                description='Filter by application status',
+                required=False
+            ),
+            OpenApiParameter(
+                name='job', 
+                type=OpenApiTypes.INT, 
+                location=OpenApiParameter.QUERY,
+                description='Filter by job ID',
+                required=False
+            ),
+            OpenApiParameter(
+                name='applied_at', 
+                type=OpenApiTypes.DATE, 
+                location=OpenApiParameter.QUERY,
+                description='Filter by application date (YYYY-MM-DD)',
+                required=False
+            ),
+            OpenApiParameter(
+                name='ordering', 
+                type=OpenApiTypes.STR, 
+                location=OpenApiParameter.QUERY,
+                description='Which field to use when ordering the results',
+                required=False
+            ),
+        ],
         responses={
             200: JobApplicationSerializer(many=True),
-            401: 'Authentication credentials were not provided.',
-            403: 'You do not have permission to access this resource.',
-        },
-        tags=['Job Applications']
+            401: OpenApiResponse(
+                response={"detail": "Authentication credentials were not provided."},
+                description="Authentication credentials were not provided"
+            ),
+            403: OpenApiResponse(
+                response={"detail": "You do not have permission to access this resource."},
+                description="You do not have permission to access this resource"
+            ),
+        }
     )
     def get(self, request, *args, **kwargs):
         """
@@ -2485,19 +2522,25 @@ class UserJobApplicationsView(ListAPIView):
         Returns a paginated list of job applications for the current user,
         with optional filtering and ordering.
         """
-        return super().get(request, *args, **kwargs)
-    
+        return super().list(request, *args, **kwargs)
+
     def get_queryset(self):
         """
         Get the list of job applications for the current user.
         
         Returns:
             QuerySet: Filtered and ordered queryset of job applications
+            
+        Raises:
+            NotAuthenticated: If user is not authenticated
         """
+        if not self.request.user.is_authenticated:
+            raise NotAuthenticated("Authentication credentials were not provided.")
+            
         try:
-            # Base queryset: only applications for the current user
+            # Only return applications for the current user
             queryset = JobApplication.objects.filter(
-                applicant=self.request.user
+                applicant_id=self.request.user.id
             ).select_related(
                 'job',
                 'job__company',
@@ -2516,7 +2559,13 @@ class UserJobApplicationsView(ListAPIView):
             return queryset
             
         except Exception as e:
-            logger.error(f"Error retrieving job applications: {str(e)}")
+            logger.error(f"Error retrieving job applications: {str(e)}", 
+                       exc_info=True, 
+                       extra={
+                           'user_id': self.request.user.id if self.request.user.is_authenticated else None,
+                           'status': self.request.query_params.get('status'),
+                           'job_id': self.request.query_params.get('job')
+                       })
             # Return an empty queryset on error rather than raising an exception
             return JobApplication.objects.none()
 

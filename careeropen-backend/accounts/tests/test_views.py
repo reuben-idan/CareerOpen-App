@@ -2,12 +2,15 @@
 Tests for the accounts app views.
 """
 import json
+import logging
 from django.urls import reverse
 from django.test import TestCase, override_settings
 from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
 from rest_framework import status
 
+# Set up logger
+logger = logging.getLogger(__name__)
 User = get_user_model()
 
 class UserProfileViewTests(TestCase):

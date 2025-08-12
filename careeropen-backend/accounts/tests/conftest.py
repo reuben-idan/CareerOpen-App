@@ -34,3 +34,6 @@ def django_db_setup(django_db_setup, django_db_blocker):
 def enable_db_access_for_all_tests(db):
     """Enable database access for all tests."""
     pass
+
+# Configure Django for tests
+pytest_plugins = ['django']
