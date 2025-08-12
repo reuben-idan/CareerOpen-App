@@ -1,165 +1,97 @@
-from typing import Dict, Any, Optional
-from drf_spectacular.generators import SchemaGenerator
+from typing import Dict, Any, Optional, List, Union
+from drf_spectacular.generators import SchemaGenerator, EndpointEnumerator
 from drf_spectacular.openapi import AutoSchema
-from drf_spectacular.plumbing import get_doc
+from drf_spectacular.plumbing import get_doc, force_real_str
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema
+from drf_spectacular.drainage import get_override
+from drf_spectacular.settings import spectacular_settings
+from drf_spectacular.validation import validate_schema
+
+import logging
+logger = logging.getLogger(__name__)
 
 def preprocess_example_responses(result=None, **kwargs):
-    """
-    Preprocess example responses to ensure they are in the correct format.
-    This helps prevent the 'dict' object has no attribute 'request_only' error.
-    
-    Args:
-        result: The schema result dictionary (for post-processing hook)
-        **kwargs: Additional arguments that might be passed by drf-spectacular
-        
-    Returns:
-        The processed result or endpoints depending on the hook type
-    """
-    # Handle both pre and post processing hooks
-    if result is None and 'endpoints' in kwargs:
-        # This is a pre-processing hook (before endpoints are processed)
+    """Minimal preprocessor that just returns the input to avoid processing examples"""
+    if result is not None:
+        return result
+    if 'endpoints' in kwargs:
         return kwargs['endpoints']
-    
-    # This is a post-processing hook (after schema is generated)
-    if result is None:
-        return {}
-        
-    def clean_examples(examples: Dict[str, Any]) -> Dict[str, Any]:
-        cleaned = {}
-        if not isinstance(examples, dict):
-            return cleaned
-            
-        for key, value in examples.items():
-            if value is None:
-                continue
-            if hasattr(value, 'get') and 'value' in value:
-                cleaned[key] = value
-            elif isinstance(value, (OpenApiExample, dict)):
-                cleaned[key] = {'value': value}
-            else:
-                cleaned[key] = {'value': value}
-        return cleaned
+    return {}
 
-    if isinstance(result, dict) and 'paths' in result:
-        for path, methods in result['paths'].items():
+class CustomSchemaGenerator(SchemaGenerator):
+    """
+    Custom schema generator that completely bypasses problematic example handling.
+    This is a more aggressive approach to prevent the 'request_only' attribute error.
+    """
+    def get_schema(self, request=None, public=False):
+        # Get the base schema without any example processing
+        schema = super().get_schema(request, public)
+        
+        # If we don't have a valid schema, return early
+        if not schema or 'paths' not in schema:
+            return schema
+            
+        # Clean up the schema to remove any problematic examples
+        for path, methods in schema['paths'].items():
             if not isinstance(methods, dict):
                 continue
                 
             for method, operation in methods.items():
-                if not isinstance(operation, dict):
+                if not isinstance(operation, dict) or method.lower() not in ['get', 'post', 'put', 'patch', 'delete']:
                     continue
                     
-                if method.lower() in ['get', 'post', 'put', 'patch', 'delete']:
-                    if 'responses' in operation and isinstance(operation['responses'], dict):
-                        for response in operation['responses'].values():
-                            if not isinstance(response, dict):
-                                continue
+                # Remove examples completely to avoid processing issues
+                if 'responses' in operation and isinstance(operation['responses'], dict):
+                    for response in operation['responses'].values():
+                        if not isinstance(response, dict) or 'content' not in response:
+                            continue
+                            
+                        for content in response['content'].values():
+                            if isinstance(content, dict) and 'examples' in content:
+                                del content['examples']
                                 
-                            if 'content' in response and isinstance(response['content'], dict):
-                                for content_type, content in response['content'].items():
-                                    if not isinstance(content, dict):
-                                        continue
-                                        
-                                    if 'examples' in content and content['examples'] is not None:
-                                        content['examples'] = clean_examples(content['examples'])
-    
-    return result
-
-class CustomSchemaGenerator(SchemaGenerator):
-    """
-    Custom schema generator that handles example dictionaries more gracefully.
-    This prevents the 'dict' object has no attribute 'request_only' error.
-    """
-    def get_schema(self, request=None, public=False):
-        schema = super().get_schema(request, public)
-        # Ensure all responses have valid examples
-        if schema and 'paths' in schema:
-            for path, methods in schema['paths'].items():
-                for method, operation in methods.items():
-                    if method.lower() in ['get', 'post', 'put', 'patch', 'delete']:
-                        self._clean_response_examples(operation)
         return schema
-
-    def _clean_response_examples(self, operation):
-        """Clean up response examples to be compatible with drf-spectacular"""
-        if 'responses' in operation:
-            for response in operation['responses'].values():
-                if 'content' in response:
-                    for content_type, content in response['content'].items():
-                        if 'examples' in content:
-                            # Convert any OpenAPI example objects to plain dicts
-                            if isinstance(content['examples'], dict):
-                                for example_name, example in content['examples'].items():
-                                    if hasattr(example, 'get'):
-                                        content['examples'][example_name] = {
-                                            'value': example.get('value', {})
-                                        }
 
 
 class CustomAutoSchema(AutoSchema):
-    """Custom AutoSchema that handles example dictionaries more gracefully"""
+    """
+    Custom AutoSchema that completely bypasses problematic example processing.
+    This is a minimal implementation that focuses on generating a valid schema
+    without any example processing that could cause issues.
+    """
     def _get_response_for_code(self, response_serializers, status_code, direction='response'):
         try:
+            # Get the base response without any example processing
             response = super()._get_response_for_code(response_serializers, status_code, direction)
             
-            # Ensure the response has the expected structure
+            # If we don't have a valid response, return a minimal valid one
             if not isinstance(response, dict):
-                return response
+                return {'description': 'Response'}
                 
+            # Ensure we have a content section
             if 'content' not in response:
-                return response
+                response['content'] = {'application/json': {'schema': {}}}
                 
-            for content_type, content in response['content'].items():
+            # Clean up the response to remove any problematic examples
+            for content_type, content in response.get('content', {}).items():
                 if not isinstance(content, dict):
                     continue
                     
-                # Handle examples if they exist
-                if 'examples' in content and content['examples'] is not None:
-                    if not isinstance(content['examples'], dict):
-                        content['examples'] = {}
-                        continue
-                        
-                    # Convert any OpenAPI example objects to the proper format
-                    cleaned_examples = {}
-                    for example_name, example in content['examples'].items():
-                        if example is None:
-                            continue
-                            
-                        if hasattr(example, 'get'):
-                            # If it's already a dict with 'value', use it as is
-                            if 'value' in example:
-                                cleaned_examples[example_name] = example
-                            # If it's an OpenApiExample or similar, convert to dict
-                            elif hasattr(example, 'name') and hasattr(example, 'value'):
-                                cleaned_examples[example_name] = {
-                                    'value': example.value,
-                                    'summary': getattr(example, 'summary', ''),
-                                    'description': getattr(example, 'description', '')
-                                }
-                            # If it's a plain dict, wrap it in a 'value' key
-                            else:
-                                cleaned_examples[example_name] = {'value': dict(example)}
-                        # If it's a simple value, wrap it in a 'value' key
-                        else:
-                            cleaned_examples[example_name] = {'value': example}
+                # Remove examples completely to avoid processing issues
+                if 'examples' in content:
+                    del content['examples']
                     
-                    content['examples'] = cleaned_examples
-                
-                # Ensure schema exists to prevent other potential issues
+                # Ensure we have a schema
                 if 'schema' not in content:
                     content['schema'] = {}
             
             return response
             
         except Exception as e:
-            # Log the error but don't fail the entire schema generation
-            import logging
-            logger = logging.getLogger(__name__)
             logger.error(f"Error in CustomAutoSchema._get_response_for_code: {str(e)}", exc_info=True)
             
-            # Return a minimal valid response to prevent schema generation from failing completely
+            # Return a minimal valid response
             return {
                 'description': 'Response',
                 'content': {
