@@ -101,14 +101,70 @@ class CustomSchemaGenerator(SchemaGenerator):
 class CustomAutoSchema(AutoSchema):
     """Custom AutoSchema that handles example dictionaries more gracefully"""
     def _get_response_for_code(self, response_serializers, status_code, direction='response'):
-        response = super()._get_response_for_code(response_serializers, status_code, direction)
-        # Ensure examples are properly formatted
-        if 'content' in response:
+        try:
+            response = super()._get_response_for_code(response_serializers, status_code, direction)
+            
+            # Ensure the response has the expected structure
+            if not isinstance(response, dict):
+                return response
+                
+            if 'content' not in response:
+                return response
+                
             for content_type, content in response['content'].items():
-                if 'examples' in content and isinstance(content['examples'], dict):
+                if not isinstance(content, dict):
+                    continue
+                    
+                # Handle examples if they exist
+                if 'examples' in content and content['examples'] is not None:
+                    if not isinstance(content['examples'], dict):
+                        content['examples'] = {}
+                        continue
+                        
+                    # Convert any OpenAPI example objects to the proper format
+                    cleaned_examples = {}
                     for example_name, example in content['examples'].items():
+                        if example is None:
+                            continue
+                            
                         if hasattr(example, 'get'):
-                            content['examples'][example_name] = {
-                                'value': example.get('value', {})
-                            }
-        return response
+                            # If it's already a dict with 'value', use it as is
+                            if 'value' in example:
+                                cleaned_examples[example_name] = example
+                            # If it's an OpenApiExample or similar, convert to dict
+                            elif hasattr(example, 'name') and hasattr(example, 'value'):
+                                cleaned_examples[example_name] = {
+                                    'value': example.value,
+                                    'summary': getattr(example, 'summary', ''),
+                                    'description': getattr(example, 'description', '')
+                                }
+                            # If it's a plain dict, wrap it in a 'value' key
+                            else:
+                                cleaned_examples[example_name] = {'value': dict(example)}
+                        # If it's a simple value, wrap it in a 'value' key
+                        else:
+                            cleaned_examples[example_name] = {'value': example}
+                    
+                    content['examples'] = cleaned_examples
+                
+                # Ensure schema exists to prevent other potential issues
+                if 'schema' not in content:
+                    content['schema'] = {}
+            
+            return response
+            
+        except Exception as e:
+            # Log the error but don't fail the entire schema generation
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error in CustomAutoSchema._get_response_for_code: {str(e)}", exc_info=True)
+            
+            # Return a minimal valid response to prevent schema generation from failing completely
+            return {
+                'description': 'Response',
+                'content': {
+                    'application/json': {
+                        'schema': {}
+                    }
+                }
+            }
