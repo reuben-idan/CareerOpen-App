@@ -351,59 +351,70 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     @extend_schema(
         request=CustomTokenObtainPairSerializer,
         responses={
-            200: OpenApiResponse(
-                description="Authentication successful",
-                response=TokenResponse,
-                examples=[
-                    OpenApiExample(
-                        "Success Response",
-                        value={
-                            "access": "eyJhbGciOiJIUzI1NiIs...",
-                            "refresh": "eyJhbGciOiJIUzI1NiIs...",
-                            "user": {
-                                "id": 1,
-                                "email": "user@example.com",
-                                "is_employer": False,
-                                "is_staff": False
-                            }
+            200: {
+                'type': 'object',
+                'properties': {
+                    'access': {'type': 'string'},
+                    'refresh': {'type': 'string'},
+                    'user': {
+                        'type': 'object',
+                        'properties': {
+                            'id': {'type': 'integer'},
+                            'email': {'type': 'string'},
+                            'is_employer': {'type': 'boolean'},
+                            'is_applicant': {'type': 'boolean'},
+                            'full_name': {'type': 'string', 'nullable': True}
                         }
-                    )
-                ]
-            ),
-            400: OpenApiResponse(
-                description="Bad Request - Missing or invalid input",
-                examples=[
-                    OpenApiExample(
-                        "Error Response",
-                        value={"detail": "Email and password are required"}
-                    )
-                ]
-            ),
-            401: OpenApiResponse(
-                description="Unauthorized - Invalid credentials",
-                examples=[
-                    OpenApiExample(
-                        "Error Response",
-                        value={"detail": "No active account found with the given credentials"}
-                    )
-                ]
-            ),
-            500: OpenApiResponse(
-                description="Internal server error",
-                examples=[
-                    OpenApiExample(
-                        "Error Response",
-                        value={"detail": "An unexpected error occurred while processing your request"}
-                    )
-                ]
-            )
+                    }
+                },
+                'example': {
+                    'access': 'eyJhbGciOiJIUzI1NiIs...',
+                    'refresh': 'eyJhbGciOiJIUzI1NiIs...',
+                    'user': {
+                        'id': 1,
+                        'email': 'user@example.com',
+                        'is_employer': False,
+                        'is_applicant': True,
+                        'full_name': 'John Doe'
+                    }
+                }
+            },
+            400: {
+                'type': 'object',
+                'properties': {
+                    'detail': {'type': 'string'},
+                    'code': {'type': 'string'}
+                },
+                'example': {
+                    'detail': 'No active account found with the given credentials',
+                    'code': 'no_active_account'
+                }
+            },
+            401: {
+                'type': 'object',
+                'properties': {
+                    'detail': {'type': 'string'},
+                    'code': {'type': 'string'}
+                },
+                'example': {
+                    'detail': 'Invalid credentials',
+                    'code': 'authentication_failed'
+                }
+            }
         },
-        description="""Authenticate a user and return JWT tokens.
+        summary="Obtain JWT token pair",
+        description="""
+        Authenticate a user and return JWT access and refresh tokens.
         
-        This endpoint allows users to log in and receive access and refresh tokens.
-        The access token should be included in the Authorization header for subsequent requests.
+        This endpoint validates user credentials and returns:
+        - Access token (short-lived)
+        - Refresh token (long-lived, for obtaining new access tokens)
+        - User data
         
-        Note: This endpoint is CSRF-exempt for API access.
+        The access token should be included in the Authorization header of subsequent requests:
+        `Authorization: Bearer <access_token>`
+        
+        When the access token expires, use the refresh token to obtain a new one via the refresh endpoint.
         """
     )
     def post(self, request, *args, **kwargs):
