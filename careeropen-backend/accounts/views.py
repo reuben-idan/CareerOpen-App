@@ -105,40 +105,47 @@ class TokenObtainPairView(APIView):
             }
         },
         responses={
-            200: OpenApiResponse(
-                response={
-                    'type': 'object',
-                    'properties': {
-                        'access': {'type': 'string', 'description': 'JWT access token'},
-                        'refresh': {'type': 'string', 'description': 'JWT refresh token'},
-                        'user': {
-                            'type': 'object',
-                            'properties': {
-                                'id': {'type': 'integer'},
-                                'username': {'type': 'string'},
-                                'email': {'type': 'string', 'format': 'email'},
-                                'is_employer': {'type': 'boolean'},
-                                'is_applicant': {'type': 'boolean'},
-                                'full_name': {'type': 'string', 'nullable': True},
-                                'company_name': {'type': 'string', 'nullable': True}
-                            }
+            200: {
+                'type': 'object',
+                'properties': {
+                    'access': {'type': 'string', 'description': 'JWT access token'},
+                    'refresh': {'type': 'string', 'description': 'JWT refresh token'},
+                    'user': {
+                        'type': 'object',
+                        'properties': {
+                            'id': {'type': 'integer'},
+                            'username': {'type': 'string'},
+                            'email': {'type': 'string', 'format': 'email'},
+                            'is_employer': {'type': 'boolean'},
+                            'is_applicant': {'type': 'boolean'},
+                            'full_name': {'type': ['string', 'null']},
+                            'company_name': {'type': ['string', 'null']}
                         }
                     }
                 },
-                description='Authentication successful. Returns JWT tokens and user data.'
-            ),
-            400: OpenApiResponse(
-                response={'type': 'object', 'properties': {'error': {'type': 'string'}}},
-                description='Bad request. Missing or invalid input data.'
-            ),
-            401: OpenApiResponse(
-                response={'type': 'object', 'properties': {'error': {'type': 'string'}}},
-                description='Unauthorized. Invalid credentials.'
-            ),
-            500: OpenApiResponse(
-                response={'type': 'object', 'properties': {'error': {'type': 'string'}}},
-                description='Internal server error.'
-            )
+                'description': 'Authentication successful. Returns JWT tokens and user data.'
+            },
+            400: {
+                'type': 'object',
+                'properties': {
+                    'error': {'type': 'string'}
+                },
+                'description': 'Bad request. Missing or invalid input data.'
+            },
+            401: {
+                'type': 'object',
+                'properties': {
+                    'error': {'type': 'string'}
+                },
+                'description': 'Unauthorized. Invalid credentials.'
+            },
+            500: {
+                'type': 'object',
+                'properties': {
+                    'error': {'type': 'string'}
+                },
+                'description': 'Internal server error.'
+            }
         },
         description='Obtain JWT tokens for API authentication',
         summary='Obtain JWT Tokens',
