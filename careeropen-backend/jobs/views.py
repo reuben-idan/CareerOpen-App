@@ -2469,6 +2469,9 @@ class UserJobApplicationsView(generics.ListAPIView):
         }
     ordering_fields = ['applied_at', 'updated_at', 'status']
     ordering = ['-applied_at']
+    
+    # Add empty queryset to prevent database access during schema generation
+    queryset = JobApplication.objects.none()
 
     @extend_schema(
         operation_id='list_user_job_applications',
@@ -2504,32 +2507,9 @@ class UserJobApplicationsView(generics.ListAPIView):
             ),
         ],
         responses={
-            200: OpenApiResponse(
-                response=JobApplicationSerializer(many=True),
-                description='List of job applications',
-                examples={
-                    'application/json': [
-                        {
-                            'id': 1,
-                            'job': 1,
-                            'applicant': 1,
-                            'status': 'applied',
-                            'cover_letter': 'I am very interested in this position...',
-                            'resume': '/media/resumes/example.pdf',
-                            'applied_at': '2023-01-01T12:00:00Z',
-                            'updated_at': '2023-01-01T12:00:00Z'
-                        }
-                    ]
-                }
-            ),
-            401: OpenApiResponse(
-                response={"detail": "Authentication credentials were not provided."},
-                description="Authentication credentials were not provided"
-            ),
-            403: OpenApiResponse(
-                response={"detail": "You do not have permission to access this resource."},
-                description="You do not have permission to access this resource"
-            ),
+            200: JobApplicationSerializer(many=True),
+            401: {"description": "Authentication credentials were not provided"},
+            403: {"description": "You do not have permission to access this resource"},
         }
     )
     def get(self, request, *args, **kwargs):
