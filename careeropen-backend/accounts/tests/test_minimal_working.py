@@ -4,7 +4,7 @@ Minimal working test to verify pytest setup.
 import pytest
 
 def test_import_serializers():
-    ""Test that we can import the serializers module."""
+    """Test that we can import the serializers module."""
     try:
         from accounts.serializers import SimpleRegistrationSerializer, UserRegistrationSerializer
         assert SimpleRegistrationSerializer is not None
@@ -18,5 +18,5 @@ def test_import_serializers():
         raise
 
 def test_minimal_assertion():
-    ""Minimal test to verify pytest is working."""
+    """Minimal test to verify pytest is working."""
     assert 1 + 1 == 2
