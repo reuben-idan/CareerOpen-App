@@ -7,18 +7,16 @@ from django.urls import path, include, re_path
 from django.views.generic import RedirectView
 from rest_framework import permissions
 from rest_framework import routers
-from drf_spectacular.views import (
-    SpectacularRedocView,
-    SpectacularSwaggerView,
-    SpectacularAPIView
-)
-from .schema import CustomSchemaGenerator, CustomAutoSchema
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
     TokenVerifyView,
 )
 from .views import HealthCheckView, WelcomeView
+from .schema import MinimalSchemaView
 
 # Create a router for the API
 router = routers.DefaultRouter()
@@ -36,6 +34,9 @@ api_patterns = [
     # Health check
     path('health/', HealthCheckView.as_view(), name='health_check'),
     
+    # Schema (using our minimal implementation)
+    path('schema/', MinimalSchemaView.as_view(), name='schema'),
+    
     # Authentication
     path('auth/', include('accounts.urls')),  # Includes token and user endpoints
     
@@ -47,20 +48,6 @@ api_patterns = [
     # Apps
     path('jobs/', include('jobs.urls')),  # Job-related endpoints
     path('network/', include('network.urls')),  # Network-related endpoints
-    
-    # API Documentation
-    path('schema/', SpectacularAPIView.as_view(
-        generator_class=CustomSchemaGenerator,
-        permission_classes=[permissions.AllowAny]  # Allow public access to schema
-    ), name='schema'),
-    path('docs/', SpectacularSwaggerView.as_view(
-        url_name='api_v1:schema',
-        permission_classes=[permissions.AllowAny]  # Allow public access to Swagger UI
-    ), name='swagger-ui'),
-    path('redoc/', SpectacularRedocView.as_view(
-        url_name='api_v1:schema',
-        permission_classes=[permissions.AllowAny]  # Allow public access to ReDoc
-    ), name='redoc'),
 ]
 
 # API v1 URLs
@@ -73,6 +60,19 @@ urlpatterns = [
     
     # API v1
     path('api/v1/', include((api_patterns, 'api_v1'), namespace='api_v1')),
+    
+    # API Documentation - using our minimal schema view
+    path('api/v1/schema/', MinimalSchemaView.as_view(), name='schema'),
+    
+    # Simple welcome page for API docs
+    path('api/v1/docs/', TemplateView.as_view(
+        template_name='api_docs.html',
+        extra_context={
+            'title': 'CareerOpen API',
+            'description': 'API documentation for CareerOpen application.',
+            'schema_url': '/api/v1/schema/'
+        }
+    ), name='api-docs'),
     
     # Redirect old API URLs to v1
     path('api/', include([
