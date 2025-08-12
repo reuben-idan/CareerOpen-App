@@ -37,7 +37,7 @@ from django.http import HttpRequest, HttpResponse
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from mypy_extensions import TypedDict
+from typing import TypedDict
 
 # Type variable for generic views
 _ViewT = TypeVar('_ViewT', bound=APIView)
