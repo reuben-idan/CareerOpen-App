@@ -49,9 +49,18 @@ api_patterns = [
     path('network/', include('network.urls')),  # Network-related endpoints
     
     # API Documentation
-    path('schema/', SpectacularAPIView.as_view(generator_class=CustomSchemaGenerator), name='schema'),
-    path('docs/', SpectacularSwaggerView.as_view(url_name='api_v1:schema'), name='swagger-ui'),
-    path('redoc/', SpectacularRedocView.as_view(url_name='api_v1:schema'), name='redoc'),
+    path('schema/', SpectacularAPIView.as_view(
+        generator_class=CustomSchemaGenerator,
+        permission_classes=[permissions.AllowAny]  # Allow public access to schema
+    ), name='schema'),
+    path('docs/', SpectacularSwaggerView.as_view(
+        url_name='api_v1:schema',
+        permission_classes=[permissions.AllowAny]  # Allow public access to Swagger UI
+    ), name='swagger-ui'),
+    path('redoc/', SpectacularRedocView.as_view(
+        url_name='api_v1:schema',
+        permission_classes=[permissions.AllowAny]  # Allow public access to ReDoc
+    ), name='redoc'),
 ]
 
 # API v1 URLs
