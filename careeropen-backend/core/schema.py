@@ -5,15 +5,36 @@ from drf_spectacular.plumbing import get_doc
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema
 
-def preprocess_example_responses(result: Dict[str, Any], **kwargs) -> Dict[str, Any]:
+def preprocess_example_responses(result=None, **kwargs):
     """
     Preprocess example responses to ensure they are in the correct format.
     This helps prevent the 'dict' object has no attribute 'request_only' error.
+    
+    Args:
+        result: The schema result dictionary (for post-processing hook)
+        **kwargs: Additional arguments that might be passed by drf-spectacular
+        
+    Returns:
+        The processed result or endpoints depending on the hook type
     """
+    # Handle both pre and post processing hooks
+    if result is None and 'endpoints' in kwargs:
+        # This is a pre-processing hook (before endpoints are processed)
+        return kwargs['endpoints']
+    
+    # This is a post-processing hook (after schema is generated)
+    if result is None:
+        return {}
+        
     def clean_examples(examples: Dict[str, Any]) -> Dict[str, Any]:
         cleaned = {}
+        if not isinstance(examples, dict):
+            return cleaned
+            
         for key, value in examples.items():
-            if isinstance(value, dict) and 'value' in value:
+            if value is None:
+                continue
+            if hasattr(value, 'get') and 'value' in value:
                 cleaned[key] = value
             elif isinstance(value, (OpenApiExample, dict)):
                 cleaned[key] = {'value': value}
@@ -21,16 +42,29 @@ def preprocess_example_responses(result: Dict[str, Any], **kwargs) -> Dict[str, 
                 cleaned[key] = {'value': value}
         return cleaned
 
-    if 'paths' in result:
+    if isinstance(result, dict) and 'paths' in result:
         for path, methods in result['paths'].items():
+            if not isinstance(methods, dict):
+                continue
+                
             for method, operation in methods.items():
+                if not isinstance(operation, dict):
+                    continue
+                    
                 if method.lower() in ['get', 'post', 'put', 'patch', 'delete']:
-                    if 'responses' in operation:
+                    if 'responses' in operation and isinstance(operation['responses'], dict):
                         for response in operation['responses'].values():
-                            if 'content' in response:
+                            if not isinstance(response, dict):
+                                continue
+                                
+                            if 'content' in response and isinstance(response['content'], dict):
                                 for content_type, content in response['content'].items():
-                                    if 'examples' in content:
+                                    if not isinstance(content, dict):
+                                        continue
+                                        
+                                    if 'examples' in content and content['examples'] is not None:
                                         content['examples'] = clean_examples(content['examples'])
+    
     return result
 
 class CustomSchemaGenerator(SchemaGenerator):
