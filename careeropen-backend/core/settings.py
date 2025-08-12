@@ -123,21 +123,51 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
-    # 3rd-party
+    
+    # Third-party apps
     'rest_framework',
-    'rest_framework.authtoken',
-    'django_redis',
     'rest_framework_simplejwt',
     'corsheaders',
     'drf_spectacular',
-    'storages',
-
+    'drf_spectacular_sidecar',  # Required for production static files
+    
     # Local apps
-    'jobs',
-    'accounts',
-    'network',
+    'accounts.apps.AccountsConfig',
+    'jobs.apps.JobsConfig',
+    'network.apps.NetworkConfig',
 ]
+
+# DRF Spectacular Settings
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'CareerOpen API',
+    'DESCRIPTION': 'API documentation for CareerOpen application',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'SWAGGER_UI_DIST': 'SIDECAR',  # Use the sidecar for production
+    'SWAGGER_UI_FAVICON_HREF': 'SIDECAR',
+    'REDOC_DIST': 'SIDECAR',
+    'COMPONENT_SPLIT_REQUEST': True,  # Important for file uploads
+    
+    # Disable example processing to avoid 'request_only' errors
+    'SCHEMA_PATH_PREFIX': r'/api/v[0-9]',
+    'SCHEMA_PATH_PREFIX_TRIM': True,
+    'SWAGGER_UI_SETTINGS': {
+        'deepLinking': True,
+        'persistAuthorization': True,
+        'displayRequestDuration': True,
+    },
+    'PREPROCESSING_HOOKS': [
+        'core.schema.preprocess_example_responses',
+    ],
+    # Disable example processing
+    'COMPONENT_NO_READ_ONLY_REQUIRED': True,
+    'ENUM_NAME_OVERRIDES': {},
+    'GENERIC_ADDITIONAL_PROPERTIES': 'dict',
+    'ENUM_ADD_EXPLICIT_BLANK_NULL_CHOICE': False,
+    'SCHEMA_COERCE_PATH_PK_SUFFIX': True,
+    'SCHEMA_COERCE_PATH_PK': True,
+    'DEFAULT_GENERATOR_CLASS': 'core.schema.CustomSchemaGenerator',
+}
 
 MIDDLEWARE = [
     # Temporarily disabled Prometheus middleware to resolve async/coroutine issues
@@ -264,38 +294,67 @@ REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
-# DRF Spectacular Settings
+# DRF Spectacular Settings - Consolidated and optimized
 SPECTACULAR_SETTINGS = {
     'TITLE': 'CareerOpen API',
-    'DESCRIPTION': 'API documentation for CareerOpen application. This API provides endpoints for managing job applications, user accounts, and professional networking.',
+    'DESCRIPTION': 'API documentation for CareerOpen application',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
-    'COMPONENT_SPLIT_REQUEST': True,
-    'SCHEMA_PATH_PREFIX': r'/api/v1/',
+    'SWAGGER_UI_DIST': 'SIDECAR',  # Use the sidecar for production
+    'SWAGGER_UI_FAVICON_HREF': 'SIDECAR',
+    'REDOC_DIST': 'SIDECAR',
+    
+    # Schema generation settings
+    'DEFAULT_SCHEMA_CLASS': 'core.schema.CustomAutoSchema',
+    'DEFAULT_GENERATOR_CLASS': 'core.schema.CustomSchemaGenerator',
+    'SCHEMA_PATH_PREFIX': r'/api/v[0-9]',
+    'SCHEMA_PATH_PREFIX_TRIM': True,
+    
+    # Disable example processing to avoid 'request_only' errors
+    'COMPONENT_SPLIT_REQUEST': False,
+    'COMPONENT_SPLIT_RESPONSE': False,
+    'COMPONENT_NO_READ_ONLY_REQUIRED': True,
+    'ENUM_ADD_EXPLICIT_BLANK_NULL_CHOICE': False,
+    'SCHEMA_COERCE_PATH_PK_SUFFIX': True,
+    'SCHEMA_COERCE_PATH_PK': True,
+    
+    # Server and security settings
     'SERVERS': [
         {'url': 'https://careeropen-api.onrender.com', 'description': 'Production server'},
         {'url': 'http://localhost:8000', 'description': 'Local development server'},
     ],
+    'SECURITY': [],  # Disable security schemes to simplify the schema
+    
+    # UI settings
+    'SWAGGER_UI_SETTINGS': {
+        'deepLinking': True,
+        'persistAuthorization': True,
+        'displayRequestDuration': True,
+        'filter': True,
+        'docExpansion': 'none',
+    },
+    
+    # Disable example processing
+    'PREPROCESSING_HOOKS': [
+        'core.schema.preprocess_example_responses',
+    ],
+    
+    # Error handling
+    'EXCEPTION_HANDLER': 'core.middleware.error_handler.api_exception_handler',
+    'TEST_REQUEST_DEFAULT_FORMAT': 'json',
+    
+    # Throttling (if needed)
     'DEFAULT_THROTTLE_RATES': {
         'anon': '100/day',
         'user': '1000/day',
     },
-    'EXCEPTION_HANDLER': 'core.middleware.error_handler.api_exception_handler',
-    'DEFAULT_SCHEMA_CLASS': 'core.schema.CustomAutoSchema',
-    'TEST_REQUEST_DEFAULT_FORMAT': 'json',
-    'SCHEMA_PATH_PREFIX_TRIM': True,
-    'SCHEMA_PATH_PREFIX': r'/api/v1/',
-    'COMPONENT_SPLIT_REQUEST': True,
-    'COMPONENT_SPLIT_RESPONSE': True,
-    'COMPONENT_NO_READ_ONLY_REQUIRED': True,
+    
+    # Enum overrides
     'ENUM_NAME_OVERRIDES': {
         'StatusEnum': 'jobs.models.JobPosting.Status',
         'JobTypeEnum': 'jobs.models.JobPosting.JobType',
         'ExperienceLevelEnum': 'jobs.models.JobPosting.ExperienceLevel',
     },
-    'PREPROCESSING_HOOKS': [
-        'core.schema.preprocess_example_responses',
-    ],
 }
 
 # JWT Settings
