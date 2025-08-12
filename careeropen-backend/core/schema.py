@@ -86,36 +86,58 @@ class CustomAutoSchema(AutoSchema):
     """
     def _get_examples(self, *args, **kwargs):
         """
-        Safely handle example processing to prevent 'request_only' attribute errors.
+        Completely override to prevent any example processing that might cause errors.
+        This is a more aggressive approach that completely bypasses the problematic code.
         """
-        if not args or not kwargs:
-            return {}
-            
-        # Get the serializer and direction from the arguments
-        serializer = args[0] if len(args) > 0 else None
-        direction = kwargs.get('direction', None)
+        return {}
         
-        # If we don't have the required arguments, return empty
-        if not serializer or not direction:
+    def _get_response_for_code(self, response_serializers, status_code, **kwargs):
+        """
+        Override to safely handle response generation and prevent example processing errors.
+        """
+        try:
+            # Call the parent method but skip example processing
+            response = super()._get_response_for_code(response_serializers, status_code, **kwargs)
+            
+            # Ensure we have a valid response
+            if not isinstance(response, dict):
+                return {}
+                
+            # Clean up any problematic examples in the response
+            if 'content' in response and isinstance(response['content'], dict):
+                for content_type, content in response['content'].items():
+                    if isinstance(content, dict) and 'examples' in content:
+                        del content['examples']
+                        
+            return response
+            
+        except Exception as e:
+            logger.warning(f"Error in _get_response_for_code: {str(e)}")
             return {}
             
+    def get_operation(self, *args, **kwargs):
+        """
+        Override get_operation to ensure we handle examples safely.
+        """
         try:
-            # Get the default examples from the parent class
-            examples = super()._get_examples(*args, **kwargs)
+            operation = super().get_operation(*args, **kwargs)
             
-            # If we have examples, ensure they're in the correct format
-            if isinstance(examples, dict):
-                safe_examples = {}
-                for key, value in examples.items():
-                    # Skip any example that might cause issues
-                    if hasattr(value, 'request_only') and direction == 'response' and value.request_only:
-                        continue
-                    safe_examples[key] = value
-                return safe_examples
+            # Ensure we have a valid operation
+            if not isinstance(operation, dict):
+                return {}
                 
-            return examples if examples else {}
+            # Clean up any problematic examples in the operation
+            if 'responses' in operation and isinstance(operation['responses'], dict):
+                for response_code, response in operation['responses'].items():
+                    if isinstance(response, dict) and 'content' in response and isinstance(response['content'], dict):
+                        for content_type, content in response['content'].items():
+                            if isinstance(content, dict) and 'examples' in content:
+                                del content['examples']
+                                
+            return operation
+            
         except Exception as e:
-            logger.warning(f"Error processing examples: {str(e)}")
+            logger.warning(f"Error in get_operation: {str(e)}")
             return {}
         
     def _get_response_for_code(self, response_serializers, status_code, **kwargs):
