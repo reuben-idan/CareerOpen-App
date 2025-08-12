@@ -137,9 +137,33 @@ TEMPLATES = [
     },
 ]
 
-# Extend INSTALLED_APPS to include core
+# Application definition with all required Django built-in apps and our custom apps
 INSTALLED_APPS = [
-    'core.apps.CoreConfig',  # Add this line
+    # Django defaults
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    
+    # Third-party apps
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'corsheaders',
+    'drf_spectacular',
+    'drf_spectacular_sidecar',  # Required for production static files
+    'django_prometheus',
+    'django_redis',
+    'django_filters',
+    'storages',
+    'whitenoise.runserver_nostatic',
+    
+    # Local apps
+    'accounts.apps.AccountsConfig',
+    'jobs.apps.JobsConfig',
+    'network.apps.NetworkConfig',
+    'core.apps.CoreConfig',
 ]
 
 # Connection pooling for production
