@@ -25,14 +25,22 @@ class CustomSchemaGenerator(SchemaGenerator):
     This version is more aggressive in handling schema generation to prevent 'request_only' attribute errors.
     """
     def get_schema(self, request=None, public=False):
-        # Set default schema class for all views that don't have one specified
-        for view in self.endpoints.values():
-            if hasattr(view, 'schema') and view.schema is None:
-                view.schema = CustomAutoSchema()
-            elif not hasattr(view, 'schema'):
-                view.schema = CustomAutoSchema()
+        # First call the parent's get_schema to ensure endpoints are initialized
+        schema = super().get_schema(request, public)
         
-        # Get the base schema
+        # If we have endpoints, set the default schema class for views that don't have one
+        if hasattr(self, 'endpoints') and self.endpoints is not None:
+            for view in self.endpoints.values():
+                if view is None:
+                    continue
+                    
+                # Set the schema if it's not already set
+                if hasattr(view, 'schema') and view.schema is None:
+                    view.schema = CustomAutoSchema()
+                elif not hasattr(view, 'schema'):
+                    view.schema = CustomAutoSchema()
+        
+        # Get the schema again with our custom schema classes
         schema = super().get_schema(request, public)
         
         # If we don't have a valid schema, return early
