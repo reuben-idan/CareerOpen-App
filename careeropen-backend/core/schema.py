@@ -209,10 +209,33 @@ class CustomAutoSchema(AutoSchema):
     """
     def _get_examples(self, *args, **kwargs):
         """
-        Completely override to prevent any example processing that might cause errors.
-        This is a more aggressive approach that completely bypasses the problematic code.
+        Safely handle example processing to prevent 'request_only' attribute errors.
+        This version is more resilient to different input types and handles edge cases.
         """
-        return {}
+        try:
+            # If we don't have the expected arguments, return empty dict
+            if not args and not kwargs:
+                return {}
+                
+            # If we have a serializer as first arg, check if it's a dict
+            if args and isinstance(args[0], dict):
+                return {}
+                
+            # If we have a 'direction' in kwargs and it's 'response', return empty dict
+            # to avoid processing response examples that might cause issues
+            if kwargs.get('direction') == 'response':
+                return {}
+                
+            # For any other case, try to call the parent method but be prepared to catch errors
+            try:
+                return super()._get_examples(*args, **kwargs)
+            except Exception as e:
+                logger.warning(f"Error in _get_examples: {str(e)}")
+                return {}
+                
+        except Exception as e:
+            logger.error(f"Unexpected error in _get_examples: {str(e)}", exc_info=True)
+            return {}
         
     def _get_response_bodies(self, *args, **kwargs):
         """
