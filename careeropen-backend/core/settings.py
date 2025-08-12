@@ -281,8 +281,21 @@ SPECTACULAR_SETTINGS = {
         'user': '1000/day',
     },
     'EXCEPTION_HANDLER': 'core.middleware.error_handler.api_exception_handler',
-    'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
+    'DEFAULT_SCHEMA_CLASS': 'core.schema.CustomAutoSchema',
     'TEST_REQUEST_DEFAULT_FORMAT': 'json',
+    'SCHEMA_PATH_PREFIX_TRIM': True,
+    'SCHEMA_PATH_PREFIX': r'/api/v1/',
+    'COMPONENT_SPLIT_REQUEST': True,
+    'COMPONENT_SPLIT_RESPONSE': True,
+    'COMPONENT_NO_READ_ONLY_REQUIRED': True,
+    'ENUM_NAME_OVERRIDES': {
+        'StatusEnum': 'jobs.models.JobPosting.Status',
+        'JobTypeEnum': 'jobs.models.JobPosting.JobType',
+        'ExperienceLevelEnum': 'jobs.models.JobPosting.ExperienceLevel',
+    },
+    'PREPROCESSING_HOOKS': [
+        'core.schema.preprocess_example_responses',
+    ],
 }
 
 # JWT Settings

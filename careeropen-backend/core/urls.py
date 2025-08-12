@@ -8,10 +8,11 @@ from django.views.generic import RedirectView
 from rest_framework import permissions
 from rest_framework import routers
 from drf_spectacular.views import (
-    SpectacularAPIView,
     SpectacularRedocView,
     SpectacularSwaggerView,
 )
+from .schema import CustomSchemaGenerator, CustomAutoSchema
+from drf_spectacular.views import SpectacularAPIView as BaseSpectacularAPIView
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
@@ -48,7 +49,7 @@ api_patterns = [
     path('network/', include('network.urls')),  # Network-related endpoints
     
     # API Documentation
-    path('schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('schema/', SpectacularAPIView.as_view(generator_class=CustomSchemaGenerator), name='schema'),
     path('docs/', SpectacularSwaggerView.as_view(url_name='api_v1:schema'), name='swagger-ui'),
     path('redoc/', SpectacularRedocView.as_view(url_name='api_v1:schema'), name='redoc'),
 ]
