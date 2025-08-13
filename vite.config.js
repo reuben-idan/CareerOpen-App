@@ -1,6 +1,10 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import { fileURLToPath, URL } from 'node:url';
+import { resolve } from 'path';
+
+// Vite configuration for Vercel deployment
+// Explicitly handles MUI imports and ensures proper bundling
 
 export default defineConfig({
   plugins: [
@@ -11,22 +15,35 @@ export default defineConfig({
       },
     }),
   ],
+  
+  // Optimize dependencies for better performance
   optimizeDeps: {
     include: [
+      'react',
+      'react-dom',
+      'react-router-dom',
       '@mui/material',
       '@mui/icons-material',
       '@emotion/react',
       '@emotion/styled',
     ],
+    esbuildOptions: {
+      // Enable esbuild polyfill for Node.js modules
+      target: 'es2020',
+    },
   },
+  
+  // Resolve configuration
   resolve: {
     alias: {
+      // Base path alias
       '@': fileURLToPath(new URL('./src', import.meta.url)),
-      // Ensure MUI components are properly resolved
-      '@mui/material': '@mui/material',
-      '@mui/icons-material': '@mui/icons-material',
-      '@emotion/react': '@emotion/react',
-      '@emotion/styled': '@emotion/styled',
+      
+      // MUI aliases to ensure proper resolution
+      '@mui/material': resolve(__dirname, 'node_modules/@mui/material'),
+      '@mui/icons-material': resolve(__dirname, 'node_modules/@mui/icons-material'),
+      '@emotion/react': resolve(__dirname, 'node_modules/@emotion/react'),
+      '@emotion/styled': resolve(__dirname, 'node_modules/@emotion/styled'),
     },
   },
   build: {
