@@ -11,9 +11,22 @@ export default defineConfig({
       },
     }),
   ],
+  optimizeDeps: {
+    include: [
+      '@mui/material',
+      '@mui/icons-material',
+      '@emotion/react',
+      '@emotion/styled',
+    ],
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
+      // Ensure MUI components are properly resolved
+      '@mui/material': '@mui/material',
+      '@mui/icons-material': '@mui/icons-material',
+      '@emotion/react': '@emotion/react',
+      '@emotion/styled': '@emotion/styled',
     },
   },
   build: {
