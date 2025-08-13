@@ -9,7 +9,7 @@ import {
   LoadingSpinner,
   ErrorMessage
 } from '../components/common';
-import { useJobsStore } from '../stores/jobsStore';
+import useJobsStore from '../stores/jobsStore';
 
 /**
  * JobPostPage - A page component for posting new job listings
