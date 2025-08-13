@@ -1,8 +1,10 @@
 import jobService from '../jobService';
-import api from '../authService';
+import authService from '../authService';
 
 // Mock the authService
 jest.mock('../authService');
+
+const { api } = authService;
 
 describe('jobService', () => {
   const mockResponse = (data, status = 200) => ({

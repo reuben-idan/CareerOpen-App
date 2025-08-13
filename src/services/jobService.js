@@ -1,4 +1,5 @@
-import { api } from './authService';
+import authService from './authService';
+const { api } = authService;
 
 const jobService = {
   // Get all jobs with optional filters

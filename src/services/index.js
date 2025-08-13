@@ -1,6 +1,6 @@
 // Import the API instance and services
-import { api } from './authService';
 import authService from './authService';
+const { api } = authService;
 import jobService from './jobService';
 
 // Create a services object that includes everything
