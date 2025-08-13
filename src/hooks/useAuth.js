@@ -1,38 +1,85 @@
-import { useUser } from "../context/auth";
-import { useProfile } from "../context/profile";
+import { useAuthStore } from '../stores/authStore';
 
 /**
- * Custom hook that combines authentication and user profile functionality
- * @returns {Object} Combined auth and profile methods and state
+ * Custom hook that provides authentication state and methods
+ * @returns {Object} Auth methods and state
  */
 const useAuth = () => {
-  const auth = useUser();
-  const profile = useProfile();
+  const {
+    user,
+    accessToken,
+    isAuthenticated,
+    isLoading,
+    error,
+    login,
+    logout,
+    checkAuth,
+    refreshToken,
+  } = useAuthStore();
+
+  /**
+   * Login with email/username and password
+   * @param {string} username - User's username or email
+   * @param {string} password - User's password
+   * @returns {Promise<{success: boolean, error?: string}>} Login result
+   */
+  const signIn = async (username, password) => {
+    return await login({ username, password });
+  };
+
+  /**
+   * Sign up a new user
+   * @param {Object} userData - User registration data
+   * @returns {Promise<{success: boolean, error?: string}>} Signup result
+   */
+  const signUp = async (userData) => {
+    // TODO: Implement signup logic when the endpoint is available
+    console.log('Signup not implemented yet', userData);
+    return { success: false, error: 'Signup not implemented yet' };
+  };
+
+  /**
+   * Sign out the current user
+   */
+  const signOut = () => {
+    logout();
+  };
+
+  /**
+   * Update user profile
+   * @param {Object} profileData - Updated profile data
+   * @returns {Promise<{success: boolean, error?: string}>} Update result
+   */
+  const updateProfile = async (profileData) => {
+    // TODO: Implement profile update when the endpoint is available
+    console.log('Profile update not implemented yet', profileData);
+    return { success: false, error: 'Profile update not implemented yet' };
+  };
 
   return {
     // Auth state
-    user: auth.user,
-    isLoading: auth.isLoading || profile.isLoading,
-    error: auth.error || profile.error,
+    user,
+    accessToken,
+    isAuthenticated,
+    isLoading,
+    error,
     
     // Auth methods
-    signUp: auth.signUp,
-    signIn: auth.signIn,
-    signOut: auth.signOut,
-    updateUser: auth.updateUser,
+    login: signIn,
+    signIn,
+    signUp,
+    logout: signOut,
+    signOut,
+    checkAuth,
+    refreshToken,
     
-    // Profile state
-    profile: profile.profile,
-    preferences: profile.preferences,
+    // Profile methods (stubs for now)
+    updateUser: updateProfile,
+    updateProfile,
     
-    // Profile methods
-    updateProfile: profile.updateProfile,
-    updatePreferences: profile.updatePreferences,
-    refreshProfile: profile.refreshProfile,
-    
-    // Combined loading state
-    isInitializing: auth.isLoading && !auth.user,
-    isProfileLoading: profile.isLoading,
+    // For compatibility with existing code
+    isInitializing: isLoading && !user,
+    isProfileLoading: false,
   };
 };
 
