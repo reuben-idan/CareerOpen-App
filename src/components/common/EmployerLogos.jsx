@@ -1,33 +1,5 @@
 import React from 'react';
-import { Box, Container, Typography } from '@mui/material';
-import { styled } from '@mui/material/styles';
-
-const StyledContainer = styled(Container)(({ theme }) => ({
-  padding: theme.spacing(4, 0),
-  textAlign: 'center',
-}));
-
-const LogosContainer = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  flexWrap: 'wrap',
-  gap: theme.spacing(4),
-  marginTop: theme.spacing(3),
-  '& img': {
-    height: '40px',
-    width: 'auto',
-    maxWidth: '150px',
-    objectFit: 'contain',
-    filter: 'grayscale(100%)',
-    opacity: 0.7,
-    transition: 'all 0.3s ease',
-    '&:hover': {
-      filter: 'grayscale(0%)',
-      opacity: 1,
-    },
-  },
-}));
+import '../styles/glassmorphism.css';
 
 const EmployerLogos = ({ title = "Trusted by leading companies", companies = [] }) => {
   // Default company logos (can be replaced with actual company logos)
@@ -41,23 +13,29 @@ const EmployerLogos = ({ title = "Trusted by leading companies", companies = [] 
   const companyList = companies.length > 0 ? companies : defaultCompanies;
 
   return (
-    <StyledContainer maxWidth="lg">
-      {title && (
-        <Typography variant="h5" component="h2" gutterBottom>
-          {title}
-        </Typography>
-      )}
-      <LogosContainer>
-        {companyList.map((company, index) => (
-          <img
-            key={index}
-            src={company.logo}
-            alt={company.name}
-            loading="lazy"
-          />
-        ))}
-      </LogosContainer>
-    </StyledContainer>
+    <section className="glass-container">
+      <div className="glass-content">
+        {title && (
+          <h2 className="glass-title">
+            {title}
+          </h2>
+        )}
+        <div className="logos-grid">
+          {companyList.map((company, index) => (
+            <div key={index} className="logo-container">
+              <div className="logo-glass">
+                <img
+                  src={company.logo}
+                  alt={company.name}
+                  loading="lazy"
+                  className="company-logo"
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 };
 
