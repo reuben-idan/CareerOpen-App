@@ -1,0 +1,2 @@
+import{r as e}from"./react-vendor-Blpmel2Z.js";function t({title:t,titleId:r,...n},o){return e.createElement("svg",Object.assign({xmlns:"http://www.w3.org/2000/svg",fill:"none",viewBox:"0 0 24 24",strokeWidth:1.5,stroke:"currentColor","aria-hidden":"true","data-slot":"icon",ref:o,"aria-labelledby":r},n),t?e.createElement("title",{id:r},t):null,e.createElement("path",{strokeLinecap:"round",strokeLinejoin:"round",d:"M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"}))}const r=e.forwardRef(t);export{r as F};
+//# sourceMappingURL=ClockIcon-D6KXJook.js.map

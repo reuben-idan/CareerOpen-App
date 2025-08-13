@@ -19,4 +19,4 @@ const Logo = ({ subtitle, className = "" }) => (
   </div>
 );
 
-export { Logo };
+export default Logo;
