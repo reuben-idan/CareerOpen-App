@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useUser } from "../context/auth";
-import { Logo } from "../components/common/Logo";
+import Logo from "../components/common/Logo";
 import logo from "../assets/logo.jpeg";
 
 const employerLogos = [

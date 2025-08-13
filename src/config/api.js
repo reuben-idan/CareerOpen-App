@@ -5,8 +5,8 @@
  * All endpoints should be defined here for consistency and easy maintenance.
  */
 
-// Hardcode the API base URL to ensure it's always correct
-const API_BASE_URL = 'http://localhost:8000/api/v1';
+// Use environment variable for API base URL with fallback to local development
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
 
 // Log the API base URL for debugging
 console.log('[API] Using base URL:', API_BASE_URL);
