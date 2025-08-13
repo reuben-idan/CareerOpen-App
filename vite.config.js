@@ -8,6 +8,7 @@ import { join } from 'path';
 // Vite configuration for Vercel deployment
 // Vite configuration
 const config = defineConfig({
+  base: '/',  // Ensure base is set to root
   plugins: [
     react()
   ],
@@ -34,9 +35,9 @@ const config = defineConfig({
   build: {
     // Output directory
     outDir: 'dist',
-    // Ensure proper MIME types for assets
+    // Don't inline assets to ensure proper MIME types
     assetsInlineLimit: 0,
-    // Don't include source maps in production
+    // Source maps only in development
     sourcemap: process.env.NODE_ENV !== 'production',
     // Minify the output
     minify: 'terser',
@@ -52,16 +53,22 @@ const config = defineConfig({
       },
       external: ['react', 'react-dom'],
       output: {
-        // Ensure proper MIME types for JS files
+        // Use consistent file naming
         chunkFileNames: 'assets/[name]-[hash].js',
         entryFileNames: 'assets/[name]-[hash].js',
         assetFileNames: 'assets/[name]-[hash][extname]',
-        // Ensure proper module type for modern browsers
+        // Use proper module format
         format: 'esm',
+        // Ensure proper module type
+        generatedCode: 'es2015',
+        // Preserve modules for better tree-shaking
+        preserveModules: true,
+        // Global variables for external dependencies
         globals: {
           react: 'React',
           'react-dom': 'ReactDOM',
         },
+        // Manual chunks for better caching
         manualChunks: (id) => {
           if (id.includes('node_modules')) {
             if (id.includes('@mui')) {
@@ -76,6 +83,16 @@ const config = defineConfig({
   server: {
     port: 3000,
     open: true,
+    // Ensure proper MIME types in development
+    headers: {
+      'Content-Type': 'text/javascript; charset=utf-8',
+    },
+  },
+  // Ensure proper MIME types for all files
+  esbuild: {
+    loader: 'jsx',
+    include: /.*\.jsx?$/,
+    exclude: [],
   },
 });
 

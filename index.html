@@ -2,12 +2,42 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="./src/assets/logo.jpeg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="description" content="CareerOpen - Your career development platform" />
+    
+    <link rel="icon" type="image/jpeg" href="/src/assets/logo.jpeg" />
+    <link rel="apple-touch-icon" href="/src/assets/logo.jpeg" />
+    
     <title>CareerOpen</title>
+    
+    <!-- Preload critical resources -->
+    <link rel="modulepreload" href="/src/main.jsx" as="script" />
+    
+    <!-- Preconnect to external domains -->
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    <!-- Preload fonts -->
+    <link rel="preload" href="/src/assets/fonts/your-font.woff2" as="font" type="font/woff2" crossorigin />
   </head>
   <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
+    
+    <!-- Load the main script with module type -->
     <script type="module" src="/src/main.jsx"></script>
+    
+    <!-- Add a fallback for non-module browsers -->
+    <script>
+      // Check for module support
+      const supportsModules = 'noModule' in HTMLScriptElement.prototype;
+      if (!supportsModules) {
+        const script = document.createElement('script');
+        script.src = '/src/main.jsx';
+        script.nomodule = true;
+        document.body.appendChild(script);
+      }
+    </script>
   </body>
 </html>
