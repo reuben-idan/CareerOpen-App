@@ -1,11 +1,19 @@
-// Export all API services from a single entry point
-import authService, { api } from './authService';
+// Import services
+import authService from './authService';
+import { api } from './authService';
 import jobService from './jobService';
 
-export { api, authService, jobService };
+// Export the API instance and services
+export { api };
 
+export {
+  authService,
+  jobService
+};
+
+// Default export with all services
 export default {
   api,
   authService,
-  jobService,
+  jobService
 };
