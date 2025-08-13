@@ -1,5 +1,5 @@
 import React from 'react';
-import '../styles/glassmorphism.css';
+import '../../../src/styles/glassmorphism.css';
 
 const EmployerLogos = ({ title = "Trusted by leading companies", companies = [] }) => {
   // Default company logos (can be replaced with actual company logos)
