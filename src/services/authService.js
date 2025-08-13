@@ -142,20 +142,9 @@ export const authService = {
     const token = localStorage.getItem('accessToken');
     return token ? { Authorization: `Bearer ${token}` } : {};
   },
+  // Export the API instance
+  api
 };
 
-// Create an object with all auth service functions
-const authService = {
-  register,
-  login,
-  logout,
-  getCurrentUser,
-  isAuthenticated,
-  getAuthHeader
-};
-
-// Export the API instance as a named export
-export { api };
-
-// Export the auth service functions as default
+// Export the auth service as default
 export default authService;
