@@ -48,9 +48,11 @@ const NavigationBar = () => {
     try {
       await signOut();
       analytics.track("user_logout");
-      navigate("/login");
+      navigate("/signin");
     } catch (error) {
       console.error("Logout error:", error);
+      // Show error toast or notification to the user
+      toast.error("Failed to log out. Please try again.");
     }
   };
 

@@ -25,10 +25,25 @@ const api = axios.create({
 // Request interceptor for API calls
 api.interceptors.request.use(
   async (config) => {
+    // Log authentication-related requests
+    const isAuthRequest = config.url?.includes('auth/');
+    
+    if (isAuthRequest && ENV.IS_DEV) {
+      console.log(`[API] Auth request to ${config.url}`, {
+        method: config.method?.toUpperCase(),
+        data: config.data,
+        headers: config.headers
+      });
+    }
+    
     // Add auth token to request if available
     const token = authService.getAccessToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      
+      if (isAuthRequest && ENV.IS_DEV) {
+        console.log('[API] Added auth token to request');
+      }
     }
 
     // Log request in development
@@ -205,8 +220,30 @@ const handleError = async (error) => {
 
 // Add response interceptor
 api.interceptors.response.use(
-  response => response,
-  handleError
+  response => {
+    // Log successful auth responses
+    if (response.config.url?.includes('auth/') && ENV.IS_DEV) {
+      console.log(`[API] Auth response from ${response.config.url}`, {
+        status: response.status,
+        data: response.data,
+        headers: response.headers
+      });
+    }
+    return response;
+  },
+  error => {
+    // Log auth errors
+    if (error.config?.url?.includes('auth/') && ENV.IS_DEV) {
+      console.error('[API] Auth error:', {
+        url: error.config.url,
+        method: error.config.method,
+        status: error.response?.status,
+        data: error.response?.data,
+        headers: error.config.headers
+      });
+    }
+    return handleError(error);
+  }
 );
 
 /**

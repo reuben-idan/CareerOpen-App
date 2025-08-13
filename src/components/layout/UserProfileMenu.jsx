@@ -14,17 +14,21 @@ const UserProfileMenu = () => {
 
   const handleSignOut = async () => {
     try {
-      await signOut();
-      toast.success("Successfully signed out!", {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-      });
-      navigate("/signin");
+      const result = await signOut();
+      if (result?.success) {
+        toast.success("Successfully signed out!", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+        });
+        navigate("/signin");
+      } else {
+        throw new Error("Logout was not successful");
+      }
     } catch (error) {
       console.error("Sign out error:", error);
       toast.error("Error signing out. Please try again.", {

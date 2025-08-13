@@ -4,14 +4,19 @@ import apiService from './apiService';
  * Performs a health check of the backend API
  * @returns {Promise<Object>} A promise that resolves to the health check data
  */
+/**
+ * Performs a health check of the backend API
+ * @returns {Promise<Object>} A promise that resolves to the health check data
+ */
 export const checkHealth = async () => {
   try {
-    const response = await apiService.get('/health/');
-    return {
-      status: 'healthy',
-      timestamp: new Date().toISOString(),
-      ...response.data
-    };
+    console.log('[healthService] Making health check request...');
+    // Use the healthCheck method from apiService
+    const response = await apiService.healthCheck();
+    console.log('[healthService] Health check response:', response);
+    
+    // The backend already returns the correct format, just forward it
+    return response.data;
   } catch (error) {
     console.error('Health check failed:', error);
     

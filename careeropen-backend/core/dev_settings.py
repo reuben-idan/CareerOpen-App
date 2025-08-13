@@ -8,11 +8,21 @@ import sys
 from pathlib import Path
 from dotenv import load_dotenv
 
+# Import all settings from base settings first
+from .settings import *
+
 # Load environment variables from .env file
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
+# Security settings - override base settings
+DEBUG = True
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+
+# Ensure ROOT_URLCONF is set
+ROOT_URLCONF = 'core.urls'
 
 # Database configuration
 # Use PostgreSQL if DB_ENGINE is set to postgres, otherwise fall back to SQLite
@@ -77,9 +87,23 @@ if os.getenv('USE_FAKEREDIS', 'True').lower() == 'true':
     django_redis.pool.ConnectionFactory = FakeConnectionFactory
     CACHES['default']['OPTIONS']['SERIALIZER'] = 'django_redis.serializers.json.JSONSerializer'
 
-# Ensure logs directory exists
-LOGS_DIR = os.path.join(BASE_DIR, 'logs')
-os.makedirs(LOGS_DIR, exist_ok=True)
+# Ensure logs directory exists with full path resolution
+LOGS_DIR = os.path.abspath(os.path.join(BASE_DIR, 'logs'))
+try:
+    os.makedirs(LOGS_DIR, exist_ok=True)
+    # Test if directory is writable
+    test_log = os.path.join(LOGS_DIR, 'test_permissions.log')
+    with open(test_log, 'w') as f:
+        f.write('Test log entry')
+    os.remove(test_log)
+    print(f"Successfully wrote to logs directory: {LOGS_DIR}")
+except Exception as e:
+    print(f"Error creating or writing to logs directory {LOGS_DIR}: {str(e)}")
+    # Fallback to a directory we know we can write to
+    import tempfile
+    LOGS_DIR = os.path.join(tempfile.gettempdir(), 'careeropen_logs')
+    os.makedirs(LOGS_DIR, exist_ok=True)
+    print(f"Using fallback logs directory: {LOGS_DIR}")
 
 # Enable debug logging for development
 LOGGING = {

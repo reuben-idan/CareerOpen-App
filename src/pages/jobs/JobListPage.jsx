@@ -2,15 +2,9 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useJobsStore } from '../../stores/jobsStore';
 import JobCard from '../../components/jobs/JobCard';
-import { 
-  Button, 
-  Input, 
-  Select, 
-  Checkbox, 
-  Pagination, 
-  LoadingSpinner, 
-  ErrorMessage 
-} from '../../components/common';
+import LoadingSpinner from '../../components/common/LoadingSpinner';
+import ErrorMessage from '../../components/common/ErrorMessage';
+import Pagination from '../../components/common/Pagination';
 import { 
   FunnelIcon, 
   XMarkIcon, 

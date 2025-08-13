@@ -1,18 +1,22 @@
 import { Suspense, lazy, useEffect, useState } from 'react';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import {
   BrowserRouter as Router,
   Route,
   Routes,
   Navigate,
   useLocation,
+  Outlet,
 } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import PropTypes from 'prop-types';
 
 // Context Providers
 import { ThemeProvider } from './context/ThemeContext';
-import AuthProvider from './contexts/AuthProvider';
 import { Web3Provider } from './context/web3';
+import { UserProvider } from './context/auth';
+import { ProfileProvider } from './context/profile';
 import { ToastProvider } from './context/toast';
 
 // Components
@@ -39,10 +43,10 @@ const JobList = lazy(() => import('./pages/JobList'));
 const JobListPage = lazy(() => import('./pages/jobs/JobListPage'));
 const JobDetail = lazy(() => import('./pages/JobDetail'));
 const Feed = lazy(() => import('./pages/Feed'));
-const MyNetwork = lazy(() => import('./pages/network/NetworkPage')); // Updated to use new NetworkPage
+const MyNetwork = lazy(() => import('./pages/network/NetworkPage')); 
 const Messages = lazy(() => import('./pages/Messages'));
 const SignUpPage = lazy(() => import('./pages/SignUpPage'));
-const SignInPage = lazy(() => import('./pages/LoginPage')); // Updated to use LoginPage
+const SignInPage = lazy(() => import('./pages/SignInPage'));
 const NotificationPage = lazy(() => import('./pages/NotificationPage'));
 const SubscriptionPayment = lazy(() => import('./pages/SubscriptionPayment'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
@@ -51,78 +55,34 @@ const JobApplicationsPage = lazy(() => import('./pages/JobApplicationsPage'));
 const JobPostPage = lazy(() => import('./pages/JobPostPage'));
 const APITest = lazy(() => import('./pages/APITest'));
 
+const PublicLayout = lazy(() => import('./components/layout/PublicLayout'));
+const AppLayout = lazy(() => import('./components/layout/AppLayout'));
+
 const App = () => {
   return (
     <HelmetProvider>
       <ThemeProvider>
         <Web3Provider>
-          <AuthProvider>
-            <ToastProvider>
-              <Router>
-                <AnalyticsWrapper>
-                  <ErrorBoundary>
-                    <Suspense
-                      fallback={
-                        <div className="flex h-screen w-full items-center justify-center">
-                          <LoadingSpinner size="xl" />
-                        </div>
-                      }
-                    >
-                      <AppLayout>
-                        <AppRoutes />
-                      </AppLayout>
-                    </Suspense>
-                  </ErrorBoundary>
-                </AnalyticsWrapper>
-              </Router>
-            </ToastProvider>
-          </AuthProvider>
+          <UserProvider>
+            <ProfileProvider>
+              <ToastProvider>
+                <Router>
+                  <Suspense fallback={
+                    <div className="flex h-screen w-full items-center justify-center">
+                      <LoadingSpinner size="xl" />
+                    </div>
+                  }>
+                    <AppRoutes />
+                    <ToastContainer position="bottom-right" autoClose={5000} />
+                  </Suspense>
+                </Router>
+              </ToastProvider>
+            </ProfileProvider>
+          </UserProvider>
         </Web3Provider>
       </ThemeProvider>
     </HelmetProvider>
   );
-};
-
-/**
- * Main application layout component that includes the navigation bar, sidebar, and main content area.
- * Only shows navigation elements to authenticated users.
- */
-const AppLayout = ({ children }) => {
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-
-  const handleSidebarToggle = () => {
-    setIsSidebarCollapsed(!isSidebarCollapsed);
-  };
-
-  return (
-    <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900">
-      <NavigationBar onMenuToggle={handleSidebarToggle} />
-      <div className="flex flex-1">
-        <Sidebar isCollapsed={isSidebarCollapsed} onToggle={handleSidebarToggle} />
-        <div className="flex flex-col flex-1">
-          <main className="flex-1 p-4 overflow-y-auto">
-            <ErrorBoundary>
-              {children}
-            </ErrorBoundary>
-          </main>
-          
-          {/* Footer with health status */}
-          <footer className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
-              <HealthStatus showDetails={false} className="border-0 p-2" />
-              <div className="py-2 text-center text-xs text-gray-500 dark:text-gray-400">
-                <p> {new Date().getFullYear()} CareerOpen. All rights reserved.</p>
-              </div>
-            </div>
-          </footer>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-AppLayout.propTypes = {
-  children: PropTypes.node.isRequired,
 };
 
 /**
@@ -132,43 +92,29 @@ AppLayout.propTypes = {
 const AppRoutes = () => {
   return (
     <Routes>
-      {/* Public routes */}
-      <Route
-        path="/login"
-        element={
-          <PublicRoute>
-            <SignInPage />
-          </PublicRoute>
-        }
-      />
-      <Route
-        path="/signup"
-        element={
-          <PublicRoute>
-            <SignUpPage />
-          </PublicRoute>
-        }
-      />
-      
-      {/* Protected routes */}
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute>
-            <AppLayout>
-              <Navigate to="/feed" replace />
-            </AppLayout>
-          </ProtectedRoute>
-        }
-      />
-      
-      <Route
+      {/* Public routes with PublicLayout */}
+      <Route element={
+        <PublicRoute>
+          <PublicLayout>
+            <Outlet />
+          </PublicLayout>
+        </PublicRoute>
+      }>
+        <Route path="signin" element={<SignInPage />} />
+        <Route path="signup" element={<SignUpPage />} />
+        <Route path="login" element={<Navigate to="/signin" replace />} />
+        <Route index element={<Navigate to="/signin" replace />} />
+      </Route>
+
+      {/* Protected routes with AppLayout */}
+      <Route 
         element={
           <ProtectedRoute>
             <AppLayout />
           </ProtectedRoute>
         }
       >
+        <Route index element={<Navigate to="/feed" replace />} />
         <Route path="feed" element={<Feed />} />
         <Route path="profile" element={<ProfilePage />} />
         <Route path="profile/:userId" element={<UserProfile />} />
@@ -184,37 +130,18 @@ const AppRoutes = () => {
         <Route path="my-applications" element={<JobApplicationsPage />} />
         <Route path="api-test" element={<APITest />} />
       </Route>
-      
-      {/* Catch-all route */}
-      <Route
-        path="*"
+
+      {/* Catch-all route - redirects to signin for unauthenticated users */}
+      <Route 
+        path="*" 
         element={
-          <ProtectedRoute>
-            <AppLayout>
-              <Navigate to="/feed" replace />
-            </AppLayout>
-          </ProtectedRoute>
-        }
+          <PublicRoute>
+            <Navigate to="/signin" replace />
+          </PublicRoute>
+        } 
       />
     </Routes>
   );
-};
-
-
-// Analytics wrapper component to track page views
-const AnalyticsWrapper = ({ children }) => {
-  const location = useLocation();
-
-  useEffect(() => {
-    analytics.initialize();
-    analytics.trackPageView(location.pathname, document.title);
-  }, [location]);
-
-  return children;
-};
-
-AnalyticsWrapper.propTypes = {
-  children: PropTypes.node.isRequired,
 };
 
 export default App;

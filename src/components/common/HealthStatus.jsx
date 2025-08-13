@@ -6,7 +6,7 @@ import {
   ExclamationCircleIcon,
   ArrowPathIcon
 } from '@heroicons/react/24/outline';
-import healthService from '../../services/api/healthService';
+import { checkHealth } from '../../services/api/healthService';
 
 /**
  * HealthStatus component displays the current status of the backend API
@@ -26,23 +26,50 @@ const HealthStatus = ({ showDetails = false, className = '' }) => {
   
   // Fetch health status when component mounts
   useEffect(() => {
-    const checkHealth = async () => {
+    const fetchHealthStatus = async () => {
       try {
         setIsLoading(true);
-        const healthData = await healthService.checkHealth();
-        setStatus({
-          status: healthData.status,
-          timestamp: healthData.timestamp,
-          details: healthData
-        });
-        setError(null);
+        console.log('Fetching health status...');
+        const healthData = await checkHealth();
+        console.log('Health data received:', healthData);
+        
+        // Ensure healthData is defined and has the expected structure
+        if (healthData && typeof healthData === 'object') {
+          // Handle case where the response is an Axios response object with data property
+          const responseData = healthData.data || healthData;
+          
+          // Ensure we have a valid status
+          const healthStatus = responseData.status || 'unknown';
+          const timestamp = responseData.timestamp || new Date().toISOString();
+          
+          console.log('Setting status with:', { status: healthStatus, timestamp, details: responseData });
+          
+          setStatus({
+            status: healthStatus,
+            timestamp,
+            details: responseData
+          });
+          setError(null);
+        } else {
+          // Handle case where healthData is not in the expected format
+          console.error('Unexpected health data format:', healthData);
+          setError('Invalid health data received');
+          setStatus({
+            status: 'error',
+            timestamp: new Date().toISOString(),
+            details: { error: 'Invalid health data format' }
+          });
+        }
       } catch (err) {
         console.error('Failed to check health status:', err);
         setError('Failed to check system status');
         setStatus({
           status: 'error',
           timestamp: new Date().toISOString(),
-          details: { error: err.message }
+          details: { 
+            error: err.message || 'Unknown error occurred',
+            stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+          }
         });
       } finally {
         setIsLoading(false);
@@ -50,10 +77,10 @@ const HealthStatus = ({ showDetails = false, className = '' }) => {
     };
     
     // Initial check
-    checkHealth();
+    fetchHealthStatus();
     
     // Set up polling every 30 seconds
-    const intervalId = setInterval(checkHealth, 30000);
+    const intervalId = setInterval(fetchHealthStatus, 30000);
     
     // Clean up interval on unmount
     return () => clearInterval(intervalId);

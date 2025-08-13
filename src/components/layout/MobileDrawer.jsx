@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useUser } from "../../context/auth";
+import useAuth from "../../hooks/useAuth";
 import { useTheme } from "../../context/ThemeContext";
 import analytics from "../../services/analytics";
+import { toast } from "react-toastify";
 import {
   HomeIcon,
   BriefcaseIcon,
@@ -32,7 +33,7 @@ import {
 } from "@heroicons/react/24/solid";
 
 const MobileDrawer = ({ isOpen, onClose }) => {
-  const { user, signOutUser } = useUser();
+  const { user, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
@@ -60,12 +61,18 @@ const MobileDrawer = ({ isOpen, onClose }) => {
 
   const handleLogout = async () => {
     try {
-      await signOutUser();
-      analytics.track("user_logout");
-      navigate("/login");
-      onClose();
+      const result = await signOut();
+      if (result?.success) {
+        analytics.track("user_logout");
+        navigate("/signin");
+        onClose();
+      } else {
+        throw new Error("Logout was not successful");
+      }
     } catch (error) {
       console.error("Logout error:", error);
+      // Show error toast or notification to the user
+      toast.error("Failed to log out. Please try again.");
     }
   };
 

@@ -61,36 +61,42 @@ class HealthCheckView(APIView):
         """
         try:
             # Test database connection
-            with connection.cursor() as cursor:
-                cursor.execute("SELECT 1")
-                db_ok = cursor.fetchone()
-            
-            if not db_ok:
-                return Response(
-                    {'error': 'Database connection failed'},
-                    status=status.HTTP_503_SERVICE_UNAVAILABLE
-                )
+            try:
+                with connection.cursor() as cursor:
+                    cursor.execute("SELECT 1")
+                    db_ok = cursor.fetchone() is not None
+                db_status = 'connected'
+            except Exception as db_error:
+                print(f"Database connection error: {str(db_error)}")
+                db_status = f'error: {str(db_error)}'
+                db_ok = False
             
             # Prepare response data
             data = {
-                'status': 'ok',
+                'status': 'ok' if db_ok else 'error',
                 'timestamp': timezone.now().isoformat(),
-                'database': 'connected',
+                'database': db_status,
                 'version': getattr(settings, 'API_VERSION', '1.0.0'),
             }
             
-            serializer = self.serializer_class(data=data)
-            serializer.is_valid(raise_exception=True)
+            # Log the health check
+            print(f"Health check data: {data}")
             
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            # Return the response directly without using the serializer
+            status_code = status.HTTP_200_OK if db_ok else status.HTTP_503_SERVICE_UNAVAILABLE
+            return Response(data, status=status_code)
             
         except Exception as e:
+            error_data = {
+                'status': 'error',
+                'error': str(e),
+                'timestamp': timezone.now().isoformat(),
+                'database': 'unknown',
+                'version': getattr(settings, 'API_VERSION', '1.0.0'),
+            }
+            print(f"Health check failed with error: {error_data}")
             return Response(
-                {
-                    'status': 'error',
-                    'error': str(e),
-                    'timestamp': timezone.now().isoformat()
-                },
+                error_data,
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 

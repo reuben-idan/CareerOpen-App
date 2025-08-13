@@ -83,6 +83,9 @@ const useAuthStore = create((set, get) => ({
     
     // Clear localStorage
     localStorage.removeItem('auth');
+    
+    // Return success status for better handling in components
+    return { success: true };
   },
   
   // Set access token (used by the interceptor)

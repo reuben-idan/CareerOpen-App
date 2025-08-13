@@ -1,4 +1,5 @@
 import api from './api';
+import { ENDPOINTS } from '../../config/api';
 
 // Token storage keys
 const TOKEN_KEYS = {
@@ -34,18 +35,26 @@ const authService = {
    */
   async login(email, password) {
     try {
-      const response = await api.post('/auth/login/', { email, password });
+      console.log('Attempting login with endpoint:', ENDPOINTS.AUTH.LOGIN);
+      const response = await api.post(ENDPOINTS.AUTH.LOGIN, { username: email, password });
       
       if (!response || !response.data) {
         throw new Error('No data received from server');
       }
       
-      const { access, refresh, user: userData } = response.data;
+      console.log('Login response:', response.data);
       
-      if (!access || !refresh || !userData) {
-        console.error('Invalid response format from server:', response.data);
-        throw new Error('Invalid response format from server');
+      // Handle the JWT token response
+      const { access, refresh } = response.data;
+      
+      if (!access || !refresh) {
+        console.error('Missing tokens in response:', response.data);
+        throw new Error('Authentication failed: No tokens received');
       }
+      
+      // Get user data using the token
+      const userResponse = await this.getCurrentUser(true);
+      const userData = userResponse || {};
       
       // Store tokens and user data
       this.setAuthTokens({ access, refresh });
@@ -112,17 +121,28 @@ const authService = {
     }
     
     try {
-      const response = await api.get('/auth/me/');
-      const userData = response.data?.data || response.data;
+      const response = await api.get(ENDPOINTS.AUTH.ME);
+      const userData = response.data;
       
-      if (!userData?.id) {
-        throw new Error('Invalid user data received');
+      if (!userData || typeof userData !== 'object') {
+        throw new Error('Invalid user data format received');
       }
       
+      // Ensure we have the required user fields
+      if (!userData.id || !userData.email) {
+        console.error('Missing required user fields:', userData);
+        throw new Error('Incomplete user data received');
+      }
+      
+      // Store the user data
       this.setUser(userData);
       return userData;
     } catch (error) {
-      this.clearAuth();
+      console.error('Error fetching current user:', error);
+      // Only clear auth if it's an authentication error
+      if (error.response?.status === 401) {
+        this.clearAuth();
+      }
       throw error;
     }
   },
@@ -134,17 +154,27 @@ const authService = {
    */
   async register(userData) {
     try {
-      const response = await api.post('/auth/register/', userData);
-      const { access, refresh, user } = response.data;
+      console.log('Attempting registration with endpoint:', ENDPOINTS.AUTH.REGISTER);
       
-      if (!access || !refresh || !user) {
-        throw new Error('Registration successful but incomplete response from server');
+      // Transform the user data to match the backend's expected format
+      const registrationData = {
+        username: userData.email, // Using email as username
+        email: userData.email,
+        password: userData.password,
+        first_name: userData.first_name,
+        last_name: userData.last_name,
+        // Include any additional fields required by the backend
+      };
+      
+      const response = await api.post(ENDPOINTS.AUTH.REGISTER, registrationData);
+      console.log('Registration response:', response.data);
+      
+      // After successful registration, log the user in
+      if (response.data.id) {
+        return this.login(registrationData.email, registrationData.password);
       }
       
-      this.setAuthTokens({ access, refresh });
-      this.setUser(user);
-      
-      return user;
+      throw new Error('Registration failed: No user ID in response');
     } catch (error) {
       if (error.response?.data) {
         throw new Error(

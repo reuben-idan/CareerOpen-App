@@ -18,6 +18,9 @@ from rest_framework_simplejwt.views import (
 from .views import HealthCheckView, WelcomeView
 from .schema import MinimalSchemaView
 
+# Import accounts views for JWT token endpoints
+from accounts import views as accounts_views
+
 # Create a router for the API
 router = routers.DefaultRouter()
 
@@ -40,10 +43,12 @@ api_patterns = [
     # Authentication
     path('auth/', include('accounts.urls')),  # Includes token and user endpoints
     
-    # JWT Token endpoints
-    path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('token/verify/', TokenVerifyView.as_view(), name='token_verify'),
+    # JWT Token endpoints - using custom view from accounts app
+    path('token/', include([
+        path('', accounts_views.api_token_obtain_pair, name='token_obtain_pair'),
+        path('refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+        path('verify/', TokenVerifyView.as_view(), name='token_verify'),
+    ])),
     
     # Apps
     path('jobs/', include('jobs.urls')),  # Job-related endpoints
