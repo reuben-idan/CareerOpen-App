@@ -3,11 +3,23 @@ import react from "@vitejs/plugin-react-swc";
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react({
+      jsxImportSource: "@emotion/react",
+      babel: {
+        plugins: ["@emotion/babel-plugin"],
+      },
+    }),
+  ],
   test: {
     globals: true,
     environment: "jsdom",
     setupFiles: ["./src/test/setup.js"],
+  },
+  resolve: {
+    alias: {
+      "@": "/src",
+    },
   },
   build: {
     outDir: "dist",
@@ -47,7 +59,15 @@ export default defineConfig({
       "axios",
       "react-toastify",
       "react-helmet-async",
+      "@mui/material",
+      "@mui/icons-material",
+      "@emotion/react",
+      "@emotion/styled",
     ],
+    esbuildOptions: {
+      // Enable esbuild's tree shaking
+      treeShaking: true,
+    },
     exclude: [
       "@fortawesome/fontawesome-svg-core",
       "@fortawesome/free-brands-svg-icons",
