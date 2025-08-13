@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
+import { fileURLToPath, URL } from 'node:url';
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -18,12 +19,36 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@": "/src",
+      "@": fileURLToPath(new URL('./src', import.meta.url)),
+      '@mui/material': '@mui/material',
+      '@mui/icons-material': '@mui/icons-material',
+      '@emotion/react': '@emotion/react',
+      '@emotion/styled': '@emotion/styled',
     },
+    extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json'],
   },
   build: {
     outDir: "dist",
     sourcemap: true,
+    rollupOptions: {
+      // Externalize peer dependencies
+      external: ['react', 'react-dom', '@mui/material', '@emotion/react', '@emotion/styled'],
+      output: {
+        // Ensure proper module resolution
+        globals: {
+          react: 'React',
+          'react-dom': 'ReactDOM',
+          '@mui/material': 'MaterialUI',
+          '@emotion/react': 'EmotionReact',
+          '@emotion/styled': 'EmotionStyled',
+        },
+        // Enable code splitting
+        manualChunks: {
+          'vendor': ['react', 'react-dom', 'react-router-dom'],
+          'mui': ['@mui/material', '@mui/icons-material', '@emotion/react', '@emotion/styled'],
+        },
+      },
+    },
     minify: "terser",
     terserOptions: {
       compress: {
@@ -51,22 +76,40 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: [
-      "react",
-      "react-dom",
-      "react-router-dom",
-      "@fortawesome/react-fontawesome",
-      "react-icons",
-      "axios",
-      "react-toastify",
-      "react-helmet-async",
-      "@mui/material",
-      "@mui/icons-material",
-      "@emotion/react",
-      "@emotion/styled",
+      'react',
+      'react-dom',
+      'react-router-dom',
+      '@fortawesome/react-fontawesome',
+      'react-icons',
+      'axios',
+      'react-toastify',
+      'react-helmet-async',
+      '@mui/material',
+      '@mui/icons-material',
+      '@emotion/react',
+      '@emotion/styled',
+      '@mui/material/styles',
+      '@mui/material/Box',
+      '@mui/material/Button',
+      '@mui/material/Container',
+      '@mui/material/Typography',
+      '@mui/material/AppBar',
+      '@mui/material/Toolbar',
+      '@mui/material/IconButton',
+      '@mui/material/Menu',
+      '@mui/material/MenuItem',
+      '@mui/icons-material/Menu',
+      '@mui/icons-material/AccountCircle',
     ],
     esbuildOptions: {
       // Enable esbuild's tree shaking
       treeShaking: true,
+      // Define global constants
+      define: {
+        global: 'globalThis',
+      },
+      // Target browsers
+      target: 'es2020',
     },
     exclude: [
       "@fortawesome/fontawesome-svg-core",
