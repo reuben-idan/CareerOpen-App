@@ -5,11 +5,24 @@
       "src": "package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "dist"
+        "distDir": "dist",
+        "zeroConfig": true
       }
     }
   ],
   "routes": [
+    {
+      "src": "/_next/static/(.*)",
+      "dest": "/_next/static/$1"
+    },
+    {
+      "src": "/static/(.*)",
+      "dest": "/static/$1"
+    },
+    {
+      "src": "/(.*).(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|json)",
+      "dest": "/$1.$2"
+    },
     {
       "src": "^/api/(.*)",
       "dest": "/api/$1"
@@ -17,6 +30,22 @@
     {
       "src": "^/(.*)$",
       "dest": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source" : "/(.*).(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|json)",
+      "headers" : [{
+        "key" : "Cache-Control",
+        "value" : "public, max-age=31536000, immutable"
+      }]
+    },
+    {
+      "source" : "/_next/static/(.*)",
+      "headers" : [{
+        "key" : "Cache-Control",
+        "value" : "public, max-age=31536000, immutable"
+      }]
     }
   ]
 }
