@@ -9,7 +9,7 @@ import {
   XMarkIcon,
   MagnifyingGlassIcon
 } from '@heroicons/react/24/outline';
-import { useNetworkStore } from '../../stores/networkStore';
+import useNetworkStore from '../../stores/networkStore';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ErrorMessage from '../../components/common/ErrorMessage';
 import useAuth from '../../hooks/useAuth';
