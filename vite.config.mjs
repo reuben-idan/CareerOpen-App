@@ -3,7 +3,7 @@ import react from "@vitejs/plugin-react-swc";
 import { fileURLToPath, URL } from 'node:url';
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [
     react({
       jsxImportSource: "@emotion/react",
@@ -20,32 +20,33 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": fileURLToPath(new URL('./src', import.meta.url)),
-      '@mui/material': '@mui/material',
-      '@mui/icons-material': '@mui/icons-material',
-      '@emotion/react': '@emotion/react',
-      '@emotion/styled': '@emotion/styled',
+      // Remove explicit MUI aliases to let Vite handle them
     },
     extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json'],
   },
   build: {
     outDir: "dist",
-    sourcemap: true,
+    sourcemap: mode !== 'production',
+    commonjsOptions: {
+      include: [/node_modules/],
+      transformMixedEsModules: true,
+    },
     rollupOptions: {
-      // Externalize peer dependencies
-      external: ['react', 'react-dom', '@mui/material', '@emotion/react', '@emotion/styled'],
+      // Don't externalize MUI for Vite - it needs to be bundled
+      external: ['react', 'react-dom', 'react-router-dom'],
       output: {
-        // Ensure proper module resolution
         globals: {
           react: 'React',
           'react-dom': 'ReactDOM',
-          '@mui/material': 'MaterialUI',
-          '@emotion/react': 'EmotionReact',
-          '@emotion/styled': 'EmotionStyled',
         },
-        // Enable code splitting
         manualChunks: {
-          'vendor': ['react', 'react-dom', 'react-router-dom'],
-          'mui': ['@mui/material', '@mui/icons-material', '@emotion/react', '@emotion/styled'],
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'mui-vendor': [
+            '@mui/material', 
+            '@mui/icons-material', 
+            '@emotion/react', 
+            '@emotion/styled'
+          ],
         },
       },
     },
