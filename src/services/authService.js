@@ -144,4 +144,15 @@ export const authService = {
   },
 };
 
-export default api;
+// Export the API instance as a named export
+export { api };
+
+// Export all auth service functions as default
+export default {
+  register,
+  login,
+  logout,
+  getCurrentUser,
+  isAuthenticated,
+  getAuthHeader
+};
