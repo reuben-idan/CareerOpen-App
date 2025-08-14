@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
 import { createUserProfile } from "../services/firebase/users";
-import { Logo } from "../components/common/Logo";
+import Logo from "../components/common/Logo";
 import { ImageUpload } from "../components/common/ImageUpload";
 
 const SignUp = () => {

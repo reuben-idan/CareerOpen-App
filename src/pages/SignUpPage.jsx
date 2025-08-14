@@ -1,8 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useUser } from "../context/auth";
-// Firebase import removed - using backend auth
-import { Logo } from "../components/common/Logo";
 import ImageUpload from "../components/common/ImageUpload";
 import logo from "../assets/logo.jpeg";
 
