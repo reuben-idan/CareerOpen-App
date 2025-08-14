@@ -10,15 +10,21 @@ import {
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
-// Hardcoded Firebase configuration (from user)
+// Firebase configuration from environment variables
 const firebaseConfig = {
-  apiKey: "AIzaSyDJn-cqrCpMXvLOKOivRh4L-wvR1EPNSaw",
-  authDomain: "careeropen-6f059.firebaseapp.com",
-  projectId: "careeropen-6f059",
-  storageBucket: "careeropen-6f059.appspot.com",
-  messagingSenderId: "1062433243943",
-  appId: "1:1062433243943:web:ff6ceaf8a9f21e68465f02",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
+
+// Validate Firebase configuration
+if (Object.values(firebaseConfig).some(value => !value)) {
+  console.warn('Missing or invalid Firebase configuration. Please check your environment variables.');
+  console.warn('Current config:', firebaseConfig);
+}
 
 // Initialize Firebase
 export const app = getApps().length

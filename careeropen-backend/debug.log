@@ -1,0 +1,459 @@
+INFO 2025-08-01 22:26:13,469 autoreload 27856 15228 Watching for file changes with StatReloader
+INFO 2025-08-01 22:28:19,667 autoreload 10500 4824 Watching for file changes with StatReloader
+INFO 2025-08-01 22:28:28,792 basehttp 27856 22216 "POST /api/token/ HTTP/1.1" 200 483
+INFO 2025-08-01 22:28:28,919 views 27856 22216 Job application request received. Job ID: 1
+INFO 2025-08-01 22:28:28,921 views 27856 22216 Request data: <QueryDict: {}>
+INFO 2025-08-01 22:28:28,922 views 27856 22216 Request FILES: <MultiValueDict: {}>
+INFO 2025-08-01 22:28:28,928 views 27856 22216 Found job: 1 - Senior Software Engineer
+INFO 2025-08-01 22:28:28,928 views 27856 22216 Creating serializer with data: <QueryDict: {}>
+INFO 2025-08-01 22:28:28,928 views 27856 22216 Files in request: <MultiValueDict: {}>
+INFO 2025-08-01 22:28:28,936 views 27856 22216 Final data being passed to serializer: <QueryDict: {'job': [1], 'applicant': [5]}>
+INFO 2025-08-01 22:28:28,941 views 27856 22216 Serializer is valid. Saving application...
+INFO 2025-08-01 22:28:28,945 serializers 27856 22216 Creating JobApplication with validated_data: {'job': <Job: Senior Software Engineer at None>, 'applicant': <User: jobseeker@example.com>, 'status': 'applied'}
+INFO 2025-08-01 22:28:28,945 serializers 27856 22216 job: Senior Software Engineer at None
+INFO 2025-08-01 22:28:28,946 serializers 27856 22216 applicant: jobseeker@example.com
+INFO 2025-08-01 22:28:28,946 serializers 27856 22216 status: applied
+INFO 2025-08-01 22:28:28,974 serializers 27856 22216 Successfully created JobApplication with ID: 1
+INFO 2025-08-01 22:28:28,974 views 27856 22216 Application created successfully. ID: 1
+INFO 2025-08-01 22:28:28,993 basehttp 27856 22216 "POST /api/jobs/jobs/1/apply/ HTTP/1.1" 201 352
+INFO 2025-08-01 22:28:29,084 basehttp 27856 22216 - Broken pipe from ('127.0.0.1', 41510)
+INFO 2025-08-01 22:35:18,880 autoreload 10500 4824 C:\Users\IDAN\CareerOpen-App\careeropen-backend\jobs\serializers.py changed, reloading.
+INFO 2025-08-01 22:35:18,977 autoreload 27856 15228 C:\Users\IDAN\CareerOpen-App\careeropen-backend\jobs\serializers.py changed, reloading.
+INFO 2025-08-01 22:35:25,856 autoreload 27340 26804 Watching for file changes with StatReloader
+INFO 2025-08-01 22:35:25,971 autoreload 27744 27516 Watching for file changes with StatReloader
+INFO 2025-08-01 22:36:43,619 autoreload 28072 21700 Watching for file changes with StatReloader
+INFO 2025-08-01 22:36:53,753 basehttp 27340 27928 "POST /api/token/ HTTP/1.1" 200 483
+INFO 2025-08-01 22:36:53,896 views 27340 27928 Job application request received. Job ID: 1
+INFO 2025-08-01 22:36:53,902 views 27340 27928 Request data: <QueryDict: {}>
+INFO 2025-08-01 22:36:53,902 views 27340 27928 Request FILES: <MultiValueDict: {}>
+INFO 2025-08-01 22:36:53,906 views 27340 27928 Found job: 1 - Senior Software Engineer
+WARNING 2025-08-01 22:36:53,910 views 27340 27928 User 5 already applied to job 1
+WARNING 2025-08-01 22:36:53,915 log 27340 27928 Bad Request: /api/jobs/jobs/1/apply/
+WARNING 2025-08-01 22:36:53,916 basehttp 27340 27928 "POST /api/jobs/jobs/1/apply/ HTTP/1.1" 400 50
+INFO 2025-08-01 22:36:54,369 basehttp 27340 27928 - Broken pipe from ('127.0.0.1', 42845)
+INFO 2025-08-01 22:39:55,633 basehttp 27340 20816 "POST /api/token/ HTTP/1.1" 200 483
+INFO 2025-08-01 22:39:55,683 views 27340 20816 Job application request received. Job ID: 2
+INFO 2025-08-01 22:39:55,687 views 27340 20816 Request data: <QueryDict: {}>
+INFO 2025-08-01 22:39:55,687 views 27340 20816 Request FILES: <MultiValueDict: {}>
+INFO 2025-08-01 22:39:55,690 views 27340 20816 Found job: 2 - Test Job for Application
+INFO 2025-08-01 22:39:55,692 views 27340 20816 Creating serializer with data: <QueryDict: {}>
+INFO 2025-08-01 22:39:55,692 views 27340 20816 Files in request: <MultiValueDict: {}>
+INFO 2025-08-01 22:39:55,692 views 27340 20816 Final data being passed to serializer: <QueryDict: {'job': [2], 'applicant': [5]}>
+INFO 2025-08-01 22:39:55,702 views 27340 20816 Serializer is valid. Saving application...
+INFO 2025-08-01 22:39:55,705 serializers 27340 20816 Creating JobApplication with validated_data: {'job': <Job: Test Job for Application at Test Company>, 'applicant': <User: jobseeker@example.com>, 'status': 'applied'}
+INFO 2025-08-01 22:39:55,705 serializers 27340 20816 job: Test Job for Application at Test Company
+INFO 2025-08-01 22:39:55,706 serializers 27340 20816 applicant: jobseeker@example.com
+INFO 2025-08-01 22:39:55,706 serializers 27340 20816 status: applied
+INFO 2025-08-01 22:39:55,733 serializers 27340 20816 Successfully created JobApplication with ID: 2
+INFO 2025-08-01 22:39:55,733 views 27340 20816 Application created successfully. ID: 2
+INFO 2025-08-01 22:39:55,753 basehttp 27340 20816 "POST /api/jobs/jobs/2/apply/ HTTP/1.1" 201 376
+INFO 2025-08-01 22:39:56,190 basehttp 27340 20816 - Broken pipe from ('127.0.0.1', 43148)
+INFO 2025-08-01 22:42:00,120 basehttp 27340 27596 "POST /api/token/ HTTP/1.1" 200 483
+INFO 2025-08-01 22:42:02,262 views 27340 19608 Job application request received. Job ID: 2
+INFO 2025-08-01 22:42:02,262 views 27340 19608 Request data: <QueryDict: {'cover_letter': ['I am very interested in this position and believe my skills make me a strong candidate. This is a test cover letter for the job application.'], 'resume': [<InMemoryUploadedFile: test_resume.txt (text/plain)>]}>
+INFO 2025-08-01 22:42:02,262 views 27340 19608 Request FILES: <MultiValueDict: {'resume': [<InMemoryUploadedFile: test_resume.txt (text/plain)>]}>
+INFO 2025-08-01 22:42:02,268 views 27340 19608 Found job: 2 - Test Job for Application
+WARNING 2025-08-01 22:42:02,271 views 27340 19608 User 5 already applied to job 2
+WARNING 2025-08-01 22:42:02,271 log 27340 19608 Bad Request: /api/jobs/jobs/2/apply/
+WARNING 2025-08-01 22:42:02,271 basehttp 27340 19608 "POST /api/jobs/jobs/2/apply/ HTTP/1.1" 400 50
+INFO 2025-08-01 22:44:19,396 basehttp 27340 26756 "POST /api/token/ HTTP/1.1" 200 483
+INFO 2025-08-01 22:44:21,463 views 27340 23432 Job application request received. Job ID: 2
+INFO 2025-08-01 22:44:21,463 views 27340 23432 Request data: <QueryDict: {'cover_letter': ['I am very interested in this position and believe my skills make me a strong candidate. This is a test cover letter for the job application.'], 'resume': [<InMemoryUploadedFile: test_resume.txt (text/plain)>]}>
+INFO 2025-08-01 22:44:21,463 views 27340 23432 Request FILES: <MultiValueDict: {'resume': [<InMemoryUploadedFile: test_resume.txt (text/plain)>]}>
+INFO 2025-08-01 22:44:21,463 views 27340 23432 Found job: 2 - Test Job for Application
+INFO 2025-08-01 22:44:21,471 views 27340 23432 Creating serializer with data: <QueryDict: {'cover_letter': ['I am very interested in this position and believe my skills make me a strong candidate. This is a test cover letter for the job application.'], 'resume': [<InMemoryUploadedFile: test_resume.txt (text/plain)>]}>
+INFO 2025-08-01 22:44:21,472 views 27340 23432 Files in request: <MultiValueDict: {'resume': [<InMemoryUploadedFile: test_resume.txt (text/plain)>]}>
+INFO 2025-08-01 22:44:21,472 views 27340 23432 Final data being passed to serializer: <QueryDict: {'cover_letter': ['I am very interested in this position and believe my skills make me a strong candidate. This is a test cover letter for the job application.'], 'resume': [<InMemoryUploadedFile: test_resume.txt (text/plain)>], 'job': [2], 'applicant': [6]}>
+WARNING 2025-08-01 22:44:21,475 views 27340 23432 Serializer validation errors: {'resume': [ErrorDetail(string='Unsupported file type. Please upload a PDF, DOC, or DOCX file.', code='invalid')]}
+WARNING 2025-08-01 22:44:21,475 log 27340 23432 Bad Request: /api/jobs/jobs/2/apply/
+WARNING 2025-08-01 22:44:21,475 basehttp 27340 23432 "POST /api/jobs/jobs/2/apply/ HTTP/1.1" 400 77
+INFO 2025-08-01 23:06:37,539 autoreload 4072 4704 Watching for file changes with StatReloader
+WARNING 2025-08-01 23:16:01,477 log 4072 3508 Unauthorized: /api/jobs/
+WARNING 2025-08-01 23:16:01,479 basehttp 4072 3508 "GET /api/jobs/ HTTP/1.1" 401 58
+INFO 2025-08-01 23:16:01,793 basehttp 4072 3508 - Broken pipe from ('127.0.0.1', 52548)
+INFO 2025-08-01 23:17:30,388 basehttp 4072 8352 "POST /api/token/ HTTP/1.1" 200 483
+INFO 2025-08-01 23:17:30,425 basehttp 4072 8352 - Broken pipe from ('127.0.0.1', 52668)
+INFO 2025-08-01 23:17:55,940 basehttp 4072 2012 "POST /api/token/ HTTP/1.1" 200 483
+INFO 2025-08-01 23:17:55,971 basehttp 4072 2012 "GET /api/jobs/ HTTP/1.1" 200 161
+INFO 2025-08-01 23:17:55,997 basehttp 4072 2012 - Broken pipe from ('127.0.0.1', 52704)
+INFO 2025-08-01 23:18:08,486 basehttp 4072 3560 "POST /api/token/ HTTP/1.1" 200 483
+INFO 2025-08-01 23:18:08,553 basehttp 4072 3560 "GET /api/jobs/jobs/ HTTP/1.1" 200 1054
+INFO 2025-08-01 23:18:08,570 basehttp 4072 3560 - Broken pipe from ('127.0.0.1', 52721)
+INFO 2025-08-01 23:18:35,178 basehttp 4072 5904 "POST /api/token/ HTTP/1.1" 200 483
+INFO 2025-08-01 23:18:35,206 basehttp 4072 5904 "GET /api/jobs/jobs/1/ HTTP/1.1" 200 513
+INFO 2025-08-01 23:18:35,222 basehttp 4072 5904 - Broken pipe from ('127.0.0.1', 52753)
+INFO 2025-08-01 23:18:52,337 basehttp 4072 10204 "POST /api/token/ HTTP/1.1" 200 483
+INFO 2025-08-01 23:18:52,360 views 4072 10204 Job application request received. Job ID: 1
+INFO 2025-08-01 23:18:52,361 views 4072 10204 Request data: {'resume': 'test_resume.pdf', 'cover_letter': 'I am very interested in this position and believe my skills are a great match.'}
+INFO 2025-08-01 23:18:52,361 views 4072 10204 Request FILES: <MultiValueDict: {}>
+INFO 2025-08-01 23:18:52,363 views 4072 10204 Found job: 1 - Senior Software Engineer
+INFO 2025-08-01 23:18:52,365 views 4072 10204 Creating serializer with data: {'resume': 'test_resume.pdf', 'cover_letter': 'I am very interested in this position and believe my skills are a great match.'}
+INFO 2025-08-01 23:18:52,365 views 4072 10204 Files in request: <MultiValueDict: {}>
+INFO 2025-08-01 23:18:52,366 views 4072 10204 Final data being passed to serializer: {'resume': 'test_resume.pdf', 'cover_letter': 'I am very interested in this position and believe my skills are a great match.', 'job': 1, 'applicant': 6}
+WARNING 2025-08-01 23:18:52,370 views 4072 10204 Serializer validation errors: {'resume': [ErrorDetail(string='The submitted data was not a file. Check the encoding type on the form.', code='invalid')]}
+WARNING 2025-08-01 23:18:52,370 log 4072 10204 Bad Request: /api/jobs/jobs/1/apply/
+WARNING 2025-08-01 23:18:52,371 basehttp 4072 10204 "POST /api/jobs/jobs/1/apply/ HTTP/1.1" 400 86
+INFO 2025-08-01 23:18:52,619 basehttp 4072 10204 - Broken pipe from ('127.0.0.1', 52776)
+INFO 2025-08-01 23:20:12,581 basehttp 4072 2756 "POST /api/token/ HTTP/1.1" 200 483
+INFO 2025-08-01 23:20:12,645 views 4072 2756 Job application request received. Job ID: 1
+INFO 2025-08-01 23:20:12,647 views 4072 2756 Request data: <QueryDict: {}>
+INFO 2025-08-01 23:20:12,647 views 4072 2756 Request FILES: <MultiValueDict: {}>
+INFO 2025-08-01 23:20:12,649 views 4072 2756 Found job: 1 - Senior Software Engineer
+INFO 2025-08-01 23:20:12,650 views 4072 2756 Creating serializer with data: <QueryDict: {}>
+INFO 2025-08-01 23:20:12,650 views 4072 2756 Files in request: <MultiValueDict: {}>
+INFO 2025-08-01 23:20:12,651 views 4072 2756 Final data being passed to serializer: <QueryDict: {'job': [1], 'applicant': [6]}>
+INFO 2025-08-01 23:20:12,654 views 4072 2756 Serializer is valid. Saving application...
+INFO 2025-08-01 23:20:12,655 serializers 4072 2756 Creating JobApplication with validated_data: {'job': <Job: Senior Software Engineer at None>, 'applicant': <User: test_applicant@example.com>, 'status': 'applied'}
+INFO 2025-08-01 23:20:12,655 serializers 4072 2756 job: Senior Software Engineer at None
+INFO 2025-08-01 23:20:12,655 serializers 4072 2756 applicant: test_applicant@example.com
+INFO 2025-08-01 23:20:12,655 serializers 4072 2756 status: applied
+INFO 2025-08-01 23:20:12,672 serializers 4072 2756 Successfully created JobApplication with ID: 3
+INFO 2025-08-01 23:20:12,673 views 4072 2756 Application created successfully. ID: 3
+INFO 2025-08-01 23:20:12,676 basehttp 4072 2756 "POST /api/jobs/jobs/1/apply/ HTTP/1.1" 201 375
+INFO 2025-08-01 23:20:12,717 basehttp 4072 2756 - Broken pipe from ('127.0.0.1', 52878)
+INFO 2025-08-01 23:20:43,950 basehttp 4072 6708 "POST /api/token/ HTTP/1.1" 200 483
+ERROR 2025-08-01 23:20:44,206 log 4072 6708 Internal Server Error: /api/jobs/applications/
+Traceback (most recent call last):
+  File "C:\Python312\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\django\views\generic\base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\rest_framework\views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\rest_framework\views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Python312\Lib\site-packages\rest_framework\views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "C:\Python312\Lib\site-packages\rest_framework\views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\IDAN\CareerOpen-App\careeropen-backend\jobs\views.py", line 403, in get
+    page = self.paginate_queryset(queryset)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UserJobApplicationsView' object has no attribute 'paginate_queryset'
+ERROR 2025-08-01 23:20:44,236 basehttp 4072 6708 "GET /api/jobs/applications/ HTTP/1.1" 500 94460
+INFO 2025-08-01 23:20:44,890 basehttp 4072 6708 - Broken pipe from ('127.0.0.1', 52917)
+INFO 2025-08-01 23:22:05,187 basehttp 4072 7300 "POST /api/token/ HTTP/1.1" 200 483
+ERROR 2025-08-01 23:22:05,236 log 4072 7300 Internal Server Error: /api/jobs/applications/
+Traceback (most recent call last):
+  File "C:\Python312\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\django\views\generic\base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\rest_framework\views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\rest_framework\views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Python312\Lib\site-packages\rest_framework\views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "C:\Python312\Lib\site-packages\rest_framework\views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\IDAN\CareerOpen-App\careeropen-backend\jobs\views.py", line 403, in get
+    page = self.paginate_queryset(queryset)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UserJobApplicationsView' object has no attribute 'paginate_queryset'
+ERROR 2025-08-01 23:22:05,244 basehttp 4072 7300 "GET /api/jobs/applications/ HTTP/1.1" 500 94460
+INFO 2025-08-01 23:22:06,123 basehttp 4072 7300 - Broken pipe from ('127.0.0.1', 53019)
+INFO 2025-08-01 23:23:05,601 autoreload 4072 4704 C:\Users\IDAN\CareerOpen-App\careeropen-backend\jobs\views.py changed, reloading.
+INFO 2025-08-01 23:23:08,785 autoreload 3928 3896 Watching for file changes with StatReloader
+INFO 2025-08-01 23:23:16,362 autoreload 3928 3896 C:\Users\IDAN\CareerOpen-App\careeropen-backend\jobs\views.py changed, reloading.
+INFO 2025-08-01 23:23:18,592 autoreload 11748 2728 Watching for file changes with StatReloader
+INFO 2025-08-01 23:26:22,846 autoreload 5768 5020 Watching for file changes with StatReloader
+INFO 2025-08-01 23:26:31,131 autoreload 11748 2728 C:\Users\IDAN\CareerOpen-App\careeropen-backend\jobs\views.py changed, reloading.
+INFO 2025-08-01 23:26:31,799 autoreload 5768 5020 C:\Users\IDAN\CareerOpen-App\careeropen-backend\jobs\views.py changed, reloading.
+INFO 2025-08-01 23:26:34,185 autoreload 6688 6316 Watching for file changes with StatReloader
+INFO 2025-08-01 23:26:34,637 autoreload 10488 4928 Watching for file changes with StatReloader
+INFO 2025-08-01 23:27:01,669 autoreload 6688 6316 C:\Users\IDAN\CareerOpen-App\careeropen-backend\jobs\views.py changed, reloading.
+INFO 2025-08-01 23:27:02,530 autoreload 10488 4928 C:\Users\IDAN\CareerOpen-App\careeropen-backend\jobs\views.py changed, reloading.
+INFO 2025-08-01 23:27:04,510 autoreload 10184 11628 Watching for file changes with StatReloader
+INFO 2025-08-01 23:27:05,128 autoreload 9424 11236 Watching for file changes with StatReloader
+INFO 2025-08-01 23:27:25,278 autoreload 11272 1924 Watching for file changes with StatReloader
+WARNING 2025-08-01 23:27:43,158 log 11272 8208 Bad Request: /api/token/
+WARNING 2025-08-01 23:27:43,159 basehttp 11272 8208 "POST /api/token/ HTTP/1.1" 400 73
+WARNING 2025-08-01 23:27:43,410 log 11272 8208 Unauthorized: /api/jobs/applications/
+WARNING 2025-08-01 23:27:43,411 basehttp 11272 8208 "GET /api/jobs/applications/ HTTP/1.1" 401 107
+INFO 2025-08-01 23:27:43,430 basehttp 11272 8208 - Broken pipe from ('127.0.0.1', 53468)
+WARNING 2025-08-01 23:29:03,235 log 11272 4052 Bad Request: /api/token/
+WARNING 2025-08-01 23:29:03,236 basehttp 11272 4052 "POST /api/token/ HTTP/1.1" 400 37
+INFO 2025-08-01 23:29:03,494 basehttp 11272 4052 - Broken pipe from ('127.0.0.1', 53571)
+INFO 2025-08-01 23:29:37,597 basehttp 11272 11096 "POST /api/token/ HTTP/1.1" 200 483
+WARNING 2025-08-01 23:29:37,844 log 11272 11096 Unauthorized: /api/jobs/applications/
+WARNING 2025-08-01 23:29:37,844 basehttp 11272 11096 "GET /api/jobs/applications/ HTTP/1.1" 401 107
+INFO 2025-08-01 23:29:37,869 basehttp 11272 11096 - Broken pipe from ('127.0.0.1', 53614)
+INFO 2025-08-01 23:30:24,138 basehttp 11272 272 "POST /api/token/ HTTP/1.1" 200 483
+INFO 2025-08-01 23:30:24,177 basehttp 11272 272 "GET /api/jobs/applications/ HTTP/1.1" 200 427
+INFO 2025-08-01 23:30:24,206 basehttp 11272 272 - Broken pipe from ('127.0.0.1', 53666)
+INFO 2025-08-02 00:13:46,208 autoreload 11272 1924 C:\Users\IDAN\CareerOpen-App\careeropen-backend\jobs\views.py changed, reloading.
+INFO 2025-08-02 00:13:49,344 autoreload 8208 11028 Watching for file changes with StatReloader
+INFO 2025-08-02 00:14:01,879 autoreload 8208 11028 C:\Users\IDAN\CareerOpen-App\careeropen-backend\jobs\views.py changed, reloading.
+INFO 2025-08-02 00:14:03,955 autoreload 2728 9188 Watching for file changes with StatReloader
+INFO 2025-08-02 00:14:22,135 autoreload 2728 9188 C:\Users\IDAN\CareerOpen-App\careeropen-backend\jobs\views.py changed, reloading.
+INFO 2025-08-02 00:14:24,518 autoreload 10560 10916 Watching for file changes with StatReloader
+INFO 2025-08-02 00:16:25,574 autoreload 10560 10916 C:\Users\IDAN\CareerOpen-App\careeropen-backend\core\settings.py changed, reloading.
+INFO 2025-08-02 00:16:28,026 autoreload 5596 2688 Watching for file changes with StatReloader
+INFO 2025-08-02 00:16:47,853 autoreload 5596 2688 C:\Users\IDAN\CareerOpen-App\careeropen-backend\jobs\views.py changed, reloading.
+INFO 2025-08-02 00:16:50,107 autoreload 2192 6764 Watching for file changes with StatReloader
+INFO 2025-08-02 00:17:11,676 autoreload 2192 6764 C:\Users\IDAN\CareerOpen-App\careeropen-backend\jobs\views.py changed, reloading.
+INFO 2025-08-02 00:17:14,882 autoreload 7224 3860 Watching for file changes with StatReloader
+INFO 2025-08-02 00:17:36,701 autoreload 7224 3860 C:\Users\IDAN\CareerOpen-App\careeropen-backend\jobs\views.py changed, reloading.
+INFO 2025-08-02 00:17:39,297 autoreload 7332 2836 Watching for file changes with StatReloader
+INFO 2025-08-02 00:46:37,310 autoreload 7332 2836 C:\Users\IDAN\CareerOpen-App\careeropen-backend\core\settings.py changed, reloading.
+INFO 2025-08-02 00:46:52,262 autoreload 5796 7656 Watching for file changes with StatReloader
+INFO 2025-08-02 02:10:17,310 autoreload 15444 4572 Watching for file changes with StatReloader
+WARNING 2025-08-02 02:11:40,428 log 5796 14856 Unauthorized: /api/jobs/
+WARNING 2025-08-02 02:11:40,429 basehttp 5796 14856 "GET /api/jobs/ HTTP/1.1" 401 58
+WARNING 2025-08-02 02:15:30,153 log 5796 11008 Unauthorized: /api/jobs/
+WARNING 2025-08-02 02:15:30,154 basehttp 5796 11008 "GET /api/jobs/ HTTP/1.1" 401 58
+WARNING 2025-08-02 02:15:30,296 log 5796 16624 Not Found: /api/categories/
+WARNING 2025-08-02 02:15:30,298 basehttp 5796 16624 "GET /api/categories/ HTTP/1.1" 404 4046
+WARNING 2025-08-02 02:15:30,314 log 5796 8112 Not Found: /api/companies/
+WARNING 2025-08-02 02:15:30,315 basehttp 5796 8112 "GET /api/companies/ HTTP/1.1" 404 4043
+WARNING 2025-08-02 02:15:32,866 log 5796 9540 Unauthorized: /api/token/
+WARNING 2025-08-02 02:15:32,867 basehttp 5796 9540 "POST /api/token/ HTTP/1.1" 401 63
+WARNING 2025-08-02 02:15:34,910 log 5796 15744 Unauthorized: /api/token/
+WARNING 2025-08-02 02:15:34,911 basehttp 5796 15744 "POST /api/token/ HTTP/1.1" 401 63
+INFO 2025-08-02 02:15:36,869 basehttp 5796 15860 "POST /api/token/ HTTP/1.1" 200 483
+WARNING 2025-08-02 02:15:36,873 log 5796 6032 Unauthorized: /api/jobs/
+WARNING 2025-08-02 02:15:36,874 basehttp 5796 6032 "GET /api/jobs/ HTTP/1.1" 401 58
+WARNING 2025-08-02 02:15:36,878 log 5796 16300 Unauthorized: /api/jobs/
+WARNING 2025-08-02 02:15:36,878 basehttp 5796 16300 "GET /api/jobs/ HTTP/1.1" 401 58
+WARNING 2025-08-02 02:16:51,970 log 5796 16684 Unauthorized: /api/jobs/
+WARNING 2025-08-02 02:16:51,970 basehttp 5796 16684 "GET /api/jobs/ HTTP/1.1" 401 58
+WARNING 2025-08-02 02:16:51,987 log 5796 4740 Not Found: /api/categories/
+WARNING 2025-08-02 02:16:51,987 basehttp 5796 4740 "GET /api/categories/ HTTP/1.1" 404 4046
+WARNING 2025-08-02 02:16:52,008 log 5796 12816 Not Found: /api/companies/
+WARNING 2025-08-02 02:16:52,009 basehttp 5796 12816 "GET /api/companies/ HTTP/1.1" 404 4043
+WARNING 2025-08-02 02:16:54,520 log 5796 13040 Unauthorized: /api/token/
+WARNING 2025-08-02 02:16:54,522 basehttp 5796 13040 "POST /api/token/ HTTP/1.1" 401 63
+INFO 2025-08-02 02:16:57,312 basehttp 5796 14248 "POST /api/token/ HTTP/1.1" 200 483
+WARNING 2025-08-02 02:18:19,382 log 5796 12364 Unauthorized: /api/jobs/
+WARNING 2025-08-02 02:18:19,383 basehttp 5796 12364 "GET /api/jobs/ HTTP/1.1" 401 58
+INFO 2025-08-02 02:18:22,831 basehttp 5796 7588 "POST /api/token/ HTTP/1.1" 200 483
+INFO 2025-08-02 02:18:22,864 basehttp 5796 13624 "GET /api/auth/me/ HTTP/1.1" 200 141
+WARNING 2025-08-02 02:18:22,874 log 5796 17236 Not Found: /api/applications/
+WARNING 2025-08-02 02:18:22,875 basehttp 5796 17236 "GET /api/applications/ HTTP/1.1" 404 4052
+WARNING 2025-08-02 02:18:22,892 log 5796 12768 Not Found: /api/jobs/search/
+WARNING 2025-08-02 02:18:22,893 basehttp 5796 12768 "GET /api/jobs/search/?search=developer HTTP/1.1" 404 11531
+WARNING 2025-08-02 02:18:22,900 log 5796 4936 Unauthorized: /api/jobs/
+WARNING 2025-08-02 02:18:22,901 basehttp 5796 4936 "GET /api/jobs/ HTTP/1.1" 401 58
+WARNING 2025-08-02 02:18:22,905 log 5796 17212 Unauthorized: /api/jobs/
+WARNING 2025-08-02 02:18:22,906 basehttp 5796 17212 "GET /api/jobs/ HTTP/1.1" 401 58
+WARNING 2025-08-02 02:25:31,156 log 5796 14788 Unauthorized: /api/jobs/
+WARNING 2025-08-02 02:25:31,157 basehttp 5796 14788 "GET /api/jobs/ HTTP/1.1" 401 58
+INFO 2025-08-02 02:25:33,772 basehttp 5796 14328 "POST /api/token/ HTTP/1.1" 200 483
+INFO 2025-08-02 02:25:33,783 basehttp 5796 9672 "GET /api/auth/me/ HTTP/1.1" 200 141
+WARNING 2025-08-02 02:25:33,797 log 5796 1936 Not Found: /api/applications/
+WARNING 2025-08-02 02:25:33,797 basehttp 5796 1936 "GET /api/applications/ HTTP/1.1" 404 4052
+ERROR 2025-08-02 02:25:34,249 log 5796 272 Internal Server Error: /api/jobs/jobs/search/
+Traceback (most recent call last):
+  File "C:\Python312\Lib\site-packages\django_filters\utils.py", line 223, in resolve_field
+    lhs = query.try_transform(*args)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\django\db\models\sql\query.py", line 1458, in try_transform
+    raise FieldError(
+django.core.exceptions.FieldError: Unsupported lookup 'icontains' for ForeignKey or join on the field not permitted.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Python312\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\django\views\generic\base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\rest_framework\views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\rest_framework\views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Python312\Lib\site-packages\rest_framework\views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "C:\Python312\Lib\site-packages\rest_framework\views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\IDAN\CareerOpen-App\careeropen-backend\jobs\views.py", line 323, in get
+    queryset = self.filter_queryset(self.get_queryset())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\IDAN\CareerOpen-App\careeropen-backend\jobs\views.py", line 222, in filter_queryset
+    queryset = backend().filter_queryset(self.request, queryset, self)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\django_filters\rest_framework\backends.py", line 66, in filter_queryset
+    filterset = self.get_filterset(request, queryset, view)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\django_filters\rest_framework\backends.py", line 18, in get_filterset
+    filterset_class = self.get_filterset_class(view, queryset)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\django_filters\rest_framework\backends.py", line 49, in get_filterset_class
+    class AutoFilterSet(self.filterset_base):
+  File "C:\Python312\Lib\site-packages\django_filters\filterset.py", line 82, in __new__
+    new_class.base_filters = new_class.get_filters()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\django_filters\filterset.py", line 360, in get_filters
+    filter_instance = cls.filter_for_field(
+                      ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\django_filters\filterset.py", line 399, in filter_for_field
+    field, lookup_type = resolve_field(field, lookup_expr)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\django_filters\utils.py", line 229, in resolve_field
+    raise FieldLookupError(model_field, lookup_expr) from e
+django_filters.exceptions.FieldLookupError: Unsupported lookup 'icontains' for field 'jobs.Job.company'.
+ERROR 2025-08-02 02:25:34,266 basehttp 5796 272 "GET /api/jobs/jobs/search/?search=developer HTTP/1.1" 500 148500
+WARNING 2025-08-02 02:25:34,283 log 5796 10564 Unauthorized: /api/jobs/
+WARNING 2025-08-02 02:25:34,283 basehttp 5796 10564 "GET /api/jobs/ HTTP/1.1" 401 58
+WARNING 2025-08-02 02:25:34,290 log 5796 9380 Unauthorized: /api/jobs/
+WARNING 2025-08-02 02:25:34,293 basehttp 5796 9380 "GET /api/jobs/ HTTP/1.1" 401 58
+INFO 2025-08-02 02:26:18,623 basehttp 5796 12688 "GET /api/jobs/jobs/ HTTP/1.1" 200 1054
+WARNING 2025-08-02 02:26:18,647 log 5796 14456 Not Found: /api/jobs/token/
+WARNING 2025-08-02 02:26:18,648 basehttp 5796 14456 "POST /api/jobs/token/ HTTP/1.1" 404 11512
+WARNING 2025-08-02 02:27:51,902 log 5796 11828 Unauthorized: /api/jobs/
+WARNING 2025-08-02 02:27:51,907 basehttp 5796 11828 "GET /api/jobs/ HTTP/1.1" 401 58
+INFO 2025-08-02 02:27:54,725 basehttp 5796 5812 "POST /api/token/ HTTP/1.1" 200 483
+INFO 2025-08-02 02:27:54,749 basehttp 5796 15068 "GET /api/auth/me/ HTTP/1.1" 200 141
+INFO 2025-08-02 02:27:54,797 basehttp 5796 15464 "GET /api/jobs/applications/ HTTP/1.1" 200 795
+WARNING 2025-08-02 02:27:54,817 log 5796 13708 Not Found: /api/jobs/search/
+WARNING 2025-08-02 02:27:54,818 basehttp 5796 13708 "GET /api/jobs/search/?search=developer HTTP/1.1" 404 11531
+WARNING 2025-08-02 02:27:54,829 log 5796 3404 Unauthorized: /api/jobs/
+WARNING 2025-08-02 02:27:54,830 basehttp 5796 3404 "GET /api/jobs/ HTTP/1.1" 401 58
+WARNING 2025-08-02 02:27:54,835 log 5796 13640 Unauthorized: /api/jobs/
+WARNING 2025-08-02 02:27:54,836 basehttp 5796 13640 "GET /api/jobs/ HTTP/1.1" 401 58
+WARNING 2025-08-02 12:31:48,924 log 5796 22164 Not Found: /api/jobs/search/
+WARNING 2025-08-02 12:31:48,935 basehttp 5796 22164 "GET /api/jobs/search/?search=developer HTTP/1.1" 404 11531
+WARNING 2025-08-02 12:31:48,975 log 5796 17120 Not Found: /api/jobs/1/
+WARNING 2025-08-02 12:31:48,976 basehttp 5796 17120 "GET /api/jobs/1/ HTTP/1.1" 404 11499
+WARNING 2025-08-02 12:35:13,586 log 5796 16868 Not Found: /api/jobs/search/
+WARNING 2025-08-02 12:35:13,589 basehttp 5796 16868 "GET /api/jobs/search/?search=developer HTTP/1.1" 404 11531
+WARNING 2025-08-02 12:35:13,611 log 5796 26176 Not Found: /api/jobs/1/
+WARNING 2025-08-02 12:35:13,612 basehttp 5796 26176 "GET /api/jobs/1/ HTTP/1.1" 404 11499
+INFO 2025-08-02 12:38:27,756 basehttp 5796 20532 "GET /api/jobs/jobs/ HTTP/1.1" 200 1543
+INFO 2025-08-02 12:38:27,808 basehttp 5796 23732 "GET /api/jobs/jobs/3/ HTTP/1.1" 200 488
+INFO 2025-08-02 12:38:27,874 basehttp 5796 25264 "GET /api/jobs/jobs/2/ HTTP/1.1" 200 488
+INFO 2025-08-02 12:38:27,949 basehttp 5796 21004 "GET /api/jobs/jobs/1/ HTTP/1.1" 200 513
+WARNING 2025-08-02 12:38:27,972 log 5796 24896 Not Found: /api/jobs/search/
+WARNING 2025-08-02 12:38:27,973 basehttp 5796 24896 "GET /api/jobs/search/?search=test HTTP/1.1" 404 11526
+INFO 2025-08-02 12:40:25,938 basehttp 5796 25428 "GET /api/jobs/jobs/ HTTP/1.1" 200 1543
+INFO 2025-08-02 12:40:25,966 basehttp 5796 22972 "GET /api/jobs/jobs/3/ HTTP/1.1" 200 488
+WARNING 2025-08-02 12:40:25,976 log 5796 21768 Unauthorized: /api/jobs/jobs/search/
+WARNING 2025-08-02 12:40:25,977 basehttp 5796 21768 "GET /api/jobs/jobs/search/?search=test HTTP/1.1" 401 58
+ERROR 2025-08-02 12:53:57,260 log 5796 26188 Internal Server Error: /api/jobs/jobs/search/
+Traceback (most recent call last):
+  File "C:\Python312\Lib\site-packages\django_filters\utils.py", line 223, in resolve_field
+    lhs = query.try_transform(*args)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\django\db\models\sql\query.py", line 1458, in try_transform
+    raise FieldError(
+django.core.exceptions.FieldError: Unsupported lookup 'icontains' for ForeignKey or join on the field not permitted.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Python312\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\django\views\generic\base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\rest_framework\views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\rest_framework\views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Python312\Lib\site-packages\rest_framework\views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "C:\Python312\Lib\site-packages\rest_framework\views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\IDAN\CareerOpen-App\careeropen-backend\jobs\views.py", line 323, in get
+    queryset = self.filter_queryset(self.get_queryset())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\IDAN\CareerOpen-App\careeropen-backend\jobs\views.py", line 222, in filter_queryset
+    queryset = backend().filter_queryset(self.request, queryset, self)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\django_filters\rest_framework\backends.py", line 66, in filter_queryset
+    filterset = self.get_filterset(request, queryset, view)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\django_filters\rest_framework\backends.py", line 18, in get_filterset
+    filterset_class = self.get_filterset_class(view, queryset)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\django_filters\rest_framework\backends.py", line 49, in get_filterset_class
+    class AutoFilterSet(self.filterset_base):
+  File "C:\Python312\Lib\site-packages\django_filters\filterset.py", line 82, in __new__
+    new_class.base_filters = new_class.get_filters()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\django_filters\filterset.py", line 360, in get_filters
+    filter_instance = cls.filter_for_field(
+                      ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\django_filters\filterset.py", line 399, in filter_for_field
+    field, lookup_type = resolve_field(field, lookup_expr)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\django_filters\utils.py", line 229, in resolve_field
+    raise FieldLookupError(model_field, lookup_expr) from e
+django_filters.exceptions.FieldLookupError: Unsupported lookup 'icontains' for field 'jobs.Job.company'.
+ERROR 2025-08-02 12:53:57,284 basehttp 5796 26188 "GET /api/jobs/jobs/search/?search=test HTTP/1.1" 500 21733
+INFO 2025-08-02 12:53:57,427 basehttp 5796 22052 "GET /api/jobs/jobs/ HTTP/1.1" 200 1543
+WARNING 2025-08-02 12:53:57,448 log 5796 14640 Forbidden: /api/jobs/jobs/3/
+WARNING 2025-08-02 12:53:57,449 basehttp 5796 14640 "PATCH /api/jobs/jobs/3/ HTTP/1.1" 403 63
+WARNING 2025-08-02 12:53:57,472 log 5796 25800 Forbidden: /api/jobs/jobs/3/
+WARNING 2025-08-02 12:53:57,473 basehttp 5796 25800 "PATCH /api/jobs/jobs/3/ HTTP/1.1" 403 63
+INFO 2025-08-02 12:53:57,528 basehttp 5796 22880 "GET /api/jobs/jobs/ HTTP/1.1" 200 1543
+INFO 2025-08-02 12:53:57,573 basehttp 5796 21716 "GET /api/jobs/jobs/ HTTP/1.1" 200 1543
+INFO 2025-08-02 12:57:34,142 basehttp 5796 15788 "GET /api/jobs/jobs/ HTTP/1.1" 200 1541
+INFO 2025-08-02 12:58:34,281 basehttp 5796 24908 "GET /api/jobs/jobs/ HTTP/1.1" 200 1541
+WARNING 2025-08-02 12:58:34,297 log 5796 21800 Forbidden: /api/jobs/jobs/
+WARNING 2025-08-02 12:58:34,298 basehttp 5796 21800 "POST /api/jobs/jobs/ HTTP/1.1" 403 63
+INFO 2025-08-02 12:58:34,337 basehttp 5796 25720 "GET /api/jobs/jobs/ HTTP/1.1" 200 1541
+WARNING 2025-08-02 12:58:34,354 log 5796 23664 Forbidden: /api/jobs/jobs/3/
+WARNING 2025-08-02 12:58:34,355 basehttp 5796 23664 "PATCH /api/jobs/jobs/3/ HTTP/1.1" 403 63
+INFO 2025-08-02 13:00:22,695 basehttp 5796 17960 "GET /api/jobs/jobs/ HTTP/1.1" 200 1541
+WARNING 2025-08-02 13:00:22,704 log 5796 14520 Forbidden: /api/jobs/jobs/
+WARNING 2025-08-02 13:00:22,704 basehttp 5796 14520 "POST /api/jobs/jobs/ HTTP/1.1" 403 63
+INFO 2025-08-02 13:00:22,754 basehttp 5796 18440 "GET /api/jobs/jobs/ HTTP/1.1" 200 1541
+WARNING 2025-08-02 13:00:22,772 log 5796 20300 Forbidden: /api/jobs/jobs/3/
+WARNING 2025-08-02 13:00:22,773 basehttp 5796 20300 "PATCH /api/jobs/jobs/3/ HTTP/1.1" 403 63
+INFO 2025-08-02 13:01:34,960 basehttp 5796 21180 "GET /api/jobs/jobs/ HTTP/1.1" 200 1541
+WARNING 2025-08-02 13:01:34,975 log 5796 22056 Forbidden: /api/jobs/jobs/
+WARNING 2025-08-02 13:01:34,976 basehttp 5796 22056 "POST /api/jobs/jobs/ HTTP/1.1" 403 63
+INFO 2025-08-02 13:01:35,086 basehttp 5796 15924 "GET /api/jobs/jobs/ HTTP/1.1" 200 1541
+WARNING 2025-08-02 13:01:35,173 log 5796 23088 Forbidden: /api/jobs/jobs/3/
+WARNING 2025-08-02 13:01:35,174 basehttp 5796 23088 "PATCH /api/jobs/jobs/3/ HTTP/1.1" 403 63
+INFO 2025-08-02 13:01:38,280 basehttp 5796 24308 "GET /api/jobs/jobs/ HTTP/1.1" 200 1543
+INFO 2025-08-02 13:01:38,354 basehttp 5796 26520 "POST /api/jobs/jobs/ HTTP/1.1" 201 453
+INFO 2025-08-02 13:01:38,476 basehttp 5796 23476 "PATCH /api/jobs/jobs/4/ HTTP/1.1" 200 454
+INFO 2025-08-02 13:01:38,594 basehttp 5796 12344 "GET /api/jobs/jobs/4/ HTTP/1.1" 200 454
+INFO 2025-08-02 13:01:38,698 basehttp 5796 21196 "PATCH /api/jobs/jobs/4/ HTTP/1.1" 200 475
+INFO 2025-08-02 13:01:38,799 basehttp 5796 26124 "GET /api/jobs/jobs/4/ HTTP/1.1" 200 475
+INFO 2025-08-02 13:03:17,044 autoreload 5796 7656 C:\Users\IDAN\CareerOpen-App\careeropen-backend\core\settings.py changed, reloading.
+INFO 2025-08-02 13:03:17,104 autoreload 15444 4572 C:\Users\IDAN\CareerOpen-App\careeropen-backend\core\settings.py changed, reloading.
+INFO 2025-08-02 13:03:23,056 autoreload 15624 19592 Watching for file changes with StatReloader
+INFO 2025-08-02 13:03:23,235 autoreload 14532 25088 Watching for file changes with StatReloader
