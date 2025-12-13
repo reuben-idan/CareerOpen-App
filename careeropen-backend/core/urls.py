@@ -53,6 +53,8 @@ api_patterns = [
     # Apps
     path('jobs/', include('jobs.urls')),  # Job-related endpoints
     path('network/', include('network.urls')),  # Network-related endpoints
+    path('social/', include('social.urls')),  # Social features
+    path('ai/', include('ai_career.urls')),  # AI career intelligence
 ]
 
 # API v1 URLs

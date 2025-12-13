@@ -135,6 +135,8 @@ INSTALLED_APPS = [
     'accounts.apps.AccountsConfig',
     'jobs.apps.JobsConfig',
     'network.apps.NetworkConfig',
+    'social.apps.SocialConfig',
+    'ai_career.apps.AiCareerConfig',
 ]
 
 # DRF Spectacular Settings

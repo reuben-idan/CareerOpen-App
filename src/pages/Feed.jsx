@@ -1,274 +1,240 @@
-import React, { useState, useEffect } from "react";
-import analytics from "../services/analytics";
-import JobCard from "../components/jobs/JobCard";
-import JobSearch from "../components/jobs/JobSearch";
-import JobFilter from "../components/jobs/JobFilter";
-import JobStats from "../components/jobs/JobStats";
-import JobTrends from "../components/jobs/JobTrends";
-import LoadingSpinner from "../components/common/LoadingSpinner";
-import Sidebar from "../components/layout/Sidebar";
-import { EmployerLogos, PeopleGrid, GlassCard } from "../components";
-import { BriefcaseIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import { useState, useEffect } from 'react';
+import { useAuth } from '../hooks/useAuth';
+import CreatePost from '../components/social/CreatePost';
+import PostCard from '../components/social/PostCard';
+import GlassCard from '../components/ui/GlassCard';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 const Feed = () => {
-  const [jobs, setJobs] = useState([]);
+  const { user } = useAuth();
+  const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filters, setFilters] = useState({
-    location: "",
-    type: "",
-    experience: "",
-    salary: "",
-  });
-
-  // Mock stats data
-  const [stats, setStats] = useState({
-    totalJobs: 0,
-    activeApplications: 0,
-    savedJobs: 0,
-    views: 0,
-    connections: 0,
-  });
+  const [filter, setFilter] = useState('all');
 
   useEffect(() => {
-    fetchJobs();
-    fetchStats();
-  }, []);
+    fetchPosts();
+  }, [filter]);
 
-  const fetchJobs = async () => {
+  const fetchPosts = async () => {
     try {
       setLoading(true);
-      // Mock job data
-      const mockJobs = [
+      // Mock data for now - replace with actual API call
+      const mockPosts = [
         {
           id: 1,
-          title: "Senior React Developer",
-          company: "Tech Corp",
-          location: "San Francisco, CA",
-          type: "Full-time",
-          salary: "$120,000 - $150,000",
-          postedAt: "2024-01-15",
-          description:
-            "We're looking for a senior React developer to join our team...",
-          requirements: {
-            experience: "5+ years",
-            education: "Bachelor's degree",
+          author: {
+            first_name: 'John',
+            last_name: 'Doe',
+            profile_picture: null,
+            profile: { headline: 'Software Engineer at TechCorp' }
           },
-          skills: ["React", "TypeScript", "Node.js"],
-          benefits: {
-            healthInsurance: true,
-            remoteWork: true,
-          },
+          content: 'Excited to share that I just completed my first full-stack project using React and Django! The learning curve was steep but incredibly rewarding. Looking forward to applying these skills in my next role. #WebDevelopment #React #Django',
+          post_type: 'career_update',
+          created_at: new Date().toISOString(),
+          reactions_count: 12,
+          comments_count: 3,
+          user_reaction: null,
+          comments: []
         },
         {
           id: 2,
-          title: "Frontend Engineer",
-          company: "Startup Inc",
-          location: "Remote",
-          type: "Full-time",
-          salary: "$90,000 - $120,000",
-          postedAt: "2024-01-14",
-          description:
-            "Join our fast-growing startup as a frontend engineer...",
-          requirements: {
-            experience: "3+ years",
-            education: "Bachelor's degree",
+          author: {
+            first_name: 'Sarah',
+            last_name: 'Johnson',
+            profile_picture: null,
+            profile: { headline: 'Product Manager at InnovateCo' }
           },
-          skills: ["JavaScript", "React", "CSS"],
-          benefits: {
-            healthInsurance: true,
-            remoteWork: true,
-          },
-        },
+          content: 'Just attended an amazing conference on AI in product development. The future is incredibly exciting! Key takeaways: 1) AI will augment, not replace human creativity 2) Data quality is more important than quantity 3) Ethical considerations must be built in from day one.',
+          post_type: 'text',
+          created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+          reactions_count: 28,
+          comments_count: 7,
+          user_reaction: 'insightful',
+          comments: []
+        }
       ];
-
-      setJobs(mockJobs);
-      analytics.track("view_job_feed", { jobCount: mockJobs.length });
-    } catch (err) {
-      setError("Failed to load jobs");
-      analytics.track("job_feed_error", { error: err.message });
+      
+      setPosts(mockPosts);
+    } catch (error) {
+      console.error('Error fetching posts:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchStats = async () => {
+  const handleCreatePost = async (postData) => {
     try {
-      // Mock stats data
-      const mockStats = {
-        totalJobs: 1250,
-        activeApplications: 8,
-        savedJobs: 23,
-        views: 156,
-        connections: 342,
+      // Mock creating post - replace with actual API call
+      const newPost = {
+        id: Date.now(),
+        author: {
+          first_name: user?.first_name || 'You',
+          last_name: user?.last_name || '',
+          profile_picture: user?.profile?.profile_picture,
+          profile: { headline: user?.profile?.headline || 'Professional' }
+        },
+        ...postData,
+        created_at: new Date().toISOString(),
+        reactions_count: 0,
+        comments_count: 0,
+        user_reaction: null,
+        comments: []
       };
-      setStats(mockStats);
-    } catch (err) {
-      console.error("Failed to fetch stats:", err);
+      
+      setPosts([newPost, ...posts]);
+    } catch (error) {
+      console.error('Error creating post:', error);
     }
   };
 
-  const handleSearch = (query) => {
-    setSearchQuery(query);
-    analytics.track("search_jobs", { query });
+  const handleReaction = async (postId, reactionType) => {
+    try {
+      // Mock reaction - replace with actual API call
+      setPosts(posts.map(post => {
+        if (post.id === postId) {
+          const wasReacted = post.user_reaction === reactionType;
+          return {
+            ...post,
+            user_reaction: wasReacted ? null : reactionType,
+            reactions_count: wasReacted ? post.reactions_count - 1 : post.reactions_count + 1
+          };
+        }
+        return post;
+      }));
+    } catch (error) {
+      console.error('Error reacting to post:', error);
+    }
   };
 
-  const handleFilterChange = (newFilters) => {
-    setFilters(newFilters);
-    analytics.track("filter_jobs", { filters: newFilters });
+  const handleComment = async (postId, content) => {
+    try {
+      // Mock comment - replace with actual API call
+      const newComment = {
+        id: Date.now(),
+        author: {
+          first_name: user?.first_name || 'You',
+          last_name: user?.last_name || '',
+          profile_picture: user?.profile?.profile_picture
+        },
+        content,
+        created_at: new Date().toISOString()
+      };
+
+      setPosts(posts.map(post => {
+        if (post.id === postId) {
+          return {
+            ...post,
+            comments: [...(post.comments || []), newComment],
+            comments_count: post.comments_count + 1
+          };
+        }
+        return post;
+      }));
+    } catch (error) {
+      console.error('Error commenting on post:', error);
+    }
   };
 
-  const handleSaveJob = (jobId) => {
-    analytics.track("save_job", { jobId });
-    // TODO: Implement save job functionality
-  };
-
-  const handleApplyJob = (jobId) => {
-    analytics.track("apply_job", { jobId });
-    // TODO: Implement apply job functionality
+  const handleShare = (post) => {
+    // Mock share functionality
+    if (navigator.share) {
+      navigator.share({
+        title: `Post by ${post.author.first_name} ${post.author.last_name}`,
+        text: post.content,
+        url: window.location.href
+      });
+    } else {
+      // Fallback - copy to clipboard
+      navigator.clipboard.writeText(`${post.content}\n\n- ${post.author.first_name} ${post.author.last_name}`);
+    }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-        <LoadingSpinner />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 px-4">
-        <GlassCard className="max-w-md w-full text-center">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">
-            Error Loading Jobs
-          </h2>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <button 
-            onClick={fetchJobs} 
-            className="px-6 py-3 rounded-xl font-medium bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
-          >
-            Try Again
-          </button>
-        </GlassCard>
+      <div className="flex justify-center items-center h-64">
+        <LoadingSpinner size="xl" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex">
-      <Sidebar />
-      <div className="flex-1 ml-0 md:ml-64">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Header Section */}
-          <div className="mb-8">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-              <div className="flex-1">
-                <div className="flex items-center space-x-3 mb-4">
-                  <div className="p-3 bg-blue-600 rounded-2xl">
-                    <BriefcaseIcon className="h-8 w-8 text-white" />
-                  </div>
-                  <div>
-                    <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">
-                      Job Feed
-                    </h1>
-                    <p className="text-xl text-gray-600">
-                      Discover your next career opportunity
-                    </p>
-                  </div>
-                </div>
-                
-                {/* Search Bar */}
-                <div className="relative max-w-2xl">
-                  <MagnifyingGlassIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-6 w-6 text-gray-400" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => handleSearch(e.target.value)}
-                    placeholder="Search for jobs, companies, or skills..."
-                    className="w-full pl-12 pr-4 py-4 text-lg border-0 rounded-2xl shadow-lg bg-white/80 backdrop-blur-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  />
-                </div>
-              </div>
-              
-              {/* People Grid */}
-              <div className="hidden lg:block">
-                <PeopleGrid maxImages={4} />
-              </div>
-            </div>
-          </div>
+    <div className="max-w-2xl mx-auto space-y-6">
+      {/* Welcome Header */}
+      <GlassCard className="p-6 text-center">
+        <h1 className="text-2xl font-bold text-white mb-2">
+          Welcome back, {user?.first_name || 'Professional'}!
+        </h1>
+        <p className="text-white/70">
+          Share your professional journey and connect with your network
+        </p>
+      </GlassCard>
 
-          {/* Employer Logos */}
-          <div className="mb-8">
-            <p className="text-center text-gray-600 mb-4">Trusted by top companies worldwide</p>
-            <EmployerLogos />
-          </div>
+      {/* Create Post */}
+      <CreatePost onCreatePost={handleCreatePost} user={user} />
 
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            {/* Main Content */}
-            <div className="lg:col-span-3 space-y-6">
-              {/* Search and Filter */}
-              <GlassCard>
-                <JobSearch onSearch={handleSearch} />
-                <JobFilter
-                  filters={filters}
-                  onFilterChange={handleFilterChange}
-                />
-              </GlassCard>
-
-              {/* Job Stats */}
-              <JobStats stats={stats} />
-
-              {/* Job Listings */}
-              <div className="space-y-4">
-                {jobs.map((job) => (
-                  <JobCard
-                    key={job.id}
-                    job={job}
-                    onSave={handleSaveJob}
-                    onApply={handleApplyJob}
-                  />
-                ))}
-              </div>
-
-              {jobs.length === 0 && (
-                <GlassCard className="text-center py-12">
-                  <div className="max-w-md mx-auto">
-                    <div className="text-6xl mb-4">🔍</div>
-                    <h3 className="text-2xl font-semibold text-gray-900 mb-2">
-                      No jobs found
-                    </h3>
-                    <p className="text-gray-600 mb-6">
-                      Try adjusting your search criteria or filters.
-                    </p>
-                    <button
-                      onClick={() => {
-                        setSearchQuery("");
-                        setFilters({
-                          location: "",
-                          type: "",
-                          experience: "",
-                          salary: "",
-                        });
-                      }}
-                      className="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-colors"
-                    >
-                      Clear Filters
-                    </button>
-                  </div>
-                </GlassCard>
-              )}
-            </div>
-
-            {/* Sidebar */}
-            <div className="space-y-6">
-              {/* Job Trends */}
-              <JobTrends jobs={jobs} />
-            </div>
-          </div>
+      {/* Filter Options */}
+      <GlassCard className="p-4">
+        <div className="flex space-x-4">
+          <button
+            onClick={() => setFilter('all')}
+            className={`px-4 py-2 rounded-lg transition-all ${
+              filter === 'all' 
+                ? 'bg-blue-500/30 text-blue-200' 
+                : 'text-white/70 hover:bg-white/10'
+            }`}
+          >
+            All Posts
+          </button>
+          <button
+            onClick={() => setFilter('connections')}
+            className={`px-4 py-2 rounded-lg transition-all ${
+              filter === 'connections' 
+                ? 'bg-blue-500/30 text-blue-200' 
+                : 'text-white/70 hover:bg-white/10'
+            }`}
+          >
+            My Network
+          </button>
+          <button
+            onClick={() => setFilter('career_updates')}
+            className={`px-4 py-2 rounded-lg transition-all ${
+              filter === 'career_updates' 
+                ? 'bg-blue-500/30 text-blue-200' 
+                : 'text-white/70 hover:bg-white/10'
+            }`}
+          >
+            Career Updates
+          </button>
         </div>
+      </GlassCard>
+
+      {/* Posts Feed */}
+      <div className="space-y-6">
+        {posts.length === 0 ? (
+          <GlassCard className="p-8 text-center">
+            <p className="text-white/60">No posts to show. Start by creating your first post!</p>
+          </GlassCard>
+        ) : (
+          posts.map(post => (
+            <PostCard
+              key={post.id}
+              post={post}
+              onReact={handleReaction}
+              onComment={handleComment}
+              onShare={handleShare}
+            />
+          ))
+        )}
       </div>
+
+      {/* Load More */}
+      {posts.length > 0 && (
+        <div className="text-center">
+          <button className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl border border-white/20 transition-all duration-300">
+            Load More Posts
+          </button>
+        </div>
+      )}
     </div>
   );
 };

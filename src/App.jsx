@@ -53,6 +53,7 @@ const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const SavedJobsPage = lazy(() => import('./pages/SavedJobsPage'));
 const JobApplicationsPage = lazy(() => import('./pages/JobApplicationsPage'));
 const JobPostPage = lazy(() => import('./pages/JobPostPage'));
+const AICareerPage = lazy(() => import('./pages/AICareerPage'));
 const APITest = lazy(() => import('./pages/APITest'));
 
 const PublicLayout = lazy(() => import('./components/layout/PublicLayout'));
@@ -128,6 +129,7 @@ const AppRoutes = () => {
         <Route path="settings/subscription" element={<SubscriptionPayment />} />
         <Route path="saved-jobs" element={<SavedJobsPage />} />
         <Route path="my-applications" element={<JobApplicationsPage />} />
+        <Route path="ai-career" element={<AICareerPage />} />
         <Route path="api-test" element={<APITest />} />
       </Route>
 
