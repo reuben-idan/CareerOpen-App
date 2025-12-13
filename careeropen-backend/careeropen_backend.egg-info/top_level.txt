@@ -1,5 +1,0 @@
-accounts
-careeropen_backend
-core
-jobs
-network
