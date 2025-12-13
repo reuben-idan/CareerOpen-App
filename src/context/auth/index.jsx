@@ -1,0 +1,117 @@
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import PropTypes from "prop-types";
+import authService from "../../services/api/auth";
+import api from "../../services/api/api";
+import { useProfile } from "../profile";
+
+// Create a Context for the user data
+const UserContext = createContext();
+
+// UserContext provider component
+export const UserProvider = ({ children }) => {
+  const [user, setUser] = useState(null); // User state initialized as null
+  const [isLoading, setIsLoading] = useState(true); // Loading state
+
+  useEffect(() => {
+    // Check if user is already authenticated
+    const checkAuth = async () => {
+      try {
+        if (authService.isAuthenticated()) {
+          const userData = await authService.getCurrentUser();
+          setUser(userData);
+        } else {
+          setUser(null);
+        }
+      } catch (error) {
+        console.error("Auth check failed:", error);
+        setUser(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  // Sign up new user
+  const signUp = async (userData) => {
+    try {
+      const user = await authService.register(userData);
+      // After successful registration, log the user in
+      await signIn(userData.email, userData.password);
+      return user;
+    } catch (error) {
+      console.error("Sign up error:", error);
+      throw error;
+    }
+  };
+
+  // Sign in user
+  const signIn = async (email, password) => {
+    try {
+      const userData = await authService.login(email, password);
+      setUser(userData);
+      return userData;
+    } catch (error) {
+      console.error("Sign in error:", error);
+      // Clear any existing tokens on failed login
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      setUser(null);
+      throw error;
+    }
+  };
+
+  // Sign out user
+  const signOut = async () => {
+    try {
+      await authService.logout();
+    } catch (error) {
+      console.error("Sign out error:", error);
+      // Continue with sign out even if the server call fails
+    } finally {
+      // Clear user state and tokens
+      setUser(null);
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      delete api.defaults.headers.common['Authorization'];
+    }
+  };
+
+  // Update user data
+  const updateUser = (userData) => {
+    setUser(prev => ({
+      ...prev,
+      ...userData
+    }));
+  };
+
+  const contextValue = {
+    user,
+    signUp,
+    signIn,
+    signOut,
+    updateUser,
+    isLoading,
+  };
+
+  return (
+    <UserContext.Provider value={contextValue}>
+      {children}
+    </UserContext.Provider>
+  );
+};
+
+// Custom hook to use the user context in any component
+export const useUser = () => {
+  const context = useContext(UserContext);
+  if (!context) {
+    throw new Error("useUser must be used within a UserProvider");
+  }
+  return context;
+};
+
+// PropTypes validation for UserProvider
+UserProvider.propTypes = {
+  children: PropTypes.node.isRequired,
+};
