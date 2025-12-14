@@ -96,3 +96,6 @@ CORS_ALLOWED_ORIGINS = [
 # Add production CORS origins from environment
 if os.environ.get('CORS_ALLOWED_ORIGINS'):
     CORS_ALLOWED_ORIGINS.extend(os.environ.get('CORS_ALLOWED_ORIGINS').split(','))
+
+# Add Vercel frontend URL
+CORS_ALLOWED_ORIGINS.append('https://frontend-i6yrnbsn5-reuben-idans-projects.vercel.app')

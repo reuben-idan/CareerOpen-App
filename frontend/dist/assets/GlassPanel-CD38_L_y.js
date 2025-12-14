@@ -1,0 +1,2 @@
+import{j as l,m as t}from"./ui-CVbvJRiz.js";import{e as i}from"./index-dsmXL8HG.js";function p({children:a,className:r,blur:s="xl"}){const o={sm:"backdrop-blur-sm",md:"backdrop-blur-md",lg:"backdrop-blur-lg",xl:"backdrop-blur-xl"};return l.jsx(t.div,{className:i("glass-panel rounded-2xl p-6",o[s],r),initial:{opacity:0,y:20},animate:{opacity:1,y:0},transition:{duration:.3},children:a})}export{p as G};
+//# sourceMappingURL=GlassPanel-CD38_L_y.js.map
