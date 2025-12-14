@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.urls import path, include
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
@@ -16,6 +16,9 @@ def api_root(request):
             'auth': '/api/auth/',
         }
     })
+
+def favicon(request):
+    return HttpResponse(status=204)
 
 @csrf_exempt
 def register(request):
@@ -112,5 +115,6 @@ urlpatterns = [
     path('api/', api_root, name='api-root'),
     path('api/auth/register/', register, name='register'),
     path('api/auth/login/', login, name='login'),
+    path('favicon.ico', favicon, name='favicon'),
     path('', api_root, name='home'),
 ]
