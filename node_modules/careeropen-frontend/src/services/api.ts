@@ -1,7 +1,9 @@
 const API_BASE_URL = 'http://localhost:8000/api'
 
 class ApiService {
-  private getAuthHeaders() {
+  baseUrl = API_BASE_URL
+  
+  getAuthHeaders() {
     const token = localStorage.getItem('access_token')
     return token ? { Authorization: `Bearer ${token}` } : {}
   }

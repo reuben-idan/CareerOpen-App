@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
@@ -9,7 +9,8 @@ import {
   BellIcon,
   UserCircleIcon,
   Bars3Icon,
-  XMarkIcon
+  XMarkIcon,
+  ArrowRightOnRectangleIcon
 } from '@heroicons/react/24/outline'
 import { Avatar, Button } from '@/components/ui'
 import { Logo } from '@/components/common'
@@ -19,17 +20,30 @@ import { cn } from '@/lib/cn'
 const navigationItems = [
   { name: 'Home', href: '/app/dashboard', icon: HomeIcon },
   { name: 'Jobs', href: '/app/jobs', icon: BriefcaseIcon },
-  { name: 'Network', href: '/app/network', icon: UserGroupIcon },
+  { name: 'Feed', href: '/app/feed', icon: UserGroupIcon },
   { name: 'Messages', href: '/app/messages', icon: ChatBubbleLeftRightIcon },
   { name: 'Notifications', href: '/app/notifications', icon: BellIcon },
 ]
 
 export default function Navigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+  const userMenuRef = useRef<HTMLDivElement>(null)
   const location = useLocation()
   const { user, logout } = useAuthStore()
 
   const isActive = (href: string) => location.pathname === href
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   return (
     <nav className="sticky top-0 z-50 glass-panel-strong border-b border-white/20">
@@ -71,14 +85,58 @@ export default function Navigation() {
 
           {/* User Menu */}
           <div className="flex items-center space-x-4">
-            <Link to="/app/profile">
+            <div className="relative hidden md:block" ref={userMenuRef}>
+              <button
+                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                className="flex items-center space-x-2 p-2 rounded-xl hover:bg-white/20 transition-colors"
+              >
+                <Avatar
+                  src={user?.avatar}
+                  name={user?.name}
+                  size="sm"
+                  status="online"
+                />
+              </button>
+              
+              <AnimatePresence>
+                {isUserMenuOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                    className="absolute right-0 mt-2 w-48 glass-panel rounded-xl shadow-lg border border-white/20 py-2"
+                  >
+                    <Link
+                      to="/app/profile"
+                      onClick={() => setIsUserMenuOpen(false)}
+                      className="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-white/20 transition-colors"
+                    >
+                      <UserCircleIcon className="w-5 h-5" />
+                      <span>Profile</span>
+                    </Link>
+                    <button
+                      onClick={() => {
+                        logout()
+                        setIsUserMenuOpen(false)
+                      }}
+                      className="w-full flex items-center space-x-3 px-4 py-2 text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      <ArrowRightOnRectangleIcon className="w-5 h-5" />
+                      <span>Sign Out</span>
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            <div className="md:hidden">
               <Avatar
                 src={user?.avatar}
                 name={user?.name}
                 size="sm"
                 status="online"
               />
-            </Link>
+            </div>
 
             {/* Mobile menu button */}
             <button
@@ -141,6 +199,7 @@ export default function Navigation() {
                     }}
                     className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-red-600 hover:bg-red-50"
                   >
+                    <ArrowRightOnRectangleIcon className="w-5 h-5" />
                     <span className="font-medium">Sign Out</span>
                   </button>
                 </div>

@@ -22,6 +22,7 @@ const MessagesPage = lazy(() => import('@/pages/MessagesPage'))
 const NotificationsPage = lazy(() => import('@/pages/NotificationsPage'))
 const FeedPage = lazy(() => import('@/pages/FeedPage'))
 const SettingsPage = lazy(() => import('@/pages/SettingsPage'))
+const AdminPage = lazy(() => import('@/pages/AdminPage'))
 
 // Loading fallback component
 const PageLoader = () => (
@@ -58,6 +59,7 @@ function App() {
             <Route path="notifications" element={<NotificationsPage />} />
             <Route path="feed" element={<FeedPage />} />
             <Route path="settings" element={<SettingsPage />} />
+            <Route path="admin" element={<AdminPage />} />
           </Route>
 
           {/* Legacy routes - redirect to new structure */}
