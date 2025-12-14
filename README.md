@@ -1,39 +1,63 @@
-# CareerOpen - Next-Gen Professional Network
+# CareerOpen
 
-A modern career operating system combining professional networking, job marketplace, and AI-powered career insights.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![React](https://img.shields.io/badge/React-18.0-blue.svg)](https://reactjs.org/)
+[![Django](https://img.shields.io/badge/Django-4.2-green.svg)](https://djangoproject.com/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](https://typescriptlang.org/)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)]()
 
-## 🏗️ Project Structure
+A modern professional networking platform combining career management, job marketplace, and AI-powered insights.
 
-```
-CareerOpen-App/
-├── frontend/          # React + TypeScript frontend
-│   ├── src/
-│   ├── package.json
-│   └── vite.config.ts
-├── backend/           # Django REST API backend
-│   ├── careeropen/    # Django project settings
-│   ├── authentication/# User authentication & JWT
-│   ├── profiles/      # User profiles & experience
-│   ├── companies/     # Company management
-│   ├── jobs/          # Job postings & search
-│   ├── applications/  # Job applications
-│   ├── messaging/     # User messaging (planned)
-│   ├── notifications/ # Real-time notifications (planned)
-│   ├── analytics/     # Usage analytics (planned)
-│   └── requirements.txt
-└── package.json       # Workspace root
-```
+## Features
 
-## 🚀 Quick Start
+- **Professional Networking** - Connect with industry professionals and build your network
+- **Job Marketplace** - Advanced job search with AI-powered matching algorithms
+- **Company Management** - Comprehensive recruiter tools and company pages
+- **Real-time Messaging** - Instant communication between users
+- **AI Career Insights** - Personalized career recommendations and skill gap analysis
+- **Application Tracking** - End-to-end job application management
+- **Analytics Dashboard** - Career progress and market insights
+
+## Tech Stack
 
 ### Frontend
+- React 18 with TypeScript
+- Vite build tool
+- Tailwind CSS with glassmorphism design
+- Framer Motion animations
+- Zustand state management
+- React Query for data fetching
+
+### Backend
+- Django 4.2 with Django REST Framework
+- JWT authentication with role-based access control
+- SQLite (development) / PostgreSQL (production)
+- Redis for caching and real-time features
+- OpenAI integration for AI services
+
+## Quick Start
+
+### Prerequisites
+- Node.js 18+
+- Python 3.9+
+- Git
+
+### Installation
+
+1. Clone the repository
+```bash
+git clone https://github.com/reuben-idan/CareerOpen-App.git
+cd CareerOpen-App
+```
+
+2. Setup Frontend
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-### Backend
+3. Setup Backend
 ```bash
 cd backend
 python -m venv venv
@@ -44,63 +68,109 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-## 🎨 Design System
+## Project Structure
 
-- Apple-inspired glassmorphism
-- Ocean-themed color palette
-- Smooth animations with Framer Motion
-- Responsive design with Tailwind CSS
+```
+CareerOpen-App/
+├── frontend/              # React TypeScript application
+│   ├── src/
+│   │   ├── components/    # Reusable UI components
+│   │   ├── pages/         # Application pages
+│   │   ├── stores/        # Zustand state management
+│   │   └── services/      # API and external services
+│   └── package.json
+├── backend/               # Django REST API
+│   ├── careeropen/        # Project settings
+│   ├── authentication/    # User auth and JWT
+│   ├── profiles/          # User profiles
+│   ├── jobs/              # Job management
+│   ├── applications/      # Application tracking
+│   ├── messaging/         # Real-time messaging
+│   ├── ai_services/       # AI integration
+│   └── requirements.txt
+└── README.md
+```
 
-## 🛠️ Tech Stack
+## API Documentation
 
-**Frontend:**
-- React 18 + TypeScript
-- Vite
-- Tailwind CSS
-- Framer Motion
-- Zustand
-- React Query
+The API follows REST conventions with comprehensive endpoint coverage:
 
-**Backend:**
-- Python + Django
-- Django REST Framework
-- JWT Authentication
-- SQLite (PostgreSQL optional)
-- Redis (Celery)
-- Role-based Access Control
+- **Authentication**: `/api/auth/` - Registration, login, token refresh
+- **Profiles**: `/api/profiles/` - User profile management
+- **Jobs**: `/api/jobs/` - Job listings with advanced filtering
+- **Applications**: `/api/applications/` - Application tracking
+- **Companies**: `/api/companies/` - Company management
+- **AI Services**: `/api/ai/` - Career insights and recommendations
 
-## 🔐 Authentication
+Full API documentation available at `/api/docs/` when running the development server.
 
-- JWT tokens with refresh mechanism
-- Role-based permissions (Candidate, Recruiter, Admin)
-- Secure password validation
-- Email verification (planned)
+## Development
 
-## 📊 Features
+### Environment Variables
 
-- **User Profiles**: Comprehensive professional profiles
-- **Job Marketplace**: Advanced job search and filtering
-- **Company Pages**: Recruiter company management
-- **Applications**: Job application tracking
-- **Real-time Updates**: Live notifications and messaging
-- **Analytics**: Career insights and job market data
-- **AI Integration**: Smart job matching and recommendations
+Create `.env` files in both frontend and backend directories:
 
-## 🌐 API Endpoints
+**Backend (.env)**
+```
+SECRET_KEY=your-secret-key
+DEBUG=True
+OPENAI_API_KEY=your-openai-key
+DATABASE_URL=sqlite:///db.sqlite3
+```
 
-- `POST /api/auth/register/` - User registration
-- `POST /api/auth/login/` - User login
-- `GET /api/jobs/` - List jobs with filtering
-- `POST /api/applications/` - Apply to jobs
-- `GET /api/profiles/` - User profile management
-- `GET /api/companies/` - Company listings
+**Frontend (.env)**
+```
+VITE_API_URL=http://localhost:8000/api
+```
 
-Visit `/api/docs/` for complete API documentation.
+### Testing
 
-## 🚀 Deployment
+```bash
+# Frontend tests
+cd frontend
+npm test
 
-- Frontend: Vercel/Netlify
-- Backend: Railway/Heroku
-- Database: SQLite (PostgreSQL for production)
-- File Storage: AWS S3
-- Caching: Redis
+# Backend tests
+cd backend
+python manage.py test
+```
+
+## Deployment
+
+### Production Build
+
+```bash
+# Frontend
+cd frontend
+npm run build
+
+# Backend
+cd backend
+python manage.py collectstatic
+```
+
+### Deployment Platforms
+
+- **Frontend**: Vercel, Netlify, AWS S3 + CloudFront
+- **Backend**: Railway, Heroku, AWS EC2, DigitalOcean
+- **Database**: PostgreSQL on AWS RDS, Supabase
+- **File Storage**: AWS S3, Cloudinary
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Support
+
+For support and questions:
+- Create an issue on GitHub
+- Contact: support@careeropen.com
+- Documentation: [docs.careeropen.com](https://docs.careeropen.com)
