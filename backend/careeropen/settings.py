@@ -84,6 +84,8 @@ REST_FRAMEWORK = {
 }
 
 # CORS configuration
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:3001", 
@@ -91,14 +93,18 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",
     "http://127.0.0.1:3001",
     "http://127.0.0.1:3002",
+    "https://frontend-3jgouvdb1-reuben-idans-projects.vercel.app",
+    "https://careeropen-api.onrender.com"
 ]
 
-# Add production CORS origins from environment
-if os.environ.get('CORS_ALLOWED_ORIGINS'):
-    CORS_ALLOWED_ORIGINS.extend(os.environ.get('CORS_ALLOWED_ORIGINS').split(','))
-
-# Add Vercel frontend URL
-CORS_ALLOWED_ORIGINS.extend([
-    'https://frontend-i6yrnbsn5-reuben-idans-projects.vercel.app',
-    'https://careeropen-api.onrender.com'
-])
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
