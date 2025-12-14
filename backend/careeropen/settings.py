@@ -6,7 +6,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-change-me-in-production')
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,careeropen-api.onrender.com').split(',')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -98,4 +98,7 @@ if os.environ.get('CORS_ALLOWED_ORIGINS'):
     CORS_ALLOWED_ORIGINS.extend(os.environ.get('CORS_ALLOWED_ORIGINS').split(','))
 
 # Add Vercel frontend URL
-CORS_ALLOWED_ORIGINS.append('https://frontend-i6yrnbsn5-reuben-idans-projects.vercel.app')
+CORS_ALLOWED_ORIGINS.extend([
+    'https://frontend-i6yrnbsn5-reuben-idans-projects.vercel.app',
+    'https://careeropen-api.onrender.com'
+])
