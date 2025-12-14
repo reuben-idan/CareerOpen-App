@@ -6,11 +6,15 @@ import {
   BriefcaseIcon,
   HeartIcon,
   BookmarkIcon,
-  FunnelIcon
+  FunnelIcon,
+  ShareIcon,
+  ChatBubbleLeftIcon,
+  EyeIcon
 } from '@heroicons/react/24/outline'
 import { HeartIcon as HeartSolidIcon, BookmarkIcon as BookmarkSolidIcon } from '@heroicons/react/24/solid'
 import { Card, Button, Input, Avatar } from '@/components/ui'
 import { useJobStore } from '@/stores/jobStore'
+import JobDetailsModal from '@/components/jobs/JobDetailsModal'
 
 // Mock job data
 const mockJobs = [
@@ -79,8 +83,24 @@ export default function JobsPage() {
   const [locationFilter, setLocationFilter] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
   const [showFilters, setShowFilters] = useState(false)
+  const [selectedJob, setSelectedJob] = useState<any>(null)
+  const [likedJobs, setLikedJobs] = useState<string[]>([])
+  const [sharedJobs, setSharedJobs] = useState<string[]>([])
   
   const { savedJobs, appliedJobs, saveJob, unsaveJob, applyToJob } = useJobStore()
+
+  const handleLike = (jobId: string) => {
+    setLikedJobs(prev => 
+      prev.includes(jobId) 
+        ? prev.filter(id => id !== jobId)
+        : [...prev, jobId]
+    )
+  }
+
+  const handleShare = (jobId: string) => {
+    setSharedJobs(prev => [...prev, jobId])
+    // Could implement actual sharing logic here
+  }
 
   // Initialize with mock data
   const jobs = mockJobs.map(job => ({
@@ -250,7 +270,7 @@ export default function JobsPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
             >
-              <Card hover className="cursor-pointer">
+              <Card hover className="cursor-pointer" onClick={() => setSelectedJob(job)}>
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between">
                   <div className="flex items-start space-x-4 flex-1">
                     {/* Company Logo */}
@@ -331,6 +351,20 @@ export default function JobsPage() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation()
+                        handleLike(job.id)
+                      }}
+                      className="p-2 rounded-xl glass-button hover:bg-white/30 transition-colors"
+                    >
+                      {likedJobs.includes(job.id) ? (
+                        <HeartSolidIcon className="w-5 h-5 text-red-500" />
+                      ) : (
+                        <HeartIcon className="w-5 h-5 text-gray-400" />
+                      )}
+                    </button>
+                    
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
                         job.saved ? unsaveJob(job.id) : saveJob(job.id)
                       }}
                       className="p-2 rounded-xl glass-button hover:bg-white/30 transition-colors"
@@ -340,6 +374,16 @@ export default function JobsPage() {
                       ) : (
                         <BookmarkIcon className="w-5 h-5 text-gray-400" />
                       )}
+                    </button>
+                    
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleShare(job.id)
+                      }}
+                      className="p-2 rounded-xl glass-button hover:bg-white/30 transition-colors"
+                    >
+                      <ShareIcon className="w-5 h-5 text-gray-400" />
                     </button>
                     
                     <Button
@@ -393,6 +437,15 @@ export default function JobsPage() {
               Clear Filters
             </Button>
           </motion.div>
+        )}
+
+        {/* Job Details Modal */}
+        {selectedJob && (
+          <JobDetailsModal
+            job={selectedJob}
+            isOpen={!!selectedJob}
+            onClose={() => setSelectedJob(null)}
+          />
         )}
       </div>
     </div>

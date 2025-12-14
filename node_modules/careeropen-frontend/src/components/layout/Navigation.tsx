@@ -10,11 +10,14 @@ import {
   UserCircleIcon,
   Bars3Icon,
   XMarkIcon,
-  ArrowRightOnRectangleIcon
+  ArrowRightOnRectangleIcon,
+  MoonIcon,
+  SunIcon
 } from '@heroicons/react/24/outline'
 import { Avatar, Button } from '@/components/ui'
 import { Logo } from '@/components/common'
 import { useAuthStore } from '@/stores/authStore'
+import { useThemeStore } from '@/stores/themeStore'
 import { cn } from '@/lib/cn'
 
 const navigationItems = [
@@ -31,6 +34,7 @@ export default function Navigation() {
   const userMenuRef = useRef<HTMLDivElement>(null)
   const location = useLocation()
   const { user, logout } = useAuthStore()
+  const { isDark, toggleTheme } = useThemeStore()
 
   const isActive = (href: string) => location.pathname === href
 
@@ -83,8 +87,19 @@ export default function Navigation() {
             })}
           </div>
 
-          {/* User Menu */}
+          {/* Theme Toggle & User Menu */}
           <div className="flex items-center space-x-4">
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-xl glass-button hover:bg-white/20 transition-colors"
+              title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {isDark ? (
+                <SunIcon className="w-5 h-5 text-yellow-500" />
+              ) : (
+                <MoonIcon className="w-5 h-5 text-gray-600" />
+              )}
+            </button>
             <div className="relative hidden md:block" ref={userMenuRef}>
               <button
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
@@ -114,6 +129,16 @@ export default function Navigation() {
                       <UserCircleIcon className="w-5 h-5" />
                       <span>Profile</span>
                     </Link>
+                    <button
+                      onClick={() => {
+                        toggleTheme()
+                        setIsUserMenuOpen(false)
+                      }}
+                      className="w-full flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-white/20 transition-colors"
+                    >
+                      {isDark ? <SunIcon className="w-5 h-5" /> : <MoonIcon className="w-5 h-5" />}
+                      <span>{isDark ? 'Light Mode' : 'Dark Mode'}</span>
+                    </button>
                     <button
                       onClick={() => {
                         logout()

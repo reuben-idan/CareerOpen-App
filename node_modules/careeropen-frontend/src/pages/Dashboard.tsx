@@ -9,6 +9,8 @@ import {
 } from '@heroicons/react/24/outline'
 import { Card, Avatar, Button } from '@/components/ui'
 import { useAuthStore } from '@/stores/authStore'
+import { useJobStore } from '@/stores/jobStore'
+import { useNavigate } from 'react-router-dom'
 
 const quickStats = [
   { 
@@ -47,7 +49,8 @@ const recentActivity = [
     type: 'connection',
     message: 'Sarah Chen sent you a connection request',
     time: '2 hours ago',
-    avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150'
+    avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80',
+    name: 'Sarah Chen'
   },
   {
     id: 2,
@@ -105,9 +108,33 @@ const jobRecommendations = [
 
 export default function Dashboard() {
   const { user } = useAuthStore()
+  const { applyToJob, appliedJobs } = useJobStore()
+  const navigate = useNavigate()
   
   // Mock user for testing
   const mockUser = user || { name: 'Test User' }
+
+  const handleApply = (jobId: string) => {
+    applyToJob(jobId)
+    // Show success message or navigate to application form
+  }
+
+  const handleQuickAction = (action: string) => {
+    switch (action) {
+      case 'profile':
+        navigate('/app/profile')
+        break
+      case 'jobs':
+        navigate('/app/jobs')
+        break
+      case 'analytics':
+        navigate('/app/analytics')
+        break
+      case 'network':
+        navigate('/app/feed')
+        break
+    }
+  }
 
   const getGreeting = () => {
     const hour = new Date().getHours()
@@ -182,7 +209,11 @@ export default function Dashboard() {
                   {recentActivity.map((activity) => (
                     <div key={activity.id} className="flex items-start space-x-3">
                       {activity.avatar ? (
-                        <Avatar src={activity.avatar} size="sm" />
+                        <Avatar 
+                          src={activity.avatar} 
+                          name={activity.name || 'User'}
+                          size="sm" 
+                        />
                       ) : (
                         <div className="w-8 h-8 bg-ocean-100 rounded-full flex items-center justify-center">
                           <BellIcon className="w-4 h-4 text-ocean-600" />
@@ -233,7 +264,14 @@ export default function Dashboard() {
                           <div className="text-sm font-medium text-green-600 mb-2">
                             {job.match} match
                           </div>
-                          <Button size="sm">Apply</Button>
+                          <Button 
+                            size="sm"
+                            onClick={() => handleApply(job.id)}
+                            disabled={appliedJobs.includes(job.id)}
+                            className={appliedJobs.includes(job.id) ? 'bg-gray-400' : ''}
+                          >
+                            {appliedJobs.includes(job.id) ? 'Applied' : 'Apply'}
+                          </Button>
                         </div>
                       </div>
                     </div>
@@ -254,16 +292,32 @@ export default function Dashboard() {
               <Card>
                 <h2 className="heading-3 text-gray-900 mb-4">Quick Actions</h2>
                 <div className="space-y-3">
-                  <Button variant="glass" className="w-full justify-start">
+                  <Button 
+                    variant="glass" 
+                    className="w-full justify-start"
+                    onClick={() => handleQuickAction('profile')}
+                  >
                     Update Profile
                   </Button>
-                  <Button variant="glass" className="w-full justify-start">
+                  <Button 
+                    variant="glass" 
+                    className="w-full justify-start"
+                    onClick={() => handleQuickAction('jobs')}
+                  >
                     Browse Jobs
                   </Button>
-                  <Button variant="glass" className="w-full justify-start">
+                  <Button 
+                    variant="glass" 
+                    className="w-full justify-start"
+                    onClick={() => handleQuickAction('analytics')}
+                  >
                     View Analytics
                   </Button>
-                  <Button variant="glass" className="w-full justify-start">
+                  <Button 
+                    variant="glass" 
+                    className="w-full justify-start"
+                    onClick={() => handleQuickAction('network')}
+                  >
                     Network Activity
                   </Button>
                 </div>

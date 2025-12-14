@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { useState } from 'react'
 import { cn } from '@/lib/cn'
 
 interface AvatarProps {
@@ -20,6 +21,8 @@ export default function Avatar({
   className,
   onClick
 }: AvatarProps) {
+  const [imageError, setImageError] = useState(false)
+  const [imageLoaded, setImageLoaded] = useState(false)
   const sizes = {
     xs: 'w-6 h-6 text-xs',
     sm: 'w-8 h-8 text-sm',
@@ -67,13 +70,17 @@ export default function Avatar({
         whileTap={onClick ? { scale: 0.95 } : undefined}
         onClick={onClick}
       >
-        {src ? (
+        {src && !imageError ? (
           <img
             src={src}
             alt={alt || name}
             className="w-full h-full object-cover"
+            onError={() => setImageError(true)}
+            onLoad={() => setImageLoaded(true)}
+            style={{ display: imageLoaded ? 'block' : 'none' }}
           />
-        ) : (
+        ) : null}
+        {(!src || imageError || !imageLoaded) && (
           <span>{name ? getInitials(name) : '?'}</span>
         )}
       </motion.div>

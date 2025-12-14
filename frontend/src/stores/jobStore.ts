@@ -80,7 +80,49 @@ const defaultFilters: JobFilters = {
 }
 
 export const useJobStore = create<JobState>((set, get) => ({
-  jobs: [],
+  jobs: [
+    {
+      id: '1',
+      title: 'Senior React Developer',
+      company: 'TechCorp',
+      companyLogo: 'https://images.unsplash.com/photo-1549923746-c502d488b3ea?w=100',
+      location: 'San Francisco, CA',
+      type: 'full-time',
+      salary: { min: 120000, max: 160000, currency: 'USD', period: 'yearly' },
+      description: 'We are looking for a Senior React Developer to join our innovative team and build cutting-edge web applications.',
+      requirements: ['5+ years React experience', 'TypeScript proficiency', 'Team leadership', 'GraphQL knowledge'],
+      benefits: ['Health insurance', 'Stock options', 'Flexible hours', 'Remote work'],
+      skills: ['React', 'TypeScript', 'Node.js', 'GraphQL'],
+      experience: 'Senior',
+      postedAt: '2024-01-15T10:00:00Z',
+      isRemote: false,
+      isFeatured: true,
+      applicants: 45,
+      views: 234,
+      saved: false,
+      applied: false
+    },
+    {
+      id: '2',
+      title: 'Full Stack Engineer',
+      company: 'StartupXYZ',
+      location: 'Remote',
+      type: 'full-time',
+      salary: { min: 100000, max: 140000, currency: 'USD', period: 'yearly' },
+      description: 'Join our fast-growing startup as a Full Stack Engineer and help shape the future of our platform.',
+      requirements: ['3+ years full-stack experience', 'React and Node.js', 'Startup experience', 'AWS knowledge'],
+      benefits: ['Equity package', 'Unlimited PTO', 'Learning budget', 'Home office setup'],
+      skills: ['React', 'Node.js', 'PostgreSQL', 'AWS'],
+      experience: 'Mid-level',
+      postedAt: '2024-01-14T14:30:00Z',
+      isRemote: true,
+      isFeatured: false,
+      applicants: 23,
+      views: 156,
+      saved: false,
+      applied: false
+    }
+  ],
   savedJobs: [],
   appliedJobs: [],
   filters: defaultFilters,

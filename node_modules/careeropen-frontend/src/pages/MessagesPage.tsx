@@ -1,113 +1,55 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { MagnifyingGlassIcon, PlusIcon } from '@heroicons/react/24/outline'
-import { Card, Input, Button } from '@/components/ui'
+import { MagnifyingGlassIcon, PlusIcon, XMarkIcon } from '@heroicons/react/24/outline'
+import { Card, Input, Button, Avatar } from '@/components/ui'
 import ChatList from '@/components/messaging/ChatList'
 import ChatWindow from '@/components/messaging/ChatWindow'
+import { useMessagingStore } from '@/stores/messagingStore'
 
-const mockConversations = [
+const mockUsers = [
   {
-    id: '1',
-    participant: {
-      name: 'Sarah Chen',
-      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150',
-      title: 'Senior Software Engineer at TechCorp'
-    },
-    lastMessage: 'Thanks for the React tips! Really helpful.',
-    timestamp: '2m ago',
-    unreadCount: 2,
-    isOnline: true,
-    messages: [
-      {
-        id: 'm1',
-        content: 'Hi! I saw your post about React optimization. Could you share more details?',
-        senderId: '1',
-        timestamp: '10:30 AM',
-        isRead: true
-      },
-      {
-        id: 'm2',
-        content: 'Sure! The key is to use React.memo for components that don\'t change often, and useMemo for expensive calculations.',
-        senderId: 'current-user',
-        timestamp: '10:32 AM',
-        isRead: true
-      },
-      {
-        id: 'm3',
-        content: 'Thanks for the React tips! Really helpful. Do you have any resources on advanced patterns?',
-        senderId: '1',
-        timestamp: '10:35 AM',
-        isRead: false
-      }
-    ]
+    id: '4',
+    name: 'Alex Thompson',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+    title: 'Full Stack Developer at TechStart'
   },
   {
-    id: '2',
-    participant: {
-      name: 'Michael Rodriguez',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
-      title: 'Product Manager at StartupXYZ'
-    },
-    lastMessage: 'Let\'s schedule that call for next week',
-    timestamp: '1h ago',
-    unreadCount: 0,
-    isOnline: false,
-    messages: [
-      {
-        id: 'm4',
-        content: 'Great meeting today! Let\'s schedule that follow-up call for next week.',
-        senderId: '2',
-        timestamp: '9:15 AM',
-        isRead: true
-      },
-      {
-        id: 'm5',
-        content: 'Sounds good! I\'m free Tuesday or Wednesday afternoon.',
-        senderId: 'current-user',
-        timestamp: '9:20 AM',
-        isRead: true
-      }
-    ]
+    id: '5', 
+    name: 'Lisa Wang',
+    avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150',
+    title: 'Data Scientist at AI Corp'
   },
   {
-    id: '3',
-    participant: {
-      name: 'Emily Johnson',
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150',
-      title: 'UX Designer at DesignStudio'
-    },
-    lastMessage: 'The design mockups look amazing!',
-    timestamp: '3h ago',
-    unreadCount: 1,
-    isOnline: true,
-    messages: [
-      {
-        id: 'm6',
-        content: 'I\'ve finished the initial mockups for the mobile app. Would love your feedback!',
-        senderId: '3',
-        timestamp: '2:45 PM',
-        isRead: true
-      },
-      {
-        id: 'm7',
-        content: 'The design mockups look amazing! The user flow is very intuitive.',
-        senderId: '3',
-        timestamp: '2:50 PM',
-        isRead: false
-      }
-    ]
+    id: '6',
+    name: 'David Kim',
+    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150', 
+    title: 'DevOps Engineer at CloudTech'
   }
 ]
 
 export default function MessagesPage() {
-  const [selectedConversation, setSelectedConversation] = useState<string>(mockConversations[0].id)
   const [searchQuery, setSearchQuery] = useState('')
+  const [showNewMessageModal, setShowNewMessageModal] = useState(false)
+  const { conversations, selectedConversationId, createConversation } = useMessagingStore()
+  const [selectedConversation, setSelectedConversation] = useState<string | null>(null)
 
-  const filteredConversations = mockConversations.filter(conv =>
+  useEffect(() => {
+    if (conversations.length > 0 && !selectedConversation) {
+      setSelectedConversation(conversations[0].id)
+    }
+  }, [conversations, selectedConversation])
+
+  const filteredConversations = conversations.filter(conv =>
     conv.participant.name.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  const currentConversation = mockConversations.find(conv => conv.id === selectedConversation)
+  const currentConversation = conversations.find(conv => conv.id === selectedConversation)
+
+  const handleNewConversation = (user: typeof mockUsers[0]) => {
+    const conversationId = createConversation(user)
+    setSelectedConversation(conversationId)
+    setShowNewMessageModal(false)
+  }
 
   return (
     <div className="h-screen flex flex-col">
@@ -119,7 +61,10 @@ export default function MessagesPage() {
           className="flex items-center justify-between"
         >
           <h1 className="heading-2 text-gray-900">Messages</h1>
-          <Button className="bg-ocean-600 hover:bg-ocean-700">
+          <Button 
+            className="bg-ocean-600 hover:bg-ocean-700"
+            onClick={() => setShowNewMessageModal(true)}
+          >
             <PlusIcon className="w-5 h-5 mr-2" />
             New Message
           </Button>
@@ -173,14 +118,58 @@ export default function MessagesPage() {
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">
                   Select a conversation
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-gray-600 mb-4">
                   Choose a conversation from the sidebar to start messaging
                 </p>
+                <Button 
+                  onClick={() => setShowNewMessageModal(true)}
+                  className="bg-ocean-600 hover:bg-ocean-700"
+                >
+                  Start New Conversation
+                </Button>
               </div>
             </div>
           )}
         </div>
       </div>
+
+      {/* New Message Modal */}
+      {showNewMessageModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-xl p-6 w-full max-w-md mx-4"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">New Message</h3>
+              <button
+                onClick={() => setShowNewMessageModal(false)}
+                className="p-1 hover:bg-gray-100 rounded-full"
+              >
+                <XMarkIcon className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+            
+            <div className="space-y-3">
+              <p className="text-sm text-gray-600 mb-4">Select a person to start messaging:</p>
+              {mockUsers.map((user) => (
+                <button
+                  key={user.id}
+                  onClick={() => handleNewConversation(user)}
+                  className="w-full p-3 rounded-lg hover:bg-gray-50 flex items-center space-x-3 text-left"
+                >
+                  <Avatar src={user.avatar} name={user.name} size="sm" />
+                  <div>
+                    <div className="font-medium text-gray-900">{user.name}</div>
+                    <div className="text-sm text-gray-600">{user.title}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   )
 }

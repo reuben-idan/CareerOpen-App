@@ -11,6 +11,10 @@
     @apply bg-gradient-to-br from-ocean-50 via-pearl-50 to-aqua-50 min-h-screen antialiased;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
   }
+  
+  .dark body {
+    @apply bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900;
+  }
 
   ::-webkit-scrollbar {
     @apply w-2;
@@ -35,14 +39,29 @@
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
   }
   
+  .dark .glass-panel {
+    @apply bg-gray-800/20 border-gray-600/30;
+    background: linear-gradient(135deg, rgba(31, 41, 55, 0.2), rgba(31, 41, 55, 0.1));
+  }
+  
   .glass-panel-strong {
     @apply backdrop-blur-2xl bg-white/30 border border-white/40 shadow-xl;
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
   }
   
+  .dark .glass-panel-strong {
+    @apply bg-gray-800/30 border-gray-600/40;
+    background: linear-gradient(135deg, rgba(31, 41, 55, 0.3), rgba(31, 41, 55, 0.2));
+  }
+  
   .glass-button {
     @apply backdrop-blur-md bg-white/10 hover:bg-white/20 border border-white/20 transition-all duration-200;
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  }
+  
+  .dark .glass-button {
+    @apply bg-gray-700/10 hover:bg-gray-700/20 border-gray-500/20;
+    background: linear-gradient(135deg, rgba(55, 65, 81, 0.1), rgba(55, 65, 81, 0.05));
   }
   
   .glass-input {
@@ -84,5 +103,26 @@
 
   .body-medium {
     @apply text-base leading-relaxed;
+  }
+  
+  /* Dark mode text overrides */
+  .dark .text-gray-900 {
+    @apply text-white;
+  }
+  
+  .dark .text-gray-800 {
+    @apply text-gray-100;
+  }
+  
+  .dark .text-gray-700 {
+    @apply text-gray-200;
+  }
+  
+  .dark .text-gray-600 {
+    @apply text-gray-300;
+  }
+  
+  .dark .text-gray-500 {
+    @apply text-gray-400;
   }
 }

@@ -30,11 +30,8 @@ export default function AuthPage() {
         const response = await apiService.register({
           email,
           password,
-          password_confirm: password,
-          username: email.split('@')[0],
           first_name: name.split(' ')[0] || '',
-          last_name: name.split(' ')[1] || '',
-          role: 'candidate'
+          last_name: name.split(' ').slice(1).join(' ') || ''
         })
         localStorage.setItem('access_token', response.tokens.access)
         localStorage.setItem('refresh_token', response.tokens.refresh)

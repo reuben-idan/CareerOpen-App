@@ -1,18 +1,6 @@
 import { motion } from 'framer-motion'
 import { Avatar } from '@/components/ui'
-
-interface Conversation {
-  id: string
-  participant: {
-    name: string
-    avatar?: string
-    title: string
-  }
-  lastMessage: string
-  timestamp: string
-  unreadCount: number
-  isOnline: boolean
-}
+import { useMessagingStore, type Conversation } from '@/stores/messagingStore'
 
 interface ChatListProps {
   conversations: Conversation[]
@@ -21,21 +9,34 @@ interface ChatListProps {
 }
 
 export default function ChatList({ conversations, selectedId, onSelect }: ChatListProps) {
+  const { selectConversation } = useMessagingStore()
+  
+  const handleSelect = (conversationId: string) => {
+    selectConversation(conversationId)
+    onSelect(conversationId)
+  }
+  
   return (
     <div className="space-y-2">
-      {conversations.map((conversation, index) => (
-        <motion.button
-          key={conversation.id}
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: index * 0.05 }}
-          onClick={() => onSelect(conversation.id)}
-          className={`w-full p-4 rounded-xl text-left transition-all ${
-            selectedId === conversation.id
-              ? 'bg-ocean-100 border-ocean-200'
-              : 'bg-white/20 hover:bg-white/30 border-white/30'
-          } border backdrop-blur-md`}
-        >
+      {conversations.length === 0 ? (
+        <div className="text-center py-8 text-gray-500">
+          <p>No conversations yet</p>
+          <p className="text-sm">Start a new conversation!</p>
+        </div>
+      ) : (
+        conversations.map((conversation, index) => (
+          <motion.button
+            key={conversation.id}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: index * 0.05 }}
+            onClick={() => handleSelect(conversation.id)}
+            className={`w-full p-4 rounded-xl text-left transition-all ${
+              selectedId === conversation.id
+                ? 'bg-ocean-100 border-ocean-200'
+                : 'bg-white/20 hover:bg-white/30 border-white/30'
+            } border backdrop-blur-md`}
+          >
           <div className="flex items-center space-x-3">
             <div className="relative">
               <Avatar 
@@ -62,7 +63,11 @@ export default function ChatList({ conversations, selectedId, onSelect }: ChatLi
               
               <div className="flex items-center justify-between">
                 <p className="text-sm text-gray-500 truncate flex-1">
-                  {conversation.lastMessage}
+                  {conversation.isTyping ? (
+                    <span className="italic text-ocean-600">typing...</span>
+                  ) : (
+                    conversation.lastMessage || 'No messages yet'
+                  )}
                 </p>
                 
                 {conversation.unreadCount > 0 && (
@@ -73,8 +78,9 @@ export default function ChatList({ conversations, selectedId, onSelect }: ChatLi
               </div>
             </div>
           </div>
-        </motion.button>
-      ))}
+          </motion.button>
+        ))
+      )}
     </div>
   )
 }
