@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: careeropen-backend
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: "pip install -r backend/requirements.txt"
+    startCommand: "cd backend && python manage.py migrate && python manage.py collectstatic --noinput && gunicorn careeropen.wsgi:application"
+    envVars:
+      - key: DEBUG
+        value: False
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ALLOWED_HOSTS
+        value: careeropen-backend.onrender.com
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://careeropen-app.vercel.app
+
+  - type: pserv
+    name: careeropen-db
+    env: docker
+    plan: free
+    dockerfilePath: ./Dockerfile.postgres
