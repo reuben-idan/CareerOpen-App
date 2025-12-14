@@ -5,26 +5,47 @@ import GlassPanel from '@/components/ui/GlassPanel'
 import Button from '@/components/ui/Button'
 import { Logo } from '@/components/common'
 import { useAuthStore } from '@/stores/authStore'
+import { apiService } from '@/services/api'
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
+  const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
   const login = useAuthStore(state => state.login)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setLoading(true)
     
-    // Mock authentication
-    login({
-      id: '1',
-      email,
-      name: name || email.split('@')[0],
-    })
-    
-    navigate('/dashboard')
+    try {
+      if (isLogin) {
+        const response = await apiService.login({ email, password })
+        localStorage.setItem('access_token', response.tokens.access)
+        localStorage.setItem('refresh_token', response.tokens.refresh)
+        login(response.user)
+      } else {
+        const response = await apiService.register({
+          email,
+          password,
+          password_confirm: password,
+          username: email.split('@')[0],
+          first_name: name.split(' ')[0] || '',
+          last_name: name.split(' ')[1] || '',
+          role: 'candidate'
+        })
+        localStorage.setItem('access_token', response.tokens.access)
+        localStorage.setItem('refresh_token', response.tokens.refresh)
+        login(response.user)
+      }
+      navigate('/app/dashboard')
+    } catch (error) {
+      console.error('Auth error:', error)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -93,8 +114,8 @@ export default function AuthPage() {
               />
             </div>
 
-            <Button type="submit" className="w-full" size="lg">
-              {isLogin ? 'Sign In' : 'Create Account'}
+            <Button type="submit" className="w-full" size="lg" disabled={loading}>
+              {loading ? 'Loading...' : (isLogin ? 'Sign In' : 'Create Account')}
             </Button>
           </form>
 

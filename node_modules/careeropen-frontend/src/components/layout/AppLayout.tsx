@@ -7,10 +7,9 @@ import { Navigate } from 'react-router-dom'
 export default function AppLayout() {
   const { isAuthenticated } = useAuthStore()
 
-  // Temporarily bypass auth for testing
-  // if (!isAuthenticated) {
-  //   return <Navigate to="/auth" replace />
-  // }
+  if (!isAuthenticated) {
+    return <Navigate to="/auth" replace />
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-ocean-50 via-pearl-50 to-aqua-50">

@@ -10,21 +10,38 @@ CareerOpen-App/
 │   ├── src/
 │   ├── package.json
 │   └── vite.config.ts
-├── backend/           # Django backend (coming soon)
+├── backend/           # Django REST API backend
+│   ├── careeropen/    # Django project settings
+│   ├── authentication/# User authentication & JWT
+│   ├── profiles/      # User profiles & experience
+│   ├── companies/     # Company management
+│   ├── jobs/          # Job postings & search
+│   ├── applications/  # Job applications
+│   ├── messaging/     # User messaging (planned)
+│   ├── notifications/ # Real-time notifications (planned)
+│   ├── analytics/     # Usage analytics (planned)
+│   └── requirements.txt
 └── package.json       # Workspace root
 ```
 
 ## 🚀 Quick Start
 
+### Frontend
 ```bash
-# Install dependencies
+cd frontend
 npm install
-
-# Start development server
 npm run dev
+```
 
-# Build for production
-npm run build
+### Backend
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+cp .env.example .env
+python manage.py migrate
+python manage.py runserver
 ```
 
 ## 🎨 Design System
@@ -43,3 +60,47 @@ npm run build
 - Framer Motion
 - Zustand
 - React Query
+
+**Backend:**
+- Python + Django
+- Django REST Framework
+- JWT Authentication
+- PostgreSQL
+- Redis (Celery)
+- Role-based Access Control
+
+## 🔐 Authentication
+
+- JWT tokens with refresh mechanism
+- Role-based permissions (Candidate, Recruiter, Admin)
+- Secure password validation
+- Email verification (planned)
+
+## 📊 Features
+
+- **User Profiles**: Comprehensive professional profiles
+- **Job Marketplace**: Advanced job search and filtering
+- **Company Pages**: Recruiter company management
+- **Applications**: Job application tracking
+- **Real-time Updates**: Live notifications and messaging
+- **Analytics**: Career insights and job market data
+- **AI Integration**: Smart job matching and recommendations
+
+## 🌐 API Endpoints
+
+- `POST /api/auth/register/` - User registration
+- `POST /api/auth/login/` - User login
+- `GET /api/jobs/` - List jobs with filtering
+- `POST /api/applications/` - Apply to jobs
+- `GET /api/profiles/` - User profile management
+- `GET /api/companies/` - Company listings
+
+Visit `/api/docs/` for complete API documentation.
+
+## 🚀 Deployment
+
+- Frontend: Vercel/Netlify
+- Backend: Railway/Heroku
+- Database: PostgreSQL
+- File Storage: AWS S3
+- Caching: Redis
