@@ -1,14 +1,23 @@
-import numpy as np
-from sentence_transformers import SentenceTransformer
-from sklearn.metrics.pairwise import cosine_similarity
 import logging
+try:
+    import numpy as np
+    from sentence_transformers import SentenceTransformer
+    from sklearn.metrics.pairwise import cosine_similarity
+except ImportError:
+    np = None
+    SentenceTransformer = None
+    cosine_similarity = None
 
 logger = logging.getLogger(__name__)
 
 class EmbeddingService:
     def __init__(self):
+        if not all([np, SentenceTransformer, cosine_similarity]):
+            logger.warning("ML dependencies not available")
+            self.is_loaded = False
+            return
+        
         try:
-            # Use free sentence transformer model
             self.model = SentenceTransformer('all-MiniLM-L6-v2')
             self.is_loaded = True
         except Exception as e:

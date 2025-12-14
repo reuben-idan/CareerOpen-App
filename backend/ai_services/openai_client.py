@@ -1,19 +1,22 @@
-import openai
-from decouple import config
+import os
 import logging
+try:
+    import openai
+except ImportError:
+    openai = None
 
 logger = logging.getLogger(__name__)
 
 class OpenAIClient:
     def __init__(self):
-        self.api_key = config('OPENAI_API_KEY', default='')
-        if self.api_key:
+        self.api_key = os.environ.get('OPENAI_API_KEY', '')
+        if self.api_key and openai:
             openai.api_key = self.api_key
         else:
-            logger.warning("OpenAI API key not configured")
+            logger.warning("OpenAI not available or API key not configured")
     
     def is_available(self):
-        return bool(self.api_key)
+        return bool(self.api_key and openai)
     
     async def generate_completion(self, prompt, max_tokens=500, temperature=0.7):
         """Generate text completion using OpenAI."""
