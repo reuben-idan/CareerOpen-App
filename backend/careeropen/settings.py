@@ -6,7 +6,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-change-me-in-production')
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,careeropen-api.onrender.com').split(',')
+ALLOWED_HOSTS = ['*']  # Allow all hosts for deployment
 
 INSTALLED_APPS = [
     'django.contrib.admin',
