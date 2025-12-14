@@ -18,7 +18,7 @@ pip install -r requirements.txt
 3. Set up environment variables:
 ```bash
 cp .env.example .env
-# Edit .env with your configuration
+# Uses SQLite by default - no additional configuration needed
 ```
 
 4. Run migrations:
@@ -36,6 +36,11 @@ python manage.py createsuperuser
 ```bash
 python manage.py runserver
 ```
+
+## Database
+
+**Default**: SQLite (no setup required)
+**Production**: PostgreSQL (set `USE_SQLITE=False` in .env)
 
 ## API Documentation
 

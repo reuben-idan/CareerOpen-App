@@ -65,7 +65,7 @@ python manage.py runserver
 - Python + Django
 - Django REST Framework
 - JWT Authentication
-- PostgreSQL
+- SQLite (PostgreSQL optional)
 - Redis (Celery)
 - Role-based Access Control
 
@@ -101,6 +101,6 @@ Visit `/api/docs/` for complete API documentation.
 
 - Frontend: Vercel/Netlify
 - Backend: Railway/Heroku
-- Database: PostgreSQL
+- Database: SQLite (PostgreSQL for production)
 - File Storage: AWS S3
 - Caching: Redis

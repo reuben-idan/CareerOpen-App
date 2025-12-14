@@ -12,7 +12,7 @@ cd ../backend
 pip install -r requirements.txt
 
 echo ""
-echo "🗄️ Setting up Database..."
+echo "🗄️ Setting up SQLite Database..."
 python run_setup.py
 
 echo ""

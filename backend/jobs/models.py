@@ -1,6 +1,4 @@
 from django.db import models
-from django.contrib.postgres.indexes import GinIndex
-from django.contrib.postgres.search import SearchVectorField
 from core.models import BaseModel
 from authentication.models import User
 from companies.models import Company
@@ -32,7 +30,6 @@ class Job(BaseModel):
     skills_required = models.JSONField(default=list)
     is_published = models.BooleanField(default=True, db_index=True)
     expires_at = models.DateTimeField(null=True, blank=True, db_index=True)
-    search_vector = SearchVectorField(null=True, blank=True)
     
     class Meta:
         indexes = [
@@ -41,8 +38,6 @@ class Job(BaseModel):
             models.Index(fields=['location', 'is_published']),
             models.Index(fields=['salary_min', 'salary_max']),
             models.Index(fields=['expires_at', 'is_published']),
-            GinIndex(fields=['skills_required']),
-            GinIndex(fields=['search_vector']),
         ]
     
     def __str__(self):

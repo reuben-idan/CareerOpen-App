@@ -73,8 +73,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'careeropen.wsgi.application'
 
-# Database configuration with SQLite fallback
-if config('USE_SQLITE', default=False, cast=bool):
+# Database configuration - SQLite by default
+if config('USE_SQLITE', default=True, cast=bool):
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
