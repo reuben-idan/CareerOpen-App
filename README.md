@@ -1,5 +1,9 @@
 # CareerOpen
 
+<div align="center">
+  <img src="frontend/public/CareerOpen Logo.png" alt="CareerOpen Logo" width="200" height="auto">
+</div>
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![React](https://img.shields.io/badge/React-18.0-blue.svg)](https://reactjs.org/)
 [![Django](https://img.shields.io/badge/Django-4.2-green.svg)](https://djangoproject.com/)
